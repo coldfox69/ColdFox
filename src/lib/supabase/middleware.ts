@@ -43,8 +43,15 @@ export async function updateSession(request: NextRequest) {
 
   if (user && AUTH_PAGES.includes(pathname)) {
     const redirect = request.nextUrl.clone();
-    redirect.pathname = '/app';
-    redirect.search = '';
+    const next = request.nextUrl.searchParams.get('next');
+    if (next && next.startsWith('/') && !next.startsWith('//') && !next.includes('://')) {
+      redirect.pathname = next;
+      redirect.search = '';
+    } else {
+      // Admin lands on /admin directly when they revisit auth pages.
+      redirect.pathname = user.email?.toLowerCase() === 'coldfox6969@gmail.com' ? '/admin' : '/app';
+      redirect.search = '';
+    }
     return NextResponse.redirect(redirect);
   }
 

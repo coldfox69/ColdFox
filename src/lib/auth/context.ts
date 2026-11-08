@@ -64,7 +64,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
   const requestedOrg = cookieStore.get(ACTIVE_ORG_COOKIE)?.value;
   const active = orgs.find((o) => o.id === requestedOrg) ?? orgs[0] ?? null;
 
-  const email = user.email ?? '';
+  const email = (user.email ?? '').toLowerCase();
   const name = (profile?.full_name as string | null) || user.user_metadata?.full_name || email.split('@')[0] || 'ColdFox user';
 
   // Only coldfox6969@gmail.com can access the admin panel
@@ -97,7 +97,7 @@ export async function requireOrganization(): Promise<SessionContext & { organiza
 export async function requireAdmin(permission?: string) {
   const ctx = await requireUser();
   // Only coldfox6969@gmail.com can access the admin panel
-  if (ctx.user.email !== 'coldfox6969@gmail.com') redirect('/app');
+  if (ctx.user.email.toLowerCase() !== 'coldfox6969@gmail.com') redirect('/app');
   if (!ctx.isPlatformAdmin) redirect('/app');
 
   if (permission) {

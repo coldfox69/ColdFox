@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Sparkles, Eye, EyeOff, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -96,8 +96,15 @@ export function AuthDivider() {
   );
 }
 
-export default function LoginPage() {
+function safeNext(raw: string | null): string {
+  if (!raw) return '/app';
+  if (!raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\') || raw.includes('://')) return '/app';
+  return raw;
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -106,16 +113,30 @@ export default function LoginPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!/^\S+@\S+\.\S+$/.test(email)) return setError('Enter a valid work email address.');
+    const cleanEmail = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) return setError('Enter a valid work email address.');
     if (password.length < 1) return setError('Enter your password.');
     setLoading(true);
     try {
-      const { error: signInError } = await createBrowserSupabaseClient().auth.signInWithPassword({ email: email.trim(), password });
+      const { data, error: signInError } = await createBrowserSupabaseClient().auth.signInWithPassword({ email: cleanEmail, password });
       if (signInError) throw signInError;
-      router.replace('/app');
+      const next = safeNext(searchParams.get('next'));
+      // Admin email goes straight to admin panel (explicit next wins).
+      if (!searchParams.get('next') && data.user?.email?.toLowerCase() === 'coldfox6969@gmail.com') {
+        router.replace('/admin');
+      } else {
+        router.replace(next);
+      }
       router.refresh();
     } catch (signInError) {
-      setError(signInError instanceof Error ? signInError.message : 'Could not sign in. Check your email and password.');
+      const msg = signInError instanceof Error ? signInError.message : 'Could not sign in. Check your email and password.';
+      if (/email not confirmed/i.test(msg)) {
+        setError('Please confirm your email first, then sign in. Check your inbox for the confirmation link.');
+      } else if (/invalid login/i.test(msg)) {
+        setError('Invalid email or password. If you just signed up, use the same password you chose.');
+      } else {
+        setError(msg);
+      }
       setLoading(false);
     }
   };
@@ -139,5 +160,13 @@ export default function LoginPage() {
       </form>
       <p className="text-[11px] text-muted-foreground text-center mt-6">By signing in you agree to our <Link href="/terms" className="underline">Terms</Link> and <Link href="/privacy" className="underline">Privacy Policy</Link>.</p>
     </AuthShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

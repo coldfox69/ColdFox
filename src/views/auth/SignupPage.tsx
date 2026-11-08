@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, User, Check, X, ArrowRight } from 'lucide-react';
-import { AuthShell, PasswordField, TextField, FormError, AuthDivider } from './LoginPage';
+import { Mail, User, Check, X, ArrowRight, MailCheck } from 'lucide-react';
+import { AuthShell, PasswordField, TextField, FormError } from './LoginPage';
 import { cn } from '@/lib/utils';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -26,6 +26,7 @@ export default function SignupPage() {
   const [terms, setTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const strength = passwordStrength(form.password);
 
   const update = (key: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [key]: v }));
@@ -39,15 +40,17 @@ export default function SignupPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (form.name.trim().length < 2) return setError('Please enter your full name.');
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) return setError('Enter a valid work email address.');
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim().toLowerCase())) return setError('Enter a valid work email address.');
     if (strength < 2) return setError('Choose a stronger password: at least 8 characters with letters and numbers.');
     if (form.password !== form.confirm) return setError('Passwords do not match.');
     if (!terms) return setError('You must accept the Terms and Privacy Policy to continue.');
     setError('');
+    setNeedsConfirmation(false);
     setLoading(true);
     try {
-      const { error: signUpError } = await createBrowserSupabaseClient().auth.signUp({
-        email: form.email.trim(),
+      const cleanEmail = form.email.trim().toLowerCase();
+      const { data, error: signUpError } = await createBrowserSupabaseClient().auth.signUp({
+        email: cleanEmail,
         password: form.password,
         options: {
           data: { full_name: form.name.trim() },
@@ -55,14 +58,46 @@ export default function SignupPage() {
         },
       });
       if (signUpError) throw signUpError;
-      router.replace('/onboarding');
-      router.refresh();
+      if (data.session) {
+        // Email confirmation is disabled in Supabase — straight to onboarding.
+        router.replace('/onboarding');
+        router.refresh();
+        return;
+      }
+      try {
+        const { error: signInError } = await createBrowserSupabaseClient().auth.signInWithPassword({ email: cleanEmail, password: form.password });
+        if (!signInError) {
+          router.replace('/onboarding');
+          router.refresh();
+          return;
+        }
+      } catch {}
+      setNeedsConfirmation(true);
     } catch (signUpError) {
       setError(signUpError instanceof Error ? signUpError.message : 'Could not create your account.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (needsConfirmation) {
+    return (
+      <AuthShell
+        title="Check your email"
+        subtitle="Confirm your address to activate your workspace."
+        footer={<>Already confirmed? <Link href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">Sign in</Link></>}
+      >
+        <div className="flex flex-col items-center text-center py-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
+            <MailCheck className="w-6 h-6 text-emerald-600" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            We sent a confirmation link to <span className="font-medium text-foreground">{form.email.trim().toLowerCase()}</span>. Open it to finish signing up.
+          </p>
+        </div>
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
