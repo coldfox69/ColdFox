@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, User, Check, X, ArrowRight } from 'lucide-react';
-import { AuthShell, PasswordField, TextField, FormError, SocialButtons, AuthDivider } from './LoginPage';
+import { AuthShell, PasswordField, TextField, FormError, AuthDivider } from './LoginPage';
 import { cn } from '@/lib/utils';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -110,8 +110,6 @@ export default function SignupPage() {
           {loading ? 'Creating account...' : <>Create Account <ArrowRight className="w-4 h-4" /></>}
         </button>
       </form>
-      <AuthDivider />
-      <SocialButtons onError={setError} />
     </AuthShell>
   );
 }

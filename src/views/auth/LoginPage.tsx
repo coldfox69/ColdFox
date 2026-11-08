@@ -86,10 +86,6 @@ export function FormError({ message }: { message: string }) {
   );
 }
 
-export function SocialButtons({ onError }: { onError?: (message: string) => void }) {
-  return null;
-}
-
 export function AuthDivider() {
   return (
     <div className="flex items-center gap-3 my-6">
@@ -141,8 +137,6 @@ export default function LoginPage() {
           {loading ? 'Signing in...' : <>Sign In <ArrowRight className="w-4 h-4" /></>}
         </button>
       </form>
-      <AuthDivider />
-      <SocialButtons onError={setError} />
       <p className="text-[11px] text-muted-foreground text-center mt-6">By signing in you agree to our <Link href="/terms" className="underline">Terms</Link> and <Link href="/privacy" className="underline">Privacy Policy</Link>.</p>
     </AuthShell>
   );
