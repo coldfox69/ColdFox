@@ -87,38 +87,7 @@ export function FormError({ message }: { message: string }) {
 }
 
 export function SocialButtons({ onError }: { onError?: (message: string) => void }) {
-  const [busy, setBusy] = useState<string | null>(null);
-
-  const start = async (provider: 'google' | 'azure') => {
-    setBusy(provider);
-    try {
-      const supabase = createBrowserSupabaseClient();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo: `${window.location.origin}/auth/callback?next=/app` },
-      });
-      if (error) throw error;
-    } catch (error) {
-      onError?.(error instanceof Error ? error.message : 'That sign-in provider is unavailable. Use email and password instead.');
-      setBusy(null);
-    }
-  };
-
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {([{ label: 'Google', provider: 'google' }, { label: 'Microsoft', provider: 'azure' }] as const).map(p => (
-        <button
-          key={p.provider}
-          type="button"
-          disabled={Boolean(busy)}
-          onClick={() => void start(p.provider)}
-          className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border bg-background text-sm font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-60"
-        >
-          Continue with {p.label}
-        </button>
-      ))}
-    </div>
-  );
+  return null;
 }
 
 export function AuthDivider() {
