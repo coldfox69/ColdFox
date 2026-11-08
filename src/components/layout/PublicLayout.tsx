@@ -43,20 +43,20 @@ export function PublicNavbar() {
       'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
       scrolled ? 'neu-shell-header' : 'bg-transparent'
     )}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-16 gap-8">
-          <Link href="/" className="flex items-center gap-2.5" aria-label="ColdFox home">
-            <div className="w-8 h-8 rounded-xl gradient-blue flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-10">
+        <div className="flex items-center h-[72px] gap-6">
+          <Link href="/" className="flex items-center gap-3" aria-label="ColdFox home">
+            <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-[var(--neu-elevated-sm)]">
+              <Sparkles className="w-[18px] h-[18px]" />
             </div>
-            <span className="font-bold text-xl text-foreground">ColdFox</span>
+            <span className="font-extrabold text-[20px] tracking-tight text-foreground">ColdFox</span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
+          <nav className="hidden md:flex items-center gap-1.5" aria-label="Main navigation">
             {navLinks.map(link => (
               <Link key={link.path} href={link.path}
                 aria-current={pathname === link.path ? 'page' : undefined}
-                className={cn('px-4 py-2 rounded-xl text-sm font-medium transition-all',
+                className={cn('px-4 py-2.5 rounded-xl text-[14px] font-medium tracking-[-0.01em] transition-all',
                   pathname === link.path ? 'text-foreground neu-inset-sm' : 'text-muted-foreground hover:text-foreground hover:shadow-[var(--neu-inset-sm)]')}>
                 {link.label}
               </Link>
@@ -66,13 +66,13 @@ export function PublicNavbar() {
           <div className="ml-auto flex items-center gap-3">
             <button onClick={cycleTheme} aria-label={`Theme: ${themeLabel}. Switch theme`}
               title={`Theme: ${themeLabel}`}
-              className="neu-btn w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground">
-              {theme === 'light' ? <Sun className="w-4 h-4" /> : theme === 'dark' ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
+              className="neu-btn w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground">
+              {theme === 'light' ? <Sun className="w-[18px] h-[18px]" /> : theme === 'dark' ? <Moon className="w-[18px] h-[18px]" /> : <Monitor className="w-[18px] h-[18px]" />}
             </button>
-            <Link href="/login" className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2">
+            <Link href="/login" className="hidden sm:block text-[14px] font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2.5">
               Sign In
             </Link>
-            <Link href="/signup" className="bg-primary text-primary-foreground text-sm font-semibold px-5 py-2 rounded-xl shadow-[var(--neu-elevated-sm)] hover:brightness-[1.07] active:shadow-[var(--neu-inset-sm)] transition-all">
+            <Link href="/signup" className="bg-primary text-primary-foreground text-[14px] font-semibold px-6 py-2.5 rounded-xl shadow-[var(--neu-elevated)] hover:brightness-[1.07] hover:-translate-y-px active:shadow-[var(--neu-inset-sm)] active:translate-y-0 transition-all">
               Start Free
             </Link>
             <button className="md:hidden p-2 rounded-lg hover:bg-muted" aria-label="Toggle navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>
@@ -123,15 +123,15 @@ export function PublicFooter() {
   };
 
   return (
-    <footer className="mt-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <footer className="mt-20 pt-4">
+      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-10 py-12">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl gradient-blue flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-[var(--neu-elevated-sm)]">
+                <Sparkles className="w-4 h-4" />
               </div>
-              <span className="font-bold text-lg text-foreground">ColdFox</span>
+              <span className="font-extrabold text-lg tracking-tight text-foreground">ColdFox</span>
             </Link>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
               AI-powered cold email outreach platform for modern sales teams.

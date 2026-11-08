@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -64,31 +65,31 @@
   --cf-warning: #c08a3d;
   --cf-danger: #c45c5c;
 
-  /* Neumorphic shadows - Light */
-  --neu-elevated: 9px 9px 18px rgba(163, 177, 198, 0.55), -9px -9px 18px rgba(255, 255, 255, 0.85);
-  --neu-elevated-sm: 5px 5px 10px rgba(163, 177, 198, 0.5), -5px -5px 10px rgba(255, 255, 255, 0.8);
-  --neu-elevated-lg: 12px 12px 24px rgba(163, 177, 198, 0.55), -12px -12px 24px rgba(255, 255, 255, 0.9);
-  --neu-inset: inset 6px 6px 12px rgba(163, 177, 198, 0.5), inset -6px -6px 12px rgba(255, 255, 255, 0.8);
-  --neu-inset-sm: inset 3px 3px 6px rgba(163, 177, 198, 0.5), inset -3px -3px 6px rgba(255, 255, 255, 0.8);
+  /* Neumorphic shadows - Light: clear rise from silver background */
+  --neu-elevated: 14px 14px 28px rgba(163, 177, 198, 0.65), -12px -12px 28px rgba(255, 255, 255, 0.95);
+  --neu-elevated-sm: 7px 7px 14px rgba(163, 177, 198, 0.6), -7px -7px 14px rgba(255, 255, 255, 0.9);
+  --neu-elevated-lg: 22px 22px 44px rgba(163, 177, 198, 0.65), -18px -18px 38px rgba(255, 255, 255, 1);
+  --neu-inset: inset 8px 8px 16px rgba(163, 177, 198, 0.6), inset -8px -8px 16px rgba(255, 255, 255, 0.9);
+  --neu-inset-sm: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
 
-  /* Light mode */
+  /* Light mode: card is lighter than background for instant depth */
   --background: #e0e5ec;
   --foreground: #1a1d23;
-  --card: #e0e5ec;
+  --card: #e9eef4;
   --card-foreground: #1a1d23;
-  --popover: #e0e5ec;
+  --popover: #eaf0f6;
   --popover-foreground: #1a1d23;
   --primary: #5b8def;
   --primary-foreground: #ffffff;
   --secondary: #d5dce6;
   --secondary-foreground: #1a1d23;
   --muted: #d5dce6;
-  --muted-foreground: #5a6575;
-  --accent: #d5e3ff;
+  --muted-foreground: #4f5a6b;
+  --accent: #d0e0ff;
   --accent-foreground: #1a3a6e;
   --destructive: #c45c5c;
   --destructive-foreground: #ffffff;
-  --border: rgba(255, 255, 255, 0.45);
+  --border: rgba(163, 177, 198, 0.35);
   --input: #e0e5ec;
   --ring: #5b8def;
   --chart-1: #5b8def;
@@ -96,55 +97,55 @@
   --chart-3: #3a414d;
   --chart-4: #7fb0ff;
   --chart-5: #c9d3e2;
-  --sidebar: #e0e5ec;
+  --sidebar: #e9eef4;
   --sidebar-foreground: #1a1d23;
   --sidebar-primary: #5b8def;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #d5dce6;
   --sidebar-accent-foreground: #1a1d23;
-  --sidebar-border: rgba(255, 255, 255, 0.45);
+  --sidebar-border: rgba(163, 177, 198, 0.35);
   --sidebar-ring: #5b8def;
 }
 
 .dark {
-  /* Neumorphic shadows - Dark */
-  --neu-elevated: 10px 10px 20px rgba(0, 0, 0, 0.6), -8px -8px 18px rgba(255, 255, 255, 0.04);
-  --neu-elevated-sm: 5px 5px 10px rgba(0, 0, 0, 0.55), -4px -4px 10px rgba(255, 255, 255, 0.04);
-  --neu-elevated-lg: 14px 14px 28px rgba(0, 0, 0, 0.65), -10px -10px 22px rgba(255, 255, 255, 0.05);
-  --neu-inset: inset 6px 6px 12px rgba(0, 0, 0, 0.6), inset -6px -6px 12px rgba(255, 255, 255, 0.03);
-  --neu-inset-sm: inset 3px 3px 6px rgba(0, 0, 0, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.03);
+  /* Neumorphic shadows - Dark: deeper + stronger lift highlight */
+  --neu-elevated: 12px 12px 24px rgba(0, 0, 0, 0.75), -8px -8px 18px rgba(255, 255, 255, 0.06);
+  --neu-elevated-sm: 6px 6px 12px rgba(0, 0, 0, 0.7), -5px -5px 12px rgba(255, 255, 255, 0.05);
+  --neu-elevated-lg: 20px 20px 40px rgba(0, 0, 0, 0.8), -14px -14px 30px rgba(255, 255, 255, 0.06);
+  --neu-inset: inset 8px 8px 16px rgba(0, 0, 0, 0.75), inset -6px -6px 14px rgba(255, 255, 255, 0.04);
+  --neu-inset-sm: inset 4px 4px 8px rgba(0, 0, 0, 0.7), inset -3px -3px 8px rgba(255, 255, 255, 0.04);
 
-  --background: #1a1d23;
+  --background: #171a20;
   --foreground: #e6eaf0;
-  --card: #22262e;
+  --card: #252b35;
   --card-foreground: #e6eaf0;
-  --popover: #22262e;
+  --popover: #262c37;
   --popover-foreground: #e6eaf0;
   --primary: #7fb0ff;
   --primary-foreground: #0f172a;
-  --secondary: #2b2f36;
+  --secondary: #2b323d;
   --secondary-foreground: #e6eaf0;
-  --muted: #2b2f36;
-  --muted-foreground: #9aa3b2;
+  --muted: #1a1e26;
+  --muted-foreground: #aab4c3;
   --accent: #2b3a52;
   --accent-foreground: #b8d4ff;
   --destructive: #e58a8a;
   --destructive-foreground: #1a1d23;
-  --border: rgba(255, 255, 255, 0.06);
-  --input: #1a1d23;
+  --border: rgba(255, 255, 255, 0.09);
+  --input: #171a20;
   --ring: #7fb0ff;
   --chart-1: #7fb0ff;
   --chart-2: #9aa3b2;
   --chart-3: #5a6575;
   --chart-4: #5b8def;
   --chart-5: #3a414d;
-  --sidebar: #1f2229;
+  --sidebar: #1f242e;
   --sidebar-foreground: #e6eaf0;
   --sidebar-primary: #7fb0ff;
   --sidebar-primary-foreground: #0f172a;
-  --sidebar-accent: #2b2f36;
+  --sidebar-accent: #2b323d;
   --sidebar-accent-foreground: #e6eaf0;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-border: rgba(255, 255, 255, 0.09);
   --sidebar-ring: #7fb0ff;
 }
 
@@ -154,10 +155,29 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
     letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  h1, h2, h3, h4, h5, h6 {
+  h1 {
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+  }
+  h2 {
+    font-weight: 700;
+    line-height: 1.22;
+    letter-spacing: -0.025em;
+  }
+  h3, h4 {
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+  }
+  h5, h6 {
     @apply font-semibold tracking-tight;
   }
   ::selection {
@@ -172,20 +192,20 @@
 
 /* Classic Soft Neumorphism utility classes */
 @layer utilities {
-  /* Elevated soft surface - cards, panels, dialogs */
+  /* Elevated soft surface - genuine raised look, no hard outline */
   .neu-card {
     background: var(--card);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     box-shadow: var(--neu-elevated);
   }
   .neu-card-sm {
     background: var(--card);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     box-shadow: var(--neu-elevated-sm);
   }
   .neu-card-lg {
     background: var(--card);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     box-shadow: var(--neu-elevated-lg);
   }
   /* Inset surface - inputs, wells, pressed states */
@@ -202,7 +222,7 @@
   /* Elevated control - icon buttons, small actions */
   .neu-btn {
     background: var(--card);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     box-shadow: var(--neu-elevated-sm);
     transition: box-shadow 150ms ease, transform 150ms ease, background 150ms ease;
   }
@@ -217,7 +237,7 @@
   /* Legacy glass is now a soft elevated surface (no blur gloss) */
   .glass-card {
     background: var(--card);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     box-shadow: var(--neu-elevated);
   }
   /* Icy blue primary - solid, no gradient */
@@ -267,7 +287,7 @@
   [data-slot='hover-card-content'],
   [data-slot='tooltip-content'] {
     background: var(--popover);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     box-shadow: var(--neu-elevated-lg);
     border-radius: 1.25rem;
   }
@@ -293,7 +313,7 @@
   /* Cards */
   [data-slot='card'] {
     background: var(--card);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     box-shadow: var(--neu-elevated);
     border-radius: 1.25rem;
   }
@@ -369,13 +389,13 @@
   /* Sidebar + header shells get soft separation */
   .neu-shell-side {
     background: var(--sidebar);
-    box-shadow: var(--neu-elevated-sm);
-    border: 1px solid var(--border);
+    box-shadow: var(--neu-elevated);
+    border: 1px solid transparent;
   }
   .neu-shell-header {
     background: var(--card);
-    box-shadow: var(--neu-elevated-sm);
-    border: 1px solid var(--border);
+    box-shadow: var(--neu-elevated);
+    border: 1px solid transparent;
   }
 }
 
