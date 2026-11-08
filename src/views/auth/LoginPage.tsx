@@ -13,8 +13,8 @@ export function AuthShell({ title, subtitle, children, footer }: { title: string
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center justify-center mb-8">
-          <span className="rounded-2xl bg-white p-2 shadow-[var(--neu-elevated)]">
-            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={180} height={45} className="h-11 w-auto" priority />
+          <span className="flex h-16 w-72 max-w-full items-center justify-center rounded-2xl bg-white px-3 shadow-[var(--neu-elevated)]">
+            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={288} height={64} className="h-full w-full object-contain" priority />
           </span>
         </Link>
         <div className="neu-card rounded-3xl p-8">
