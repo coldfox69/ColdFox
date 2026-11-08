@@ -89,7 +89,7 @@ export function FormError({ message }: { message: string }) {
 export function SocialButtons({ onError }: { onError?: (message: string) => void }) {
   const [busy, setBusy] = useState<string | null>(null);
 
-  const start = async (provider: 'google' | 'azure') => {
+  const start = async (provider: 'azure') => {
     setBusy(provider);
     try {
       const supabase = createBrowserSupabaseClient();
