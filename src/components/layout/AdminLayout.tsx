@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Users, Building2, CreditCard, Megaphone, Mail, Activity,
   Cpu, Key, Ticket, Flag, Briefcase, Shield, Plug, Settings, ChevronLeft, Bell,
-  Sun, Moon, Sparkles, ExternalLink, LogOut, Gauge, FileSearch, AlertTriangle, Webhook,
+  Sun, Moon, Monitor, Sparkles, ExternalLink, LogOut, Gauge, FileSearch, AlertTriangle, Webhook,
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -64,11 +64,18 @@ export function AdminLayout({
     router.refresh();
   };
 
+  const cycleTheme = () => {
+    if (theme === 'light') setTheme('dark');
+    else if (theme === 'dark') setTheme('system');
+    else setTheme('light');
+  };
+  const themeLabel = theme === 'light' ? 'Light mode' : theme === 'dark' ? 'Dark mode' : 'System mode';
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <aside className={cn('hidden lg:flex flex-col bg-sidebar border-r border-sidebar-border flex-shrink-0 sidebar-transition relative', collapsed ? 'w-16' : 'w-60')}>
+      <aside className={cn('hidden lg:flex flex-col neu-shell-side flex-shrink-0 sidebar-transition relative', collapsed ? 'w-16' : 'w-60')}>
         <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-border', collapsed && 'justify-center px-3')}>
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 shadow-[var(--neu-elevated-sm)]">
             <Shield className="w-4 h-4 text-white" />
           </div>
           {!collapsed && (
@@ -84,7 +91,7 @@ export function AdminLayout({
             <Link key={item.path} href={item.path} title={collapsed ? item.label : undefined}
               aria-current={isActive(item.path) ? 'page' : undefined}
               className={cn('flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all',
-                isActive(item.path) ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                isActive(item.path) ? 'neu-inset-sm text-accent-foreground' : 'text-muted-foreground hover:shadow-[var(--neu-inset-sm)] hover:text-foreground',
                 collapsed && 'justify-center px-2')}>
               <item.icon className="w-4 h-4 flex-shrink-0" />
               {!collapsed && <span>{item.label}</span>}
@@ -116,21 +123,21 @@ export function AdminLayout({
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="flex items-center h-14 px-6 border-b border-border bg-card/80 backdrop-blur-sm gap-4">
+        <header className="flex items-center h-14 px-6 neu-shell-header gap-4">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-blue-500" />
             <span className="text-sm font-semibold text-foreground">ColdFox Admin</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle dark mode"
-              className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground">
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <button onClick={cycleTheme} aria-label={`Theme: ${themeLabel}. Switch theme`} title={`Theme: ${themeLabel}`}
+              className="neu-btn w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground">
+              {theme === 'light' ? <Sun className="w-4 h-4" /> : theme === 'dark' ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
             </button>
             <Link href="/admin/tickets" aria-label="Support tickets" className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground">
               <Bell className="w-4 h-4" />
             </Link>
             <div className="flex items-center gap-2 pl-2 border-l border-border">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-[var(--neu-elevated-sm)]">
                 <span className="text-white text-xs font-bold">{initials || 'SA'}</span>
               </div>
               <span className="text-sm font-medium text-foreground hidden sm:block">{user.name}</span>

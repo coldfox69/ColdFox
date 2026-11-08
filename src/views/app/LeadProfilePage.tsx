@@ -137,7 +137,7 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
       <div className="flex flex-wrap items-center gap-3">
         <LeadStatusBadge status={lead.status} />
         {lead.tags.map(t => (
-          <span key={t} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted text-xs text-muted-foreground">
+          <span key={t} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg neu-inset-sm text-xs text-muted-foreground">
             <Tag className="w-3 h-3" /> {t}
           </span>
         ))}

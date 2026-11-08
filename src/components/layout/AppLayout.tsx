@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Megaphone, Users, Mail, Inbox, Wand2,
   FileText, BarChart2, Zap, Shield, Ban, HelpCircle, Settings,
-  ChevronLeft, ChevronRight, Bell, Search, Sun, Moon, User,
+  ChevronLeft, ChevronRight, Bell, Search, Sun, Moon, Monitor, User,
   LogOut, ChevronsUpDown, Sparkles, Menu, ShieldCheck, ArrowRight
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
@@ -106,6 +106,13 @@ export function AppLayout({
     }
   };
 
+  const cycleTheme = () => {
+    if (theme === 'light') setTheme('dark');
+    else if (theme === 'dark') setTheme('system');
+    else setTheme('light');
+  };
+  const themeLabel = theme === 'light' ? 'Light mode' : theme === 'dark' ? 'Dark mode' : 'System mode';
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-border', collapsed && 'justify-center px-3')}>
@@ -120,12 +127,12 @@ export function AppLayout({
         )}
       </div>
 
-      <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto" aria-label="Workspace navigation">
+      <nav className="flex-1 px-2 py-3 space-y-1 overflow-y-auto" aria-label="Workspace navigation">
         {navItems.map(item => (
           <Link key={item.path} href={item.path} onClick={() => setMobileOpen(false)}
             aria-current={isActive(item.path) ? 'page' : undefined}
             className={cn('flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
-              isActive(item.path) ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+              isActive(item.path) ? 'neu-inset-sm text-accent-foreground' : 'text-muted-foreground hover:shadow-[var(--neu-inset-sm)] hover:text-foreground',
               collapsed && 'justify-center px-2')}
             title={collapsed ? item.label : undefined}>
             <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -146,7 +153,7 @@ export function AppLayout({
           <Link key={item.path} href={item.path} onClick={() => setMobileOpen(false)}
             aria-current={isActive(item.path) ? 'page' : undefined}
             className={cn('flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
-              isActive(item.path) ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+              isActive(item.path) ? 'neu-inset-sm text-accent-foreground' : 'text-muted-foreground hover:shadow-[var(--neu-inset-sm)] hover:text-foreground',
               collapsed && 'justify-center px-2')}>
             <item.icon className="w-4 h-4 flex-shrink-0" />
             {!collapsed && <span>{item.label}</span>}
@@ -157,7 +164,7 @@ export function AppLayout({
           onClick={() => setUserMenuOpen(!userMenuOpen)} role="button" tabIndex={0}
           onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setUserMenuOpen(!userMenuOpen); }}
           aria-expanded={userMenuOpen}>
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
+          <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-[var(--neu-elevated-sm)]">
             <span className="text-white text-xs font-bold">{initials || 'CF'}</span>
           </div>
           {!collapsed && (
@@ -187,7 +194,7 @@ export function AppLayout({
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <aside className={cn('hidden lg:flex flex-col bg-sidebar border-r border-sidebar-border relative sidebar-transition flex-shrink-0', collapsed ? 'w-16' : 'w-60')}>
+      <aside className={cn('hidden lg:flex flex-col neu-shell-side relative sidebar-transition flex-shrink-0', collapsed ? 'w-16' : 'w-60')}>
         <SidebarContent />
         <button onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="absolute -right-3 top-6 w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center shadow-sm hover:shadow-md transition-all z-10">
@@ -205,7 +212,7 @@ export function AppLayout({
       )}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="flex items-center gap-3 h-14 px-4 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
+        <header className="flex items-center gap-3 h-14 px-4 neu-shell-header flex-shrink-0">
           <button className="lg:hidden p-1.5 rounded-lg hover:bg-muted" aria-label="Open navigation" onClick={() => setMobileOpen(true)}>
             <Menu className="w-5 h-5" />
           </button>
@@ -214,20 +221,20 @@ export function AppLayout({
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leads…"
-                aria-label="Search leads" className="w-full pl-9 pr-4 py-1.5 text-sm bg-muted rounded-xl border border-transparent focus:border-ring focus:outline-none focus:bg-card transition-all" />
+                aria-label="Search leads" className="w-full pl-9 pr-4 py-1.5 text-sm neu-inset-sm rounded-xl focus:border-ring focus:outline-none transition-all" />
             </div>
           </form>
 
           <div className="flex items-center gap-1 ml-auto">
-            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle dark mode"
-              className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-all">
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <button onClick={cycleTheme} aria-label={`Theme: ${themeLabel}. Switch theme`} title={`Theme: ${themeLabel}`}
+              className="neu-btn w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground">
+              {theme === 'light' ? <Sun className="w-4 h-4" /> : theme === 'dark' ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
             </button>
 
             <div className="relative">
               <button onClick={() => { setNotifOpen(!notifOpen); if (!notifOpen && unread > 0) void markNotificationsRead(); }}
                 aria-label={`Notifications${unread ? ` (${unread} unread)` : ''}`} aria-expanded={notifOpen}
-                className="w-8 h-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-all relative">
+                className="neu-btn w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground relative">
                 <Bell className="w-4 h-4" />
                 {unread > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full border border-card" />}
               </button>

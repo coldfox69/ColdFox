@@ -25,7 +25,7 @@ const sizeClasses = {
 export function StatusBadge({ variant = 'default', size = 'md', children, className }: BadgeProps) {
   return (
     <span className={cn(
-      'inline-flex items-center gap-1 font-medium rounded-full',
+      'inline-flex items-center gap-1 font-medium rounded-lg',
       variantClasses[variant],
       sizeClasses[size],
       className

@@ -84,7 +84,7 @@ export function EmailComposeStep({
           <div className="flex flex-wrap gap-2">
             {variables.map((variable) => (
               <button key={variable} type="button" onClick={() => insert(variable)}
-                className={cn('px-2.5 py-1 rounded-full text-xs font-mono border transition-colors',
+                className={cn('px-2.5 py-1 rounded-lg text-xs font-mono border transition-colors',
                   detected.includes(variable) ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'border-border bg-background text-foreground hover:bg-muted')}>
                 {`{{${variable}}}`}
               </button>

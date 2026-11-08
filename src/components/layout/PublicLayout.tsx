@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Sparkles, Menu, X, Sun, Moon } from 'lucide-react';
+import { Sparkles, Menu, X, Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 
 const navLinks = [
@@ -31,10 +31,17 @@ export function PublicNavbar() {
   // Close the mobile menu whenever the route changes.
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
+  const cycleTheme = () => {
+    if (theme === 'light') setTheme('dark');
+    else if (theme === 'dark') setTheme('system');
+    else setTheme('light');
+  };
+  const themeLabel = theme === 'light' ? 'Light mode' : theme === 'dark' ? 'Dark mode' : 'System mode';
+
   return (
     <header className={cn(
       'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-      scrolled ? 'bg-card/95 backdrop-blur-md shadow-sm border-b border-border' : 'bg-transparent'
+      scrolled ? 'neu-shell-header' : 'bg-transparent'
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16 gap-8">
@@ -49,23 +56,23 @@ export function PublicNavbar() {
             {navLinks.map(link => (
               <Link key={link.path} href={link.path}
                 aria-current={pathname === link.path ? 'page' : undefined}
-                className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                  pathname === link.path ? 'text-foreground bg-muted' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50')}>
+                className={cn('px-4 py-2 rounded-xl text-sm font-medium transition-all',
+                  pathname === link.path ? 'text-foreground neu-inset-sm' : 'text-muted-foreground hover:text-foreground hover:shadow-[var(--neu-inset-sm)]')}>
                 {link.label}
               </Link>
             ))}
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              aria-label="Toggle dark mode"
-              className="w-9 h-9 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-all">
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <button onClick={cycleTheme} aria-label={`Theme: ${themeLabel}. Switch theme`}
+              title={`Theme: ${themeLabel}`}
+              className="neu-btn w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground">
+              {theme === 'light' ? <Sun className="w-4 h-4" /> : theme === 'dark' ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
             </button>
             <Link href="/login" className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2">
               Sign In
             </Link>
-            <Link href="/signup" className="gradient-blue text-white text-sm font-semibold px-5 py-2 rounded-xl hover:opacity-90 transition-opacity shadow-sm">
+            <Link href="/signup" className="bg-primary text-primary-foreground text-sm font-semibold px-5 py-2 rounded-xl shadow-[var(--neu-elevated-sm)] hover:brightness-[1.07] active:shadow-[var(--neu-inset-sm)] transition-all">
               Start Free
             </Link>
             <button className="md:hidden p-2 rounded-lg hover:bg-muted" aria-label="Toggle navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>
@@ -116,7 +123,7 @@ export function PublicFooter() {
   };
 
   return (
-    <footer className="bg-card border-t border-border mt-24">
+    <footer className="mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
