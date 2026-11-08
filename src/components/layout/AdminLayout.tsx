@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -75,13 +76,11 @@ export function AdminLayout({
     <div className="flex h-screen bg-background overflow-hidden">
       <aside className={cn('hidden lg:flex flex-col neu-shell-side flex-shrink-0 sidebar-transition relative', collapsed ? 'w-16' : 'w-60')}>
         <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-border', collapsed && 'justify-center px-3')}>
-          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 shadow-[var(--neu-elevated-sm)]">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
+          <Image src="/logo-icon.svg" alt="ColdFox fox logo" width={32} height={32} className="h-8 w-8 shrink-0 rounded-lg shadow-[var(--neu-elevated-sm)]" />
           {!collapsed && (
             <div>
-              <span className="font-bold text-foreground text-base">Admin Panel</span>
-              <p className="text-[10px] text-muted-foreground">ColdFox management</p>
+              <span className="font-extrabold text-foreground text-base tracking-tight"><span className="text-foreground">Cold</span><span className="text-primary">Fox</span></span>
+              <p className="text-[10px] text-muted-foreground">Admin Panel</p>
             </div>
           )}
         </div>

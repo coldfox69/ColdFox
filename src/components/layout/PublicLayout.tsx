@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Sparkles, Menu, X, Sun, Moon, Monitor } from 'lucide-react';
+import Image from 'next/image';
+import { Menu, X, Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 
 const navLinks = [
@@ -46,10 +47,8 @@ export function PublicNavbar() {
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-10">
         <div className="flex items-center h-[72px] gap-6">
           <Link href="/" className="flex items-center gap-3" aria-label="ColdFox home">
-            <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-[var(--neu-elevated-sm)]">
-              <Sparkles className="w-[18px] h-[18px]" />
-            </div>
-            <span className="font-extrabold text-[20px] tracking-tight text-foreground">ColdFox</span>
+            <Image src="/logo-icon.svg" alt="ColdFox fox logo" width={40} height={40} className="h-10 w-10 shrink-0" priority />
+            <span className="font-extrabold text-[20px] tracking-tight"><span className="text-foreground">Cold</span><span className="text-primary">Fox</span></span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1.5" aria-label="Main navigation">
@@ -128,11 +127,10 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-[var(--neu-elevated-sm)]">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <span className="font-extrabold text-lg tracking-tight text-foreground">ColdFox</span>
+              <Image src="/logo-icon.svg" alt="ColdFox fox logo" width={36} height={36} className="h-9 w-9 shrink-0" />
+              <span className="font-extrabold text-lg tracking-tight"><span className="text-foreground">Cold</span><span className="text-primary">Fox</span></span>
             </Link>
+            <p className="mt-3 text-xs font-medium text-muted-foreground">Smarter Cold Email Outreach</p>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
               AI-powered cold email outreach platform for modern sales teams.
             </p>
