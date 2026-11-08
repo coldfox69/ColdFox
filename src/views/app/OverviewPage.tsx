@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Megaphone, Users, Send, CheckCheck, MessageSquare, AlertTriangle, UserMinus, ShieldCheck, Plus, Upload, Inbox, Sparkles, ArrowRight, Mail } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
