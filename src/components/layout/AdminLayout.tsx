@@ -77,11 +77,11 @@ export function AdminLayout({
       <aside className={cn('hidden lg:flex flex-col neu-shell-side flex-shrink-0 sidebar-transition relative', collapsed ? 'w-16' : 'w-60')}>
         <div className={cn('flex items-center gap-3 px-4 py-4 border-b border-border', collapsed && 'justify-center px-3')}>
           {collapsed ? (
-            <Image src="/favicon.png" alt="ColdFox fox logo" width={32} height={32} className="h-8 w-8 shrink-0 rounded-full shadow-[var(--neu-elevated-sm)]" />
+            <Image src="/favicon.png" alt="ColdFox fox logo" width={40} height={40} className="h-10 w-10 shrink-0 rounded-full" />
           ) : (
             <div className="min-w-0 flex-1">
-              <span className="flex h-11 items-center justify-center rounded-xl bg-white px-2 shadow-[var(--neu-elevated-sm)]">
-                <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={208} height={44} className="h-full w-full object-contain" />
+              <span className="flex items-center justify-center">
+                <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={240} height={56} className="h-14 w-auto max-w-full object-contain" />
               </span>
               <p className="text-[10px] text-muted-foreground mt-1.5">Admin Panel</p>
             </div>
