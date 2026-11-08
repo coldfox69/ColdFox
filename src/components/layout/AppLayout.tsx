@@ -116,13 +116,16 @@ export function AppLayout({
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-border', collapsed && 'justify-center px-3')}>
-        <Image src="/logo-icon.svg" alt="ColdFox fox logo" width={32} height={32} className="h-8 w-8 shrink-0 rounded-lg shadow-[var(--neu-elevated-sm)]" />
+      <div className={cn('flex items-center gap-3 px-4 py-4 border-b border-border', collapsed && 'justify-center px-3')}>
+        {collapsed ? (
+          <Image src="/favicon.png" alt="ColdFox fox logo" width={32} height={32} className="h-8 w-8 shrink-0 rounded-full shadow-[var(--neu-elevated-sm)]" />
+        ) : (
+          <span className="min-w-0 flex-1 rounded-xl bg-white p-1 shadow-[var(--neu-elevated-sm)]">
+            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={160} height={40} className="h-8 w-auto max-w-full" />
+          </span>
+        )}
         {!collapsed && (
-          <div className="min-w-0">
-            <span className="font-extrabold text-foreground text-lg leading-none tracking-tight"><span className="text-foreground">Cold</span><span className="text-primary">Fox</span></span>
-            <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{organization.name}</p>
-          </div>
+          <p className="sr-only">{organization.name}</p>
         )}
       </div>
 

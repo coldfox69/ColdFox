@@ -46,9 +46,10 @@ export function PublicNavbar() {
     )}>
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-10">
         <div className="flex items-center h-[72px] gap-6">
-          <Link href="/" className="flex items-center gap-3" aria-label="ColdFox home">
-            <Image src="/logo-icon.svg" alt="ColdFox fox logo" width={40} height={40} className="h-10 w-10 shrink-0" priority />
-            <span className="font-extrabold text-[20px] tracking-tight"><span className="text-foreground">Cold</span><span className="text-primary">Fox</span></span>
+          <Link href="/" className="flex items-center" aria-label="ColdFox home">
+            <span className="rounded-xl bg-white p-1.5 shadow-[var(--neu-elevated-sm)]">
+              <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={160} height={40} className="h-10 w-auto shrink-0" priority />
+            </span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1.5" aria-label="Main navigation">
@@ -126,9 +127,10 @@ export function PublicFooter() {
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-10 py-12">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5">
-              <Image src="/logo-icon.svg" alt="ColdFox fox logo" width={36} height={36} className="h-9 w-9 shrink-0" />
-              <span className="font-extrabold text-lg tracking-tight"><span className="text-foreground">Cold</span><span className="text-primary">Fox</span></span>
+            <Link href="/" className="flex items-center">
+              <span className="rounded-xl bg-white p-1.5 shadow-[var(--neu-elevated-sm)]">
+                <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={160} height={40} className="h-9 w-auto shrink-0" />
+              </span>
             </Link>
             <p className="mt-3 text-xs font-medium text-muted-foreground">Smarter Cold Email Outreach</p>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">

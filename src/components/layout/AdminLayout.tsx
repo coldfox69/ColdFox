@@ -75,12 +75,15 @@ export function AdminLayout({
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <aside className={cn('hidden lg:flex flex-col neu-shell-side flex-shrink-0 sidebar-transition relative', collapsed ? 'w-16' : 'w-60')}>
-        <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-border', collapsed && 'justify-center px-3')}>
-          <Image src="/logo-icon.svg" alt="ColdFox fox logo" width={32} height={32} className="h-8 w-8 shrink-0 rounded-lg shadow-[var(--neu-elevated-sm)]" />
-          {!collapsed && (
-            <div>
-              <span className="font-extrabold text-foreground text-base tracking-tight"><span className="text-foreground">Cold</span><span className="text-primary">Fox</span></span>
-              <p className="text-[10px] text-muted-foreground">Admin Panel</p>
+        <div className={cn('flex items-center gap-3 px-4 py-4 border-b border-border', collapsed && 'justify-center px-3')}>
+          {collapsed ? (
+            <Image src="/favicon.png" alt="ColdFox fox logo" width={32} height={32} className="h-8 w-8 shrink-0 rounded-full shadow-[var(--neu-elevated-sm)]" />
+          ) : (
+            <div className="min-w-0 flex-1">
+              <span className="rounded-xl bg-white p-1 shadow-[var(--neu-elevated-sm)] block">
+                <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={160} height={40} className="h-8 w-auto max-w-full" />
+              </span>
+              <p className="text-[10px] text-muted-foreground mt-1.5">Admin Panel</p>
             </div>
           )}
         </div>
