@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const LeadsPage = dynamic(() => import('@/views/app/LeadsPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Leads & CRM — ColdFox',
+  title: 'Leads & CRM - ColdFox',
   description: 'Manage your contacts and import leads.',
 };
 

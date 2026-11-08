@@ -107,7 +107,7 @@ export function TemplateEditorModal({ template, onClose, onSave }: Props) {
             <li className="flex items-center justify-between rounded-xl border border-border p-3 text-sm">
               <div>
                 <p className="font-medium text-foreground">Current version</p>
-                <p className="text-xs text-muted-foreground">Updated {template?.updatedAt ?? '—'}</p>
+                <p className="text-xs text-muted-foreground">Updated {template?.updatedAt ?? ' - '}</p>
               </div>
               <span className="text-xs text-muted-foreground">Current</span>
             </li>

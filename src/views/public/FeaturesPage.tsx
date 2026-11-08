@@ -39,7 +39,7 @@ const features = [
   {
     category: 'Mailbox & Deliverability',
     icon: Shield,
-    color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+    color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
     items: [
       { title: 'Gmail & Outlook Integration', desc: 'Connect your real mailboxes via OAuth. Emails sent from your own domain, not shared IPs.' },
       { title: 'SMTP/IMAP Support', desc: 'Connect any email provider using standard SMTP/IMAP credentials.' },
@@ -79,7 +79,7 @@ export default function FeaturesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 pt-8">
             <h1 className="text-4xl font-bold text-foreground mb-4">A complete outreach platform</h1>
-            <p className="text-muted-foreground text-lg">Every feature you need — from first import to closed deal.</p>
+            <p className="text-muted-foreground text-lg">Import, templates, sequences, inbox, and deliverability checks in one workspace.</p>
           </div>
           <div className="space-y-16">
             {features.map(section => (
@@ -104,9 +104,9 @@ export default function FeaturesPage() {
               </div>
             ))}
           </div>
-          <div className="mt-16 gradient-navy rounded-3xl p-10 text-center text-white">
+          <div className="mt-16 bg-slate-900 rounded-2xl p-10 text-center text-white">
             <h2 className="text-2xl font-bold mb-3">Ready to see it in action?</h2>
-            <p className="text-blue-200 mb-6 text-sm">Start with the free plan — no credit card required.</p>
+            <p className="text-blue-200 mb-6 text-sm">Start with the free plan. No credit card required.</p>
             <Link href="/signup" className="inline-block bg-white text-blue-900 font-semibold px-8 py-3 rounded-2xl hover:bg-blue-50 transition-colors">
               Create Free Account
             </Link>

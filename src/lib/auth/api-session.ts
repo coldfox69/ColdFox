@@ -7,7 +7,7 @@ import { ACTIVE_ORG_COOKIE } from '@/lib/auth/context';
 export interface ApiSession {
   userId: string;
   email: string;
-  /** The authorized organization — resolved from the signed-in user's membership, never from the request body. */
+  /** The authorized organization - resolved from the signed-in user's membership, never from the request body. */
   organizationId: string;
   role: OrgRole;
 }

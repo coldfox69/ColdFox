@@ -3,7 +3,7 @@ import { getSessionContext } from '@/lib/auth/context';
 import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
-  title: 'Import Leads — ColdFox',
+  title: 'Import Leads - ColdFox',
   description: 'Import leads from CSV or XLSX.',
 };
 

@@ -140,7 +140,7 @@ export default function AnalyticsPage({ data }: { data: AnalyticsVM }) {
         </div>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Campaigns to compare">
           {campaigns.map(c => (
-            <button key={c.id} onClick={() => toggleCompare(c.id)} aria-pressed={compareIds.includes(c.id)} className={cn('px-3 py-1.5 rounded-full border text-xs font-medium transition-colors', compareIds.includes(c.id) ? 'border-primary bg-accent text-accent-foreground' : 'border-border text-muted-foreground hover:bg-muted')}>
+            <button key={c.id} onClick={() => toggleCompare(c.id)} aria-pressed={compareIds.includes(c.id)} className={cn('px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors', compareIds.includes(c.id) ? 'border-primary bg-accent text-accent-foreground' : 'border-border text-muted-foreground hover:bg-muted')}>
               {c.name}
             </button>
           ))}

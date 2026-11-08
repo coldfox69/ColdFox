@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Activity } from 'lucide-react';
 
 export const metadata = {
-  title: 'Email Activity — Admin',
+  title: 'Email Activity - Admin',
   description: 'Platform-wide email events.',
 };
 

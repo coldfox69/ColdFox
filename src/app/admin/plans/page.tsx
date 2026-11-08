@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Briefcase } from 'lucide-react';
 
 export const metadata = {
-  title: 'Plans — Admin',
+  title: 'Plans - Admin',
   description: 'Manage subscription plans.',
 };
 

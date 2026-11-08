@@ -1,4 +1,4 @@
-// ColdFox Mock Data — for UI demonstration only
+// ColdFox Mock Data - for UI demonstration only
 
 export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed';
 export type LeadStatus = 'new' | 'contacted' | 'replied' | 'interested' | 'not-interested' | 'bounced' | 'unsubscribed';

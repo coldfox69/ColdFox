@@ -154,7 +154,7 @@ export default function CampaignWizardPage({
         {steps.map((label, index) => (
           <li key={label} className="flex items-center gap-2 flex-shrink-0">
             <button type="button" disabled={index > step} onClick={() => setStep(index)} aria-current={index === step ? 'step' : undefined}
-              className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors disabled:cursor-default',
+              className={cn('flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:cursor-default',
                 index === step ? 'gradient-blue text-white' : index < step ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-muted text-muted-foreground')}>
               {index < step ? <Check className="w-3.5 h-3.5" /> : <span>{index + 1}</span>} {label}
             </button>

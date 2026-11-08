@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Sparkles } from 'lucide-react';
 
 export const metadata = {
-  title: 'Announcements — Admin',
+  title: 'Announcements - Admin',
   description: 'Platform announcements.',
 };
 

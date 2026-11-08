@@ -30,9 +30,9 @@ export default function PricingPage() {
               const price = annual ? Math.round(plan.price * 0.8) : plan.price;
               const isPopular = plan.id === 'pro';
               return (
-                <div key={plan.id} className={cn('rounded-2xl p-6 flex flex-col relative', isPopular ? 'gradient-navy text-white shadow-2xl shadow-blue-900/30' : 'neu-card')}>
+                <div key={plan.id} className={cn('rounded-2xl p-6 flex flex-col relative', isPopular ? 'bg-slate-900 text-white' : 'border border-border bg-card')}>
                   {isPopular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">Most Popular</div>
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-lg">Most used</div>
                   )}
                   <div className="mb-6">
                     <p className={cn('text-xs font-semibold uppercase tracking-wide mb-1', isPopular ? 'text-blue-300' : 'text-muted-foreground')}>{plan.name}</p>
@@ -56,7 +56,7 @@ export default function PricingPage() {
                     href={plan.id === 'agency' ? '/contact' : '/signup'}
                     className={cn(
                       'mt-6 block text-center py-3 rounded-xl text-sm font-semibold transition-all',
-                      isPopular ? 'bg-white text-blue-900 hover:bg-blue-50' : 'gradient-blue text-white hover:opacity-90'
+                      isPopular ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-blue-700 text-white hover:bg-blue-800'
                     )}
                   >
                     {plan.id === 'free' ? 'Get Started Free' : plan.id === 'enterprise' ? 'Contact Sales' : 'Start Free Trial'}
@@ -66,7 +66,7 @@ export default function PricingPage() {
             })}
           </div>
           <div className="mt-8 text-center">
-            <p className="text-xs text-muted-foreground">Sample pricing for demonstration purposes — not a real commercial offer.</p>
+            <p className="text-xs text-muted-foreground">Limits are per workspace. Paid billing is enabled per account. Contact us before upgrading if you need custom limits.</p>
           </div>
 
           {/* FAQ */}
@@ -75,7 +75,7 @@ export default function PricingPage() {
             <div className="space-y-4">
               {[
                 { q: 'Can I switch plans?', a: 'Yes, you can upgrade or downgrade at any time. Changes take effect on your next billing cycle.' },
-                { q: 'What happens when I hit my limits?', a: 'You\'ll receive a notification. Campaigns pause gracefully — no data is lost. You can upgrade immediately to continue.' },
+                { q: 'What happens when I hit my limits?', a: 'You will receive a notification. Campaigns pause gracefully and no data is lost. You can upgrade to continue.' },
                 { q: 'Is there a free trial?', a: 'Starter and Pro plans include a 14-day free trial. No credit card required to start.' },
                 { q: 'What counts as a mailbox?', a: 'Each connected email account (Gmail, Outlook, or SMTP) counts as one mailbox.' },
               ].map((item, i) => (

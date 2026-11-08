@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Users } from 'lucide-react';
 
 export const metadata = {
-  title: 'Users — Admin',
+  title: 'Users - Admin',
   description: 'Manage platform users.',
 };
 

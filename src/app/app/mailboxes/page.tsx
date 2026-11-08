@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const MailboxesPage = dynamic(() => import('@/views/app/MailboxesPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Mailboxes — ColdFox',
+  title: 'Mailboxes - ColdFox',
   description: 'Connect and manage your sending mailboxes.',
 };
 

@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Flag } from 'lucide-react';
 
 export const metadata = {
-  title: 'Abuse Monitoring — Admin',
+  title: 'Abuse Monitoring - Admin',
   description: 'Spam complaints and bounces.',
 };
 

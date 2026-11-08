@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 const LeadProfilePage = dynamic(() => import('@/views/app/LeadProfilePage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Lead Details — ColdFox',
+  title: 'Lead Details - ColdFox',
   description: 'View lead profile and conversation history.',
 };
 

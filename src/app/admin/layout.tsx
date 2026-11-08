@@ -3,7 +3,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { redirect } from 'next/navigation';
 
 export const metadata = {
-  title: 'Admin Panel — ColdFox',
+  title: 'Admin Panel - ColdFox',
   description: 'ColdFox platform administration.',
 };
 

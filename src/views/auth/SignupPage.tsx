@@ -59,7 +59,7 @@ export default function SignupPage() {
       });
       if (signUpError) throw signUpError;
       if (data.session) {
-        // Email confirmation is disabled in Supabase — straight to onboarding.
+        // Email confirmation is disabled in Supabase - straight to onboarding.
         router.replace('/onboarding');
         router.refresh();
         return;

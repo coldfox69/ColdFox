@@ -70,7 +70,7 @@ export async function checkDomainAuthentication(domain: string, dkimSelector?: s
       dkimTxt === null
         ? 'DNS lookup failed from this server. Retry later.'
         : dkim.length === 0
-          ? `No DKIM record found at ${dkimName}. The selector may differ — check your provider's DKIM settings.`
+          ? `No DKIM record found at ${dkimName}. The selector may differ - check your provider's DKIM settings.`
           : 'DKIM record published. Actual signing depends on your provider configuration.',
   });
 

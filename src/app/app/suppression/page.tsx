@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const SuppressionPage = dynamic(() => import('@/views/app/SuppressionPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Suppression List — ColdFox',
+  title: 'Suppression List - ColdFox',
   description: 'Unsubscribes, bounces, and complaints.',
 };
 

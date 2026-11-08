@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { AlertTriangle } from 'lucide-react';
 
 export const metadata = {
-  title: 'Error Logs — Admin',
+  title: 'Error Logs - Admin',
   description: 'Platform error logs.',
 };
 

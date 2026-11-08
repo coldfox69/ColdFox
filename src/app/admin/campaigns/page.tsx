@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Megaphone } from 'lucide-react';
 
 export const metadata = {
-  title: 'Campaigns — Admin',
+  title: 'Campaigns - Admin',
   description: 'Cross-organization campaign activity.',
 };
 

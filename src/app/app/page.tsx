@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const OverviewPage = dynamic(() => import('@/views/app/OverviewPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Overview — ColdFox',
+  title: 'Overview - ColdFox',
   description: 'Your outreach at a glance.',
 };
 

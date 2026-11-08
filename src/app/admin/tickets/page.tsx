@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Ticket } from 'lucide-react';
 
 export const metadata = {
-  title: 'Support Tickets — Admin',
+  title: 'Support Tickets - Admin',
   description: 'Cross-organization support tickets.',
 };
 

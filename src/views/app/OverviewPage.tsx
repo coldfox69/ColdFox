@@ -34,7 +34,7 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
         <StatCard title="Replies" value={o.replied.toLocaleString()} change="Recorded replies" changeType="neutral" icon={<MessageSquare className="w-5 h-5" />} iconColor="bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" />
         <StatCard title="Bounce rate" value={`${((o.bounced / Math.max(o.emailsSent, 1)) * 100).toFixed(1)}%`} change="Under 3% target" icon={<AlertTriangle className="w-5 h-5" />} iconColor="bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" />
         <StatCard title="Unsubscribes" value={o.unsubscribed} change="Suppression enforced" changeType="neutral" icon={<UserMinus className="w-5 h-5" />} iconColor="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300" />
-        <StatCard title="Sending health" value={o.sendingHealth ? `${o.sendingHealth}%` : '—'} change="Mailbox reputation" changeType="neutral" icon={<ShieldCheck className="w-5 h-5" />} iconColor="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" />
+        <StatCard title="Sending health" value={o.sendingHealth ? `${o.sendingHealth}%` : ' - '} change="Mailbox reputation" changeType="neutral" icon={<ShieldCheck className="w-5 h-5" />} iconColor="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4 mt-4">

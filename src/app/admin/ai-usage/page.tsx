@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Cpu } from 'lucide-react';
 
 export const metadata = {
-  title: 'AI Usage — Admin',
+  title: 'AI Usage - Admin',
   description: 'AI credit consumption across organizations.',
 };
 

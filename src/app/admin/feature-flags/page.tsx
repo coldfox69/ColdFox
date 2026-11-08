@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Flag } from 'lucide-react';
 
 export const metadata = {
-  title: 'Feature Flags — Admin',
+  title: 'Feature Flags - Admin',
   description: 'Manage feature flags.',
 };
 

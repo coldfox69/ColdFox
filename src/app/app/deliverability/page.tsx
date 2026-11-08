@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const DeliverabilityPage = dynamic(() => import('@/views/app/DeliverabilityPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Deliverability — ColdFox',
+  title: 'Deliverability - ColdFox',
   description: 'Domain authentication and sending health.',
 };
 

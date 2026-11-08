@@ -71,7 +71,7 @@ export async function POST(request: Request) {
         .from('email_templates')
         .insert({
           organization_id: session.organizationId,
-          name: `${input.name.slice(0, 140)} — message`,
+          name: `${input.name.slice(0, 140)} - message`,
           subject: input.subject,
           body_text: input.body,
           body_html: '',

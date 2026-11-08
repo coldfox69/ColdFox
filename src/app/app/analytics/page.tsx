@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const AnalyticsPage = dynamic(() => import('@/views/app/AnalyticsPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Analytics — ColdFox',
+  title: 'Analytics - ColdFox',
   description: 'Campaign delivery and reply analytics.',
 };
 

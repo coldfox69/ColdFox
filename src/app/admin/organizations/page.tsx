@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Building2 } from 'lucide-react';
 
 export const metadata = {
-  title: 'Organizations — Admin',
+  title: 'Organizations - Admin',
   description: 'Manage tenant organizations.',
 };
 

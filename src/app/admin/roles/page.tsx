@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Shield } from 'lucide-react';
 
 export const metadata = {
-  title: 'Admin Roles — Admin',
+  title: 'Admin Roles - Admin',
   description: 'Manage platform admin roles.',
 };
 

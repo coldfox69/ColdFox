@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Plug } from 'lucide-react';
 
 export const metadata = {
-  title: 'Integrations — Admin',
+  title: 'Integrations - Admin',
   description: 'Integration configuration status.',
 };
 

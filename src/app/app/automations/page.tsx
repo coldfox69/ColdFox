@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const AutomationsPage = dynamic(() => import('@/views/app/AutomationsPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Automations — ColdFox',
+  title: 'Automations - ColdFox',
   description: 'Follow-up sequences and campaign triggers.',
 };
 

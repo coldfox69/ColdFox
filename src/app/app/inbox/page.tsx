@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const InboxPage = dynamic(() => import('@/views/app/InboxPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Unified Inbox — ColdFox',
+  title: 'Unified Inbox - ColdFox',
   description: 'Read and reply to conversations across mailboxes.',
 };
 

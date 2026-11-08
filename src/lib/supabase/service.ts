@@ -4,7 +4,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 let adminClient: SupabaseClient | null = null;
 
 /**
- * Service-role client. Bypasses RLS — use only in trusted server code after
+ * Service-role client. Bypasses RLS - use only in trusted server code after
  * an explicit authorization check. Never import into a client component.
  */
 export function createServiceClient(): SupabaseClient {

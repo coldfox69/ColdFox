@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Briefcase } from 'lucide-react';
 
 export const metadata = {
-  title: 'Background Jobs — Admin',
+  title: 'Background Jobs - Admin',
   description: 'Background job queue status.',
 };
 

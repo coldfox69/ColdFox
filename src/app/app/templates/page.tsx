@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const TemplatesPage = dynamic(() => import('@/views/app/TemplatesPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Templates — ColdFox',
+  title: 'Templates - ColdFox',
   description: 'Manage your email templates.',
 };
 

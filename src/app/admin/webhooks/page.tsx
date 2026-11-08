@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Webhook } from 'lucide-react';
 
 export const metadata = {
-  title: 'Webhooks — Admin',
+  title: 'Webhooks - Admin',
   description: 'Webhook event records.',
 };
 

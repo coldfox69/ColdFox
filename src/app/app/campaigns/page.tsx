@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const CampaignsPage = dynamic(() => import('@/views/app/CampaignsPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Campaigns — ColdFox',
+  title: 'Campaigns - ColdFox',
   description: 'Create, schedule, and monitor your outreach campaigns.',
 };
 

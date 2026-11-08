@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { FileSearch } from 'lucide-react';
 
 export const metadata = {
-  title: 'Audit & Security — Admin',
+  title: 'Audit & Security - Admin',
   description: 'Audit log events.',
 };
 

@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { LayoutDashboard } from 'lucide-react';
 
 export const metadata = {
-  title: 'Overview — Admin',
+  title: 'Overview - Admin',
   description: 'Platform-wide metrics.',
 };
 

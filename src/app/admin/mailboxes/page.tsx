@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Mail } from 'lucide-react';
 
 export const metadata = {
-  title: 'Mailboxes — Admin',
+  title: 'Mailboxes - Admin',
   description: 'Cross-organization mailbox status.',
 };
 

@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Settings } from 'lucide-react';
 
 export const metadata = {
-  title: 'Global Settings — Admin',
+  title: 'Global Settings - Admin',
   description: 'Manage system settings.',
 };
 

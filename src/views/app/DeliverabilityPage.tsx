@@ -183,7 +183,7 @@ export default function DeliverabilityPage({ data }: { data: DeliverabilityData 
                     <td className="px-4 py-3 text-center">
                       <StatusBadge variant={statusVariant[c.status] ?? 'muted'} size="sm">{c.status}</StatusBadge>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs truncate max-w-xs">{c.found || '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs truncate max-w-xs">{c.found || ' - '}</td>
                     <td className="px-4 py-3 text-muted-foreground text-right">{c.checkedAt.slice(0, 16).replace('T', ' ')}</td>
                   </tr>
                 ))}

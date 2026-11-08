@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Gauge } from 'lucide-react';
 
 export const metadata = {
-  title: 'System Health — Admin',
+  title: 'System Health - Admin',
   description: 'Platform system health.',
 };
 

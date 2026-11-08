@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const SupportPage = dynamic(() => import('@/views/app/SupportPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Support — ColdFox',
+  title: 'Support - ColdFox',
   description: 'Help articles and support tickets.',
 };
 

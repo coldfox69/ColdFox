@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const SettingsPage = dynamic(() => import('@/views/app/SettingsPage').then((mod) => mod.default));
 
 export const metadata: Metadata = {
-  title: 'Settings — ColdFox',
+  title: 'Settings - ColdFox',
   description: 'Workspace and profile settings.',
 };
 

@@ -85,7 +85,7 @@ export function AppLayout({
       const supabase = createBrowserSupabaseClient();
       await supabase.auth.signOut();
     } catch {
-      // still redirect — middleware will re-evaluate the session
+      // still redirect - middleware will re-evaluate the session
     }
     router.replace('/login');
     router.refresh();

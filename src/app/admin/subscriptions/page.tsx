@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { CreditCard } from 'lucide-react';
 
 export const metadata = {
-  title: 'Subscriptions — Admin',
+  title: 'Subscriptions - Admin',
   description: 'Manage organization subscriptions.',
 };
 

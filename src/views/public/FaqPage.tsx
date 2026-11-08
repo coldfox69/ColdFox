@@ -17,7 +17,7 @@ const faqCategories = [
     category: 'Email Deliverability',
     items: [
       { q: 'Does ColdFox guarantee my emails will land in the inbox?', a: 'No, and no legitimate platform can make this guarantee. Email placement is determined by recipient email providers based on your domain reputation, content, sending history, and many other factors. ColdFox helps you maintain good sending practices, but cannot override provider spam filters.' },
-      { q: 'What is Template Rotation?', a: 'Template Rotation lets you alternate between multiple email variants in a sequence. This is for content testing and natural message variation — it\'s not a technique to bypass spam filters, and it does not guarantee improved inbox placement.' },
+      { q: 'What is Template Rotation?', a: 'Template Rotation lets you alternate between multiple email variants in a sequence. This is for content testing and natural message variation. It is not a technique to bypass spam filters, and it does not guarantee improved inbox placement.' },
       { q: 'How does ColdFox protect my domain?', a: 'ColdFox provides SPF, DKIM, and DMARC monitoring, sending health indicators, bounce tracking, and best-practice guidance. Following these recommendations helps protect your sender reputation over time.' },
     ]
   },

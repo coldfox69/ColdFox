@@ -251,7 +251,7 @@ export default function AiWriterPage() {
           <div className="p-4 border-t border-border space-y-3">
             <div className="flex flex-wrap gap-2">
               {promptChips.map((chip) => (
-                <button key={chip} onClick={() => send(chip)} className="px-3 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">{chip}</button>
+                <button key={chip} onClick={() => send(chip)} className="px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">{chip}</button>
               ))}
             </div>
             <form onSubmit={(event) => { event.preventDefault(); send(input); }} className="flex gap-2" noValidate>

@@ -4,7 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { redirect } from 'next/navigation';
 
 export const metadata = {
-  title: 'Dashboard — ColdFox',
+  title: 'Dashboard - ColdFox',
   description: 'Your ColdFox workspace dashboard.',
 };
 

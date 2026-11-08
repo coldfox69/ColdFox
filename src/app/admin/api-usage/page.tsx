@@ -2,7 +2,7 @@ import { AdminModulePage } from '@/components/admin/AdminModulePage';
 import { Key } from 'lucide-react';
 
 export const metadata = {
-  title: 'API Usage — Admin',
+  title: 'API Usage - Admin',
   description: 'Rate limit and API usage records.',
 };
 
