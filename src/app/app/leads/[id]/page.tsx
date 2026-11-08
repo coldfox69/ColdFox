@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getSessionContext } from '@/lib/auth/context';
-import { apiFetch } from '@/lib/client/api';
+import { getLeadDetail, getLeads } from '@/lib/data/app';
 import { redirect } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
@@ -20,9 +20,9 @@ export default async function Page({
   const ctx = await getSessionContext();
   if (!ctx?.organization) redirect('/login');
   const [detail, coworkers] = await Promise.all([
-    apiFetch<any>(`/api/leads/${id}`),
-    apiFetch<any>('/api/leads?pageSize=50'),
+    getLeadDetail(ctx.organization.id, id),
+    getLeads(ctx.organization.id, 50),
   ]);
-  if (!detail || detail.error) redirect('/app/leads');
-  return <LeadProfilePage detail={detail} coworkers={coworkers?.leads ?? []} />;
+  if (!detail) redirect('/app/leads');
+  return <LeadProfilePage detail={detail} coworkers={coworkers ?? []} />;
 }

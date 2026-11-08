@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Briefcase } from 'lucide-react';
 
 export const metadata = {
   title: 'Background Jobs - Admin',
@@ -12,7 +11,6 @@ export default function JobsPage() {
       module="jobs"
       title="Background Jobs"
       description="Durable job queue executions."
-      icon={Briefcase}
       columns={[
         { key: 'id', label: 'Job ID' },
         { key: 'job_type', label: 'Job Type' },

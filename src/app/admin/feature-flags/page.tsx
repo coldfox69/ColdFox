@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Flag } from 'lucide-react';
 
 export const metadata = {
   title: 'Feature Flags - Admin',
@@ -12,7 +11,6 @@ export default function FeatureFlagsPage() {
       module="feature-flags"
       title="Feature Flags"
       description="Platform feature flags."
-      icon={Flag}
       columns={[
         { key: 'key', label: 'Key' },
         { key: 'enabled', label: 'Enabled' },

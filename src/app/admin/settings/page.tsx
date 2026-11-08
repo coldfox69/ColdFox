@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Settings } from 'lucide-react';
 
 export const metadata = {
   title: 'Global Settings - Admin',
@@ -12,7 +11,6 @@ export default function SettingsPage() {
       module="settings"
       title="Global Settings"
       description="System-wide configuration settings."
-      icon={Settings}
       columns={[
         { key: 'key', label: 'Key' },
         { key: 'value', label: 'Value' },

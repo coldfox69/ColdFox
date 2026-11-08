@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Users } from 'lucide-react';
 
 export const metadata = {
   title: 'Users - Admin',
@@ -12,7 +11,6 @@ export default function UsersPage() {
       module="users"
       title="Users"
       description="Platform users and their sign-in activity."
-      icon={Users}
       columns={[
         { key: 'id', label: 'User ID' },
         { key: 'email', label: 'Email' },

@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Cpu } from 'lucide-react';
 
 export const metadata = {
   title: 'AI Usage - Admin',
@@ -12,7 +11,6 @@ export default function AiUsagePage() {
       module="ai-usage"
       title="AI Usage"
       description="AI generation records across organizations."
-      icon={Cpu}
       columns={[
         { key: 'id', label: 'Generation ID' },
         { key: 'kind', label: 'Kind' },

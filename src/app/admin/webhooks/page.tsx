@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Webhook } from 'lucide-react';
 
 export const metadata = {
   title: 'Webhooks - Admin',
@@ -12,7 +11,6 @@ export default function WebhooksPage() {
       module="webhooks"
       title="Webhooks"
       description="Incoming webhook event records."
-      icon={Webhook}
       columns={[
         { key: 'id', label: 'Webhook ID' },
         { key: 'provider', label: 'Provider' },

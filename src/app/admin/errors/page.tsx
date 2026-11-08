@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { AlertTriangle } from 'lucide-react';
 
 export const metadata = {
   title: 'Error Logs - Admin',
@@ -12,7 +11,6 @@ export default function ErrorsPage() {
       module="errors"
       title="Error Logs"
       description="Recent platform error logs."
-      icon={AlertTriangle}
       columns={[
         { key: 'id', label: 'Error ID' },
         { key: 'level', label: 'Level' },

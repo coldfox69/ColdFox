@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Flag } from 'lucide-react';
 
 export const metadata = {
   title: 'Abuse Monitoring - Admin',
@@ -12,7 +11,6 @@ export default function AbusePage() {
       module="abuse"
       title="Abuse Monitoring"
       description="Spam complaints and bounce records."
-      icon={Flag}
       columns={[
         { key: 'complaints', label: 'Complaints' },
         { key: 'bounces', label: 'Bounces' },

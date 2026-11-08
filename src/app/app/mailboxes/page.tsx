@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getSessionContext } from '@/lib/auth/context';
-import { apiFetch } from '@/lib/client/api';
+import { getMailboxes } from '@/lib/data/app';
 import dynamic from 'next/dynamic';
 
 const MailboxesPage = dynamic(() => import('@/views/app/MailboxesPage').then((mod) => mod.default));
@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const ctx = await getSessionContext();
-  const result = ctx?.organization ? await apiFetch<{ mailboxes: any[]; providers: { gmail: boolean; outlook: boolean } }>('/api/mailboxes') : { mailboxes: [], providers: { gmail: false, outlook: false } };
+  const result = ctx?.organization ? await getMailboxes(ctx.organization.id) : { mailboxes: [], providers: { gmail: false, outlook: false } };
   return <MailboxesPage initialMailboxes={result?.mailboxes ?? []} providers={result?.providers ?? { gmail: false, outlook: false }} />;
 }
-

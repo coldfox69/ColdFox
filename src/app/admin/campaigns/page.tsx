@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Megaphone } from 'lucide-react';
 
 export const metadata = {
   title: 'Campaigns - Admin',
@@ -12,7 +11,6 @@ export default function CampaignsPage() {
       module="campaigns"
       title="Campaigns"
       description="All campaigns across organizations."
-      icon={Megaphone}
       columns={[
         { key: 'id', label: 'Campaign ID' },
         { key: 'name', label: 'Name' },

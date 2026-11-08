@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Activity } from 'lucide-react';
 
 export const metadata = {
   title: 'Email Activity - Admin',
@@ -12,7 +11,6 @@ export default function EmailActivityPage() {
       module="email-activity"
       title="Email Activity"
       description="Platform-wide email send and delivery events."
-      icon={Activity}
       columns={[
         { key: 'id', label: 'Event ID' },
         { key: 'event_type', label: 'Event Type' },

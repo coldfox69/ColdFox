@@ -6,19 +6,16 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useToast } from '@/components/shared/ToastProvider';
+import { Search } from 'lucide-react';
 
 export interface AdminModuleProps {
   module: string;
   title: string;
   description: string;
-  icon: React.ComponentType;
   columns: Array<{ key: string; label: string }>;
-  itemActions?: (item: Record<string, unknown>) => React.ReactNode;
   emptyState?: {
     title: string;
     description: string;
-    actionLabel?: string;
-    onAction?: () => void;
   };
 }
 
@@ -26,9 +23,7 @@ export function AdminModulePage({
   module,
   title,
   description,
-  icon: Icon,
   columns,
-  itemActions,
   emptyState,
 }: AdminModuleProps) {
   const router = useRouter();
@@ -82,19 +77,14 @@ export function AdminModulePage({
             className="w-full pl-9 pr-3 py-2 rounded-xl bg-muted text-sm border border-transparent focus:outline-none focus:border-ring focus:bg-card"
           />
           <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground flex items-center justify-center">
-            <Icon />
+            <Search className="w-4 h-4" />
           </div>
         </div>
-        {emptyState?.actionLabel && emptyState.onAction && (
-          <button onClick={emptyState.onAction} className="px-4 py-2.5 rounded-xl gradient-blue text-white text-sm font-semibold hover:opacity-90">
-            <span>+</span> {emptyState.actionLabel}
-          </button>
-        )}
       </div>
 
       {data.length === 0 && !query ? (
         <EmptyState
-          icon={<span className="w-6 h-6"><Icon /></span>}
+          icon={<Search className="w-6 h-6" />}
           title={emptyState?.title ?? `No ${title.toLowerCase()}`}
           description={emptyState?.description ?? 'No records found.'}
         />
@@ -122,7 +112,9 @@ export function AdminModulePage({
                     </td>
                   ))}
                   <td className="px-4 py-3 text-right">
-                    {itemActions ? itemActions(item) : null}
+                    <button onClick={() => void removeItem(String(item.id))} disabled={busy} className="text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50">
+                      Remove
+                    </button>
                   </td>
                 </tr>
               ))}

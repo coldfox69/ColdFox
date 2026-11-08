@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { CreditCard } from 'lucide-react';
 
 export const metadata = {
   title: 'Subscriptions - Admin',
@@ -12,7 +11,6 @@ export default function SubscriptionsPage() {
       module="subscriptions"
       title="Subscriptions"
       description="Organization subscription records."
-      icon={CreditCard}
       columns={[
         { key: 'id', label: 'ID' },
         { key: 'status', label: 'Status' },

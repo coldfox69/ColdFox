@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getSessionContext } from '@/lib/auth/context';
-import { apiFetch } from '@/lib/client/api';
+import { getWorkspaceSettings } from '@/lib/data/app';
 import dynamic from 'next/dynamic';
 
 const SettingsPage = dynamic(() => import('@/views/app/SettingsPage').then((mod) => mod.default));
@@ -12,6 +12,6 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const ctx = await getSessionContext();
-  const data = ctx?.organization ? await apiFetch<any>('/api/settings') : { profile: {}, organization: {}, members: [], plans: [] };
+  const data = ctx?.organization && ctx?.user ? await getWorkspaceSettings(ctx.organization.id, ctx.user.id) : { profile: {}, organization: {}, members: [], plans: [] };
   return <SettingsPage data={data ?? { profile: {}, organization: {}, members: [], plans: [] }} />;
 }

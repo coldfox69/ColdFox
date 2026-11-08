@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Mail } from 'lucide-react';
 
 export const metadata = {
   title: 'Mailboxes - Admin',
@@ -12,7 +11,6 @@ export default function MailboxesPage() {
       module="mailboxes"
       title="Mailboxes"
       description="All connected mailboxes across organizations."
-      icon={Mail}
       columns={[
         { key: 'id', label: 'Mailbox ID' },
         { key: 'email_address', label: 'Email' },

@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { FileSearch } from 'lucide-react';
 
 export const metadata = {
   title: 'Audit & Security - Admin',
@@ -12,7 +11,6 @@ export default function AuditPage() {
       module="audit"
       title="Audit & Security"
       description="Platform audit log events."
-      icon={FileSearch}
       columns={[
         { key: 'id', label: 'Audit ID' },
         { key: 'action', label: 'Action' },

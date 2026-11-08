@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getSessionContext } from '@/lib/auth/context';
-import { apiFetch } from '@/lib/client/api';
+import { getDeliverability } from '@/lib/data/app';
 import dynamic from 'next/dynamic';
 
 const DeliverabilityPage = dynamic(() => import('@/views/app/DeliverabilityPage').then((mod) => mod.default));
@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const ctx = await getSessionContext();
-  const data = ctx?.organization ? await apiFetch<any>('/api/deliverability') : { domains: [], checks: [] };
+  const data = ctx?.organization ? await getDeliverability(ctx.organization.id) : { domains: [], checks: [] };
   return <DeliverabilityPage data={data ?? { domains: [], checks: [] }} />;
 }
-

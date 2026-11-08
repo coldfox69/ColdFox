@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Plug } from 'lucide-react';
 
 export const metadata = {
   title: 'Integrations - Admin',
@@ -12,7 +11,6 @@ export default function IntegrationsPage() {
       module="integrations"
       title="Integrations"
       description="Third-party integration configuration status."
-      icon={Plug}
       columns={[
         { key: 'key', label: 'Integration' },
         { key: 'label', label: 'Label' },

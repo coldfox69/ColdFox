@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getSessionContext } from '@/lib/auth/context';
-import { apiFetch } from '@/lib/client/api';
+import { getCampaigns } from '@/lib/data/app';
 import dynamic from 'next/dynamic';
 
 const CampaignsPage = dynamic(() => import('@/views/app/CampaignsPage').then((mod) => mod.default));
@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const ctx = await getSessionContext();
-  const campaigns = ctx?.organization ? await apiFetch<any[]>('/api/campaigns') : [];
+  const campaigns = ctx?.organization ? await getCampaigns(ctx.organization.id) : [];
   return <CampaignsPage initialCampaigns={campaigns ?? []} />;
 }
-

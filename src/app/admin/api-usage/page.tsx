@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Key } from 'lucide-react';
 
 export const metadata = {
   title: 'API Usage - Admin',
@@ -12,7 +11,6 @@ export default function ApiUsagePage() {
       module="api-usage"
       title="API Usage"
       description="Rate limit records across the platform."
-      icon={Key}
       columns={[
         { key: 'id', label: 'ID' },
         { key: 'window_start', label: 'Window Start' },

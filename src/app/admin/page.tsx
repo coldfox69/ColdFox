@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { LayoutDashboard } from 'lucide-react';
 
 export const metadata = {
   title: 'Overview - Admin',
@@ -12,7 +11,6 @@ export default function OverviewPage() {
       module="overview"
       title="Platform Overview"
       description="Organization, user, campaign, and support metrics."
-      icon={LayoutDashboard}
       columns={[
         { key: 'organizations', label: 'Organizations' },
         { key: 'users', label: 'Users' },

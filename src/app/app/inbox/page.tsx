@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getSessionContext } from '@/lib/auth/context';
-import { apiFetch } from '@/lib/client/api';
+import { getInbox } from '@/lib/data/app';
 import dynamic from 'next/dynamic';
 
 const InboxPage = dynamic(() => import('@/views/app/InboxPage').then((mod) => mod.default));
@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const ctx = await getSessionContext();
-  const threads = ctx?.organization ? await apiFetch<any[]>('/api/inbox') : [];
+  const threads = ctx?.organization ? await getInbox(ctx.organization.id) : [];
   return <InboxPage initialThreads={threads ?? []} currentUserId={ctx?.user.id ?? ''} />;
 }
-

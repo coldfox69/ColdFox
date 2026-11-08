@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getSessionContext } from '@/lib/auth/context';
-import { apiFetch } from '@/lib/client/api';
+import { getMailboxes, getTemplates } from '@/lib/data/app';
 import dynamic from 'next/dynamic';
 
 const CampaignWizardPage = dynamic(() => import('@/views/app/CampaignWizardPage').then((mod) => mod.default));
@@ -12,10 +12,10 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const ctx = await getSessionContext();
-  const mailboxes = ctx?.organization ? (await apiFetch<{ mailboxes: any[] }>('/api/mailboxes')).mailboxes ?? [] : [];
-  const templates = ctx?.organization ? await apiFetch<any[]>('/api/templates') : [];
+  const orgId = ctx?.organization?.id ?? null;
+  const mailboxResult = orgId ? await getMailboxes(orgId) : { mailboxes: [], providers: { gmail: false, outlook: false } };
+  const templates = orgId ? await getTemplates(orgId) : [];
   return (
-    <CampaignWizardPage initialMailboxes={mailboxes} initialTemplates={templates} />
+    <CampaignWizardPage initialMailboxes={mailboxResult.mailboxes} initialTemplates={templates} />
   );
 }
-

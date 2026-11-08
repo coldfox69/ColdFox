@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Shield } from 'lucide-react';
 
 export const metadata = {
   title: 'Admin Roles - Admin',
@@ -12,7 +11,6 @@ export default function RolesPage() {
       module="roles"
       title="Admin Roles"
       description="Platform admin role assignments."
-      icon={Shield}
       columns={[
         { key: 'key', label: 'Role Key' },
         { key: 'user_id', label: 'User ID' },

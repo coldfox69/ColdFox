@@ -1,5 +1,4 @@
 import { AdminModulePage } from '@/components/admin/AdminModulePage';
-import { Sparkles } from 'lucide-react';
 
 export const metadata = {
   title: 'Announcements - Admin',
@@ -12,7 +11,6 @@ export default function AnnouncementsPage() {
       module="announcements"
       title="Announcements"
       description="Platform-wide announcements."
-      icon={Sparkles}
       columns={[
         { key: 'id', label: 'ID' },
         { key: 'title', label: 'Title' },
