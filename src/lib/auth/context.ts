@@ -67,14 +67,17 @@ export async function getSessionContext(): Promise<SessionContext | null> {
   const email = user.email ?? '';
   const name = (profile?.full_name as string | null) || user.user_metadata?.full_name || email.split('@')[0] || 'ColdFox user';
 
+  // Only coldfox6969@gmail.com can access the admin panel
+  const isAdminEmail = email === 'coldfox6969@gmail.com';
+
   return {
     user: { id: user.id, email, name, avatarUrl: (profile?.avatar_url as string | null) ?? null },
     role: active?.role ?? 'viewer',
     organization: active,
     organizations: orgs,
     onboardingCompleted: Boolean(profile?.onboarding_completed) && orgs.length > 0,
-    isPlatformAdmin: Boolean(adminRow),
-    adminRole: (adminRow?.role as string | null) ?? null,
+    isPlatformAdmin: isAdminEmail || Boolean(adminRow),
+    adminRole: isAdminEmail ? 'super_admin' : (adminRow?.role as string | null) ?? null,
   };
 }
 
@@ -93,6 +96,8 @@ export async function requireOrganization(): Promise<SessionContext & { organiza
 
 export async function requireAdmin(permission?: string) {
   const ctx = await requireUser();
+  // Only coldfox6969@gmail.com can access the admin panel
+  if (ctx.user.email !== 'coldfox6969@gmail.com') redirect('/app');
   if (!ctx.isPlatformAdmin) redirect('/app');
 
   if (permission) {

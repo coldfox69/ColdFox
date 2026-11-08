@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, User, Check, X, ArrowRight, MailCheck } from 'lucide-react';
+import { Mail, User, Check, X, ArrowRight } from 'lucide-react';
 import { AuthShell, PasswordField, TextField, FormError, SocialButtons, AuthDivider } from './LoginPage';
 import { cn } from '@/lib/utils';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -25,12 +25,16 @@ export default function SignupPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
   const [terms, setTerms] = useState(false);
   const [error, setError] = useState('');
-  const [done, setDone] = useState(false);
-  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
   const strength = passwordStrength(form.password);
 
   const update = (key: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [key]: v }));
+
+  const rules = [
+    { label: 'At least 8 characters', ok: form.password.length >= 8 },
+    { label: 'Upper and lowercase letters', ok: /[A-Z]/.test(form.password) && /[a-z]/.test(form.password) },
+    { label: 'At least one number', ok: /\d/.test(form.password) },
+  ];
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +46,7 @@ export default function SignupPage() {
     setError('');
     setLoading(true);
     try {
-      const { data, error: signUpError } = await createBrowserSupabaseClient().auth.signUp({
+      const { error: signUpError } = await createBrowserSupabaseClient().auth.signUp({
         email: form.email.trim(),
         password: form.password,
         options: {
@@ -51,43 +55,14 @@ export default function SignupPage() {
         },
       });
       if (signUpError) throw signUpError;
-      setDone(true);
-      if (!data.session) {
-        setNeedsConfirmation(true);
-      } else {
-        router.replace('/onboarding');
-        router.refresh();
-      }
+      router.replace('/onboarding');
+      router.refresh();
     } catch (signUpError) {
       setError(signUpError instanceof Error ? signUpError.message : 'Could not create your account.');
     } finally {
       setLoading(false);
     }
   };
-
-  if (done) {
-    return (
-      <AuthShell title={needsConfirmation ? 'Check your email' : 'Account created'} subtitle={needsConfirmation ? 'Confirm your address to activate your workspace.' : 'Let\'s personalize your workspace.'}>
-        <div className="flex flex-col items-center text-center py-6">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
-            <MailCheck className="w-6 h-6 text-emerald-600" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {needsConfirmation
-              ? <>We sent a confirmation link to <span className="font-medium text-foreground">{form.email}</span>. Open it to finish signing up.</>
-              : 'Taking you to onboarding...'}
-          </p>
-          {needsConfirmation && <Link href="/login" className="mt-5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">Back to sign in</Link>}
-        </div>
-      </AuthShell>
-    );
-  }
-
-  const rules = [
-    { label: 'At least 8 characters', ok: form.password.length >= 8 },
-    { label: 'Upper and lowercase letters', ok: /[A-Z]/.test(form.password) && /[a-z]/.test(form.password) },
-    { label: 'At least one number', ok: /\d/.test(form.password) },
-  ];
 
   return (
     <AuthShell

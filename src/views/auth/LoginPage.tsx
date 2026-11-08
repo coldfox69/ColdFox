@@ -106,7 +106,7 @@ export function SocialButtons({ onError }: { onError?: (message: string) => void
 
   return (
     <div className="grid grid-cols-2 gap-3">
-      {([{ label: 'Google', provider: 'google' }, { label: 'Microsoft', provider: 'azure' }] as const).map(p => (
+      {([{ label: 'Microsoft', provider: 'azure' }] as const).map(p => (
         <button
           key={p.provider}
           type="button"

@@ -47,3 +47,5 @@ test-results
 # Misc
 *.local
 legacy-vite/node_modules
+
+.vercel
