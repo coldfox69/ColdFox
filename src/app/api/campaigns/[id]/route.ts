@@ -1,0 +1,77 @@
+import { withApi, ok, requireApiSession, writeAudit, assertRole, ApiError } from '@/lib/http';
+import { createServiceClient } from '@/lib/supabase/service';
+
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  return withApi(async () => {
+    const session = await requireApiSession();
+    const { id } = await params;
+    const db = createServiceClient();
+    const { data: campaign, error } = await db
+      .from('campaigns')
+      .select('*, mailbox:mailboxes(id, email_address, display_name, status), template:email_templates(id, name, subject, body_text)')
+      .eq('id', id)
+      .eq('organization_id', session.organizationId)
+      .maybeSingle();
+    if (error || !campaign) throw new ApiError(404, 'Campaign not found.', 'not_found');
+
+    const [settings, steps, executions, leads] = await Promise.all([
+      db.from('campaign_settings').select('*').eq('campaign_id', id).maybeSingle(),
+      db.from('campaign_steps').select('*').eq('campaign_id', id).order('step_order'),
+      db.from('campaign_executions').select('id, step_order, status, scheduled_for, started_at, finished_at, error, provider_message_id, lead:leads(id, first_name, last_name, email)').eq('campaign_id', id).order('scheduled_for', { ascending: false }).limit(100),
+      db.from('campaign_leads').select('id, status, current_step, last_sent_at, next_send_at, error, lead:leads(id, first_name, last_name, email, company_name)').eq('campaign_id', id).limit(500),
+    ]);
+
+    return ok({
+      campaign,
+      settings: settings.data,
+      steps: steps.data ?? [],
+      executions: executions.data ?? [],
+      leads: leads.data ?? [],
+    });
+  });
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  return withApi(async () => {
+    const session = await requireApiSession();
+    assertRole(session, ['owner', 'admin', 'member']);
+    const { id } = await params;
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const db = createServiceClient();
+    const { data: existing } = await db.from('campaigns').select('id, status').eq('id', id).eq('organization_id', session.organizationId).maybeSingle();
+    if (!existing) throw new ApiError(404, 'Campaign not found.', 'not_found');
+    if (['active', 'scheduled'].includes(String(existing.status))) throw new ApiError(409, 'Pause the campaign before editing it.', 'campaign_running');
+
+    const update: Record<string, unknown> = {};
+    if (typeof body.name === 'string' && body.name.trim()) update.name = body.name.trim().slice(0, 160);
+    if (typeof body.description === 'string' || body.description === null) update.description = body.description;
+    if (typeof body.daily_limit === 'number') update.daily_limit = Math.max(1, Math.min(2000, Math.round(body.daily_limit)));
+    if (typeof body.mailbox_id === 'string' || body.mailbox_id === null) update.mailbox_id = body.mailbox_id;
+    if (Object.keys(update).length) {
+      const { error } = await db.from('campaigns').update(update).eq('id', id);
+      if (error) throw new ApiError(500, 'Could not update the campaign.');
+    }
+    await writeAudit({ organizationId: session.organizationId, actorId: session.userId, actorEmail: session.email, action: 'campaign.updated', entityType: 'campaign', entityId: id, request });
+    return ok({ updated: true });
+  });
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  return withApi(async () => {
+    const session = await requireApiSession();
+    assertRole(session, ['owner', 'admin']);
+    const { id } = await params;
+    const db = createServiceClient();
+    const { data, error } = await db
+      .from('campaigns')
+      .update({ status: 'cancelled', completed_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('organization_id', session.organizationId)
+      .select('id')
+      .maybeSingle();
+    if (error || !data) throw new ApiError(404, 'Campaign not found.', 'not_found');
+    await db.from('campaign_executions').update({ status: 'cancelled', finished_at: new Date().toISOString() }).eq('campaign_id', id).in('status', ['queued', 'processing']);
+    await writeAudit({ organizationId: session.organizationId, actorId: session.userId, actorEmail: session.email, action: 'campaign.cancelled', entityType: 'campaign', entityId: id, request });
+    return ok({ cancelled: true });
+  });
+}

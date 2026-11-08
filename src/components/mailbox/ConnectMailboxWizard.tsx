@@ -1,0 +1,168 @@
+import { useEffect, useState } from 'react';
+import { X, Check, Mail, ShieldCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type Provider = 'gmail' | 'outlook' | 'smtp';
+
+const providers: { id: Provider; label: string; hint: string }[] = [
+  { id: 'gmail', label: 'Gmail', hint: 'Sign in with Google and approve sending access.' },
+  { id: 'outlook', label: 'Outlook', hint: 'Sign in with Microsoft 365 or Outlook.com.' },
+  { id: 'smtp', label: 'SMTP / IMAP', hint: 'Use your own mail server credentials.' },
+];
+
+const inputCls = 'w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring';
+const steps = ['Provider', 'Account', 'Confirm'];
+
+export interface MailboxConnectInput {
+  provider: Provider;
+  email: string;
+  host?: string;
+  port?: number;
+  password?: string;
+}
+
+type Props = {
+  onClose: () => void;
+  onConnect: (input: MailboxConnectInput) => Promise<void> | void;
+  configured?: { gmail: boolean; outlook: boolean };
+};
+
+export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail: false, outlook: false } }: Props) {
+  const [step, setStep] = useState(0);
+  const [provider, setProvider] = useState<Provider | null>(null);
+  const [email, setEmail] = useState('');
+  const [host, setHost] = useState('');
+  const [port, setPort] = useState('587');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const next = () => {
+    if (step === 0 && !provider) return setError('Choose a provider to continue.');
+    if (step === 1) {
+      if (!/^\S+@\S+\.\S+$/.test(email)) return setError('Enter a valid email address.');
+      if (provider === 'smtp' && (!host.trim() || !/^\d+$/.test(port) || !password)) return setError('Enter the server host, port, and password.');
+    }
+    setError('');
+    setStep(s => s + 1);
+  };
+
+  const finish = async () => {
+    if (!provider) return;
+    if ((provider === 'gmail' || provider === 'outlook') && !configured[provider]) {
+      setError(`${provider === 'gmail' ? 'Google' : 'Microsoft'} OAuth is not configured on this deployment yet. Use SMTP/IMAP or ask your platform admin.`);
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      await onConnect({ provider, email, host, port: Number(port) || 587, password });
+    } catch (connectError) {
+      setError(connectError instanceof Error ? connectError.message : 'Could not connect the mailbox.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div role="dialog" aria-modal="true" aria-labelledby="connect-title" className="relative w-full max-w-lg neu-card rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 id="connect-title" className="text-lg font-semibold text-foreground">Connect a mailbox</h2>
+          <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X className="w-4 h-4" /></button>
+        </div>
+
+        <ol className="flex items-center gap-2 mb-6" aria-label="Progress">
+          {steps.map((s, i) => (
+            <li key={s} className="flex items-center gap-2 flex-1">
+              <span className={cn('w-6 h-6 rounded-full text-xs font-semibold flex items-center justify-center', i <= step ? 'gradient-blue text-white' : 'bg-muted text-muted-foreground')}>
+                {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
+              </span>
+              <span className={cn('text-xs', i <= step ? 'text-foreground' : 'text-muted-foreground')}>{s}</span>
+            </li>
+          ))}
+        </ol>
+
+        {step === 0 && (
+          <div className="grid gap-3">
+            {providers.map(p => (
+              <button
+                key={p.id}
+                onClick={() => { setProvider(p.id); setError(''); }}
+                aria-pressed={provider === p.id}
+                className={cn(
+                  'text-left p-4 rounded-xl border transition-all',
+                  provider === p.id ? 'border-primary bg-accent' : 'border-border hover:bg-muted',
+                )}
+              >
+                <p className="font-medium text-foreground text-sm">{p.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{p.hint}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {step === 1 && provider && (
+          <div className="space-y-4">
+            <label className="block text-sm font-medium">Email address
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} className={cn(inputCls, 'mt-1.5')} placeholder="you@company.com" />
+            </label>
+            {provider === 'smtp' ? (
+              <>
+                <div className="grid grid-cols-3 gap-3">
+                  <label className="col-span-2 block text-sm font-medium">SMTP host
+                    <input value={host} onChange={e => setHost(e.target.value)} className={cn(inputCls, 'mt-1.5')} placeholder="smtp.example.com" />
+                  </label>
+                  <label className="block text-sm font-medium">Port
+                    <input value={port} onChange={e => setPort(e.target.value)} className={cn(inputCls, 'mt-1.5')} />
+                  </label>
+                </div>
+                <label className="block text-sm font-medium">Password
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} className={cn(inputCls, 'mt-1.5')} />
+                </label>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground flex gap-2"><ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" /> You will be redirected to {provider === 'gmail' ? 'Google' : 'Microsoft'} to approve access. ColdFox never sees your password.</p>
+            )}
+          </div>
+        )}
+
+        {step === 2 && provider && (
+          <div className="text-center py-4">
+            <div className="mx-auto w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3">
+              <Mail className="w-6 h-6 text-emerald-600" />
+            </div>
+            <p className="font-semibold text-foreground">Ready to connect {email}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {provider === 'smtp'
+                ? 'ColdFox tests the SMTP connection before saving encrypted credentials.'
+                : `You will be redirected to ${provider === 'gmail' ? 'Google' : 'Microsoft'} to approve access.`}
+            </p>
+          </div>
+        )}
+
+        {error && <p role="alert" className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+
+        <div className="flex justify-between mt-6">
+          <button onClick={() => (step === 0 ? onClose() : setStep(s => s - 1))} className="px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted">
+            {step === 0 ? 'Cancel' : 'Back'}
+          </button>
+          {step < 2 ? (
+            <button onClick={next} className="px-4 py-2 rounded-xl gradient-blue text-white text-sm font-semibold">Continue</button>
+          ) : (
+            <button onClick={() => void finish()} disabled={busy} className="px-4 py-2 rounded-xl gradient-blue text-white text-sm font-semibold disabled:opacity-60">
+              {busy ? 'Connecting…' : 'Connect mailbox'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
