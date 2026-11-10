@@ -125,7 +125,7 @@ export function AppLayout({
           <Image src="/favicon.png" alt="ColdFox fox logo" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full" />
         ) : (
           <span className="flex min-w-0 flex-1 items-center">
-            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={48} style={{ height: '48px', width: 'auto', maxWidth: '100%' }} />
+            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '48px', width: 'auto', maxWidth: '100%' }} priority />
           </span>
         )}
       </div>

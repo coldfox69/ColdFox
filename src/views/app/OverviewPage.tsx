@@ -43,15 +43,15 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <section className="neu-card rounded-[16px] p-5 lg:col-span-2">
+        <section className="neu-card min-w-0 rounded-[16px] p-5 lg:col-span-2">
           <div className="mb-4 flex items-start justify-between">
             <div>
               <h2 className="font-semibold text-foreground">Campaign performance</h2>
               <p className="mt-0.5 text-[13px] text-muted-foreground">Sent against replies, last 8 weeks</p>
             </div>
           </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-72 min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 0, height: 288 }}>
               <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />

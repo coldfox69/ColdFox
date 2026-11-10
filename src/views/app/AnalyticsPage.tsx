@@ -88,15 +88,15 @@ export default function AnalyticsPage({ data }: { data: AnalyticsVM }) {
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard title="Emails sent" value={overview.emailsSent.toLocaleString()} change="Provider-confirmed" />
         <StatCard title="Delivered" value={`${pct(overview.delivered, overview.emailsSent)}%`} change={`${overview.delivered.toLocaleString()} accepted by providers`} />
-        <StatCard title="Reply rate" value={`${rates.reply}%`} change={`${overview.replies.toLocaleString()} replies`} changeType="positive" />
-        <StatCard title="Unsubscribes" value={`${rates.unsub}%`} change={`${overview.unsubscribes.toLocaleString()} suppressed`} changeType="negative" />
+        <StatCard title="Reply rate" value={`${rates.reply}%`} change={`${overview.replies.toLocaleString()} replies`} changeType={overview.replies > 0 ? 'positive' : 'neutral'} />
+        <StatCard title="Unsubscribes" value={`${rates.unsub}%`} change={`${overview.unsubscribes.toLocaleString()} suppressed`} />
       </div>
 
-      <section className="neu-card rounded-[16px] p-5">
+      <section className="neu-card min-w-0 rounded-[16px] p-5">
         <h2 className="font-semibold text-foreground">Sent against replies</h2>
         <p className="mt-0.5 text-[13px] text-muted-foreground">{range.toLowerCase()}</p>
-        <div className="mt-4 h-80" role="img" aria-label="Area chart of emails sent and replies over time">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="mt-4 h-80 min-w-0" role="img" aria-label="Area chart of emails sent and replies over time">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 0, height: 320 }}>
             <AreaChart data={visibleChart} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />

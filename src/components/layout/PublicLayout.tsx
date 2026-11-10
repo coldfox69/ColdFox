@@ -47,7 +47,7 @@ export function PublicNavbar() {
       <div className="mx-auto max-w-[1200px] px-6 sm:px-8">
         <div className="flex h-16 items-center gap-8">
           <Link href="/" className="flex items-center" aria-label="ColdFox home">
-            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={220} height={55} style={{ height: '48px', width: 'auto' }} className="shrink-0" priority />
+            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '48px', width: 'auto' }} priority />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
@@ -125,7 +125,7 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center">
-              <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={180} height={45} style={{ height: '44px', width: 'auto' }} />
+              <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '44px', width: 'auto' }} />
             </Link>
             <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
               Cold email workspace. Import leads, connect your own mailbox, run sequences, handle replies.
