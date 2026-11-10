@@ -1,6 +1,27 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+
+// Self-hosted fonts: next/font downloads them at build time and serves them
+// from our own origin, so there is no render-blocking third-party request and
+// no third-party connection in the visitor's browser. Weights are limited to
+// the three we actually use.
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
+  variable: '--font-inter',
+  preload: true,
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  display: 'swap',
+  variable: '--font-mono',
+  preload: false,
+});
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://coldfox.vercel.app';
 
@@ -46,7 +67,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${plexMono.variable}`}>
       <body className="min-h-screen antialiased">
         <Providers>{children}</Providers>
       </body>

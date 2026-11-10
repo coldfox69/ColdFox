@@ -89,7 +89,9 @@ export default function MailboxesPage({
 
   const addMailbox = async (input: MailboxConnectInput) => {
     if (input.provider === 'gmail' || input.provider === 'outlook') {
-      window.location.href = `/api/mailboxes/oauth/${input.provider}/start`;
+      // The OAuth flow needs a full page navigation to the provider.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign(`/api/mailboxes/oauth/${input.provider}/start`);
       return;
     }
     if (!input.host || !input.password) throw new Error('Enter the server host and password.');

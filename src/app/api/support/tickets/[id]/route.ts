@@ -2,6 +2,9 @@ import { withApi, ok, parseBody, requireApiSession, ApiError } from '@/lib/http'
 import { supportMessageSchema } from '@/lib/validation';
 import { createServiceClient } from '@/lib/supabase/service';
 
+/** Upper bound for a ticket message list. */
+const MESSAGE_LIMIT = 500;
+
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withApi(async () => {
     const session = await requireApiSession();
@@ -9,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const db = createServiceClient();
     const { data: ticket } = await db.from('support_tickets').select('*').eq('id', id).eq('organization_id', session.organizationId).maybeSingle();
     if (!ticket) throw new ApiError(404, 'Ticket not found.', 'not_found');
-    const { data: messages } = await db.from('support_messages').select('*').eq('ticket_id', id).eq('organization_id', session.organizationId).eq('is_internal', false).order('created_at');
+    const { data: messages } = await db.from('support_messages').select('*').eq('ticket_id', id).eq('organization_id', session.organizationId).eq('is_internal', false).order('created_at').limit(MESSAGE_LIMIT);
     return ok({ ticket, messages: messages ?? [] });
   });
 }

@@ -1,6 +1,8 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+const LEAD_TAG_CHUNK = 500;
+
 export async function syncLeadTags(db: SupabaseClient, organizationId: string, leadId: string, tags: string[]) {
   const clean = [...new Set(tags.map((t) => t.trim()).filter(Boolean))].slice(0, 20);
   await db.from('lead_tag_assignments').delete().eq('organization_id', organizationId).eq('lead_id', leadId);
@@ -15,6 +17,74 @@ export async function syncLeadTags(db: SupabaseClient, organizationId: string, l
       tagRows.map((tag) => ({ organization_id: organizationId, lead_id: leadId, tag_id: tag.id })),
       { onConflict: 'lead_id,tag_id', ignoreDuplicates: true },
     );
+  }
+}
+
+/**
+ * Bulk version of `syncLeadTags` for import paths.
+ *
+ * Resolves the tags of a whole batch at once instead of once per lead: a
+ * single upsert for the union of every tag name, a single read that turns
+ * those names into ids, and a single upsert for every (lead, tag) pair.
+ * Existing assignments are left untouched - the import creates brand new
+ * leads, so there is nothing to delete.
+ */
+export async function syncLeadTagsBulk(db: SupabaseClient, organizationId: string, assignments: Map<string, string[]>) {
+  if (!assignments.size) return;
+
+  const perLead = new Map<string, string[]>();
+  const union = new Set<string>();
+  for (const [leadId, tags] of assignments) {
+    const clean = [...new Set(tags.map((t) => t.trim()).filter(Boolean))].slice(0, 20);
+    if (!clean.length) continue;
+    perLead.set(leadId, clean);
+    for (const name of clean) union.add(name);
+  }
+  if (!union.size) return;
+
+  const names = [...union];
+
+  // 1. Create every tag of the union in as few statements as possible.
+  for (let i = 0; i < names.length; i += LEAD_TAG_CHUNK) {
+    const batch = names.slice(i, i + LEAD_TAG_CHUNK);
+    const { error } = await db
+      .from('lead_tags')
+      .upsert(batch.map((name) => ({ organization_id: organizationId, name })), { onConflict: 'organization_id,name', ignoreDuplicates: true });
+    if (error) {
+      // A single malformed name must not poison the whole batch, so retry the
+      // failed chunk one name at a time and keep the names that are valid.
+      for (const name of batch) {
+        await db.from('lead_tags').upsert([{ organization_id: organizationId, name }], { onConflict: 'organization_id,name', ignoreDuplicates: true });
+      }
+    }
+  }
+
+  // 2. Resolve the union to tag ids.
+  const tagIdByName = new Map<string, string>();
+  for (let i = 0; i < names.length; i += LEAD_TAG_CHUNK) {
+    const batch = names.slice(i, i + LEAD_TAG_CHUNK);
+    const { data: tagRows } = await db.from('lead_tags').select('id, name').eq('organization_id', organizationId).in('name', batch);
+    for (const row of tagRows ?? []) {
+      const name = String(row.name);
+      if (!tagIdByName.has(name)) tagIdByName.set(name, String(row.id));
+    }
+  }
+  if (!tagIdByName.size) return;
+
+  // 3. Link every lead to its tags.
+  const rows: { organization_id: string; lead_id: string; tag_id: string }[] = [];
+  for (const [leadId, tags] of perLead) {
+    for (const name of tags) {
+      const tagId = tagIdByName.get(name);
+      if (!tagId) continue;
+      rows.push({ organization_id: organizationId, lead_id: leadId, tag_id: tagId });
+    }
+  }
+  if (!rows.length) return;
+  for (let i = 0; i < rows.length; i += LEAD_TAG_CHUNK) {
+    await db
+      .from('lead_tag_assignments')
+      .upsert(rows.slice(i, i + LEAD_TAG_CHUNK), { onConflict: 'lead_id,tag_id', ignoreDuplicates: true });
   }
 }
 

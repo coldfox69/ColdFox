@@ -1,6 +1,5 @@
 'use client';
 
-/* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
 
 type Theme = "dark" | "light" | "system"
@@ -58,6 +57,30 @@ function isEditableTarget(target: EventTarget | null) {
   return Boolean(target.closest("input, textarea, select, [contenteditable='true']"))
 }
 
+/**
+ * Listeners for the persisted theme, so a change in one tab is picked up by
+ * the others and the stored value can be read with `useSyncExternalStore`
+ * without a hydration mismatch.
+ */
+const listeners = new Set<() => void>()
+
+function subscribe(callback: () => void) {
+  listeners.add(callback)
+  const onStorage = (event: StorageEvent) => {
+    if (event.storageArea !== localStorage) return
+    listeners.forEach((listener) => listener())
+  }
+  window.addEventListener("storage", onStorage)
+  return () => {
+    listeners.delete(callback)
+    window.removeEventListener("storage", onStorage)
+  }
+}
+
+function notify() {
+  listeners.forEach((listener) => listener())
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = "system",
@@ -65,19 +88,20 @@ export function ThemeProvider({
   disableTransitionOnChange = true,
   ...props
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = React.useState<Theme>(defaultTheme)
-
-  // Hydration-safe: read persisted preference after mount only.
-  React.useEffect(() => {
-    const stored = localStorage.getItem(storageKey)
-    if (isTheme(stored) && stored !== theme) setThemeState(stored)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageKey])
+  // Read the stored preference through useSyncExternalStore so the server
+  // render and the first client render agree, and no extra render pass is
+  // needed after mount.
+  const stored = React.useSyncExternalStore(
+    subscribe,
+    () => localStorage.getItem(storageKey),
+    () => null,
+  )
+  const theme: Theme = isTheme(stored) ? stored : defaultTheme
 
   const setTheme = React.useCallback(
     (nextTheme: Theme) => {
       localStorage.setItem(storageKey, nextTheme)
-      setThemeState(nextTheme)
+      notify()
     },
     [storageKey]
   )
@@ -109,29 +133,13 @@ export function ThemeProvider({
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return
       if (isEditableTarget(event.target)) return
       if (event.key.toLowerCase() !== "d") return
-      setThemeState((currentTheme) => {
-        const nextTheme =
-          currentTheme === "dark" ? "light" : currentTheme === "light" ? "dark" : getSystemTheme() === "dark" ? "light" : "dark"
-        localStorage.setItem(storageKey, nextTheme)
-        return nextTheme
-      })
+      setTheme(
+        theme === "dark" ? "light" : theme === "light" ? "system" : getSystemTheme() === "dark" ? "light" : "dark",
+      )
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [storageKey])
-
-  React.useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.storageArea !== localStorage || event.key !== storageKey) return
-      if (isTheme(event.newValue)) {
-        setThemeState(event.newValue)
-        return
-      }
-      setThemeState(defaultTheme)
-    }
-    window.addEventListener("storage", handleStorageChange)
-    return () => window.removeEventListener("storage", handleStorageChange)
-  }, [defaultTheme, storageKey])
+  }, [theme, setTheme])
 
   const value = React.useMemo(() => ({ theme, setTheme }), [theme, setTheme])
 

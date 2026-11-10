@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { withApi, ok, parseBody, parseQuery, requireApiSession, enforceRateLimit, writeAudit, assertRole, ApiError } from '@/lib/http';
-import { leadInputSchema, leadListQuerySchema } from '@/lib/validation';
+import { leadInputSchema, leadListQuerySchema, LEAD_STATUSES } from '@/lib/validation';
+import { countByValue } from '@/lib/data/app';
 import { createServiceClient } from '@/lib/supabase/service';
 import { recordLeadActivity, syncLeadTags, tagsForLeads, toLeadDto } from '@/lib/leads';
 
@@ -44,15 +45,14 @@ export async function GET(request: Request) {
     if (error) throw new ApiError(500, 'Could not load leads.');
 
     const ids = (data ?? []).map((row) => row.id as string);
-    const [tagMap, statusRows] = await Promise.all([
+    // Exact per status counts with head requests: the breakdown never pulls
+    // lead rows into memory, so it stays correct for very large lead sets.
+    const [tagMap, statuses] = await Promise.all([
       tagsForLeads(db, session.organizationId, ids),
-      db.from('leads').select('status').eq('organization_id', session.organizationId).is('deleted_at', null).limit(10000),
+      countByValue(db, 'leads', 'status', LEAD_STATUSES, (query) =>
+        query.eq('organization_id', session.organizationId).is('deleted_at', null),
+      ),
     ]);
-    const statuses: Record<string, number> = {};
-    for (const row of statusRows.data ?? []) {
-      const key = String(row.status);
-      statuses[key] = (statuses[key] ?? 0) + 1;
-    }
 
     return ok({
       leads: (data ?? []).map((row) => toLeadDto(row, tagMap.get(row.id as string) ?? [])),

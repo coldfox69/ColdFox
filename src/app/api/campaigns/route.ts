@@ -1,5 +1,5 @@
-import { withApi, ok, parseBody, requireApiSession, enforceRateLimit, writeAudit, assertRole, ApiError } from '@/lib/http';
-import { campaignInputSchema } from '@/lib/validation';
+import { withApi, ok, parseBody, parseQuery, requireApiSession, enforceRateLimit, writeAudit, assertRole, ApiError } from '@/lib/http';
+import { campaignInputSchema, paginationSchema } from '@/lib/validation';
 import { createServiceClient } from '@/lib/supabase/service';
 import { ensureCampaignSteps } from '@/lib/email/engine';
 
@@ -28,17 +28,27 @@ function toDto(row: Record<string, unknown>) {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   return withApi(async () => {
     const session = await requireApiSession();
+    const { page, pageSize } = parseQuery(request, paginationSchema);
     const db = createServiceClient();
-    const { data, error } = await db
+    const from = (page - 1) * pageSize;
+    const { data, error, count } = await db
       .from('campaigns')
-      .select('*, mailbox:mailboxes(id, email_address)')
+      .select('id, name, description, status, total_leads, emails_sent, replies, bounces, unsubscribes, created_at, launch_at, started_at, completed_at, daily_limit, timezone, template_id, mailbox_id, mailbox:mailboxes(id, email_address)', { count: 'exact' })
       .eq('organization_id', session.organizationId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, from + pageSize - 1);
     if (error) throw new ApiError(500, 'Could not load campaigns.');
-    return ok((data ?? []).map(toDto));
+    // The payload stays an array; the pagination metadata rides in the headers.
+    return ok((data ?? []).map(toDto), {
+      headers: {
+        'X-Total-Count': String(count ?? 0),
+        'X-Page': String(page),
+        'X-Page-Size': String(pageSize),
+      },
+    });
   });
 }
 

@@ -22,15 +22,20 @@ export function PublicNavbar() {
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
 
+  // Close the mobile menu whenever the route changes. Adjusted during render
+  // instead of in an effect so it does not cause a second render pass.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
+    if (mobileOpen) setMobileOpen(false);
+  }
+
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 16);
     handler();
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
   }, []);
-
-  // Close the mobile menu whenever the route changes.
-  useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   const cycleTheme = () => {
     if (theme === 'light') setTheme('dark');
@@ -47,7 +52,7 @@ export function PublicNavbar() {
       <div className="mx-auto max-w-[1200px] px-6 sm:px-8">
         <div className="flex h-16 items-center gap-8">
           <Link href="/" className="flex items-center" aria-label="ColdFox home">
-            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '48px', width: 'auto' }} priority />
+            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '48px', width: 'auto' }} sizes="150px" priority />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
@@ -126,7 +131,7 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center">
-              <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '44px', width: 'auto' }} />
+              <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '44px', width: 'auto' }} sizes="120px" loading="lazy" />
             </Link>
             <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
               Cold email workspace. Import leads, connect your own mailbox, run sequences, handle replies.

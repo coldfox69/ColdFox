@@ -112,7 +112,7 @@ export default function OnboardingPage() {
           <div className="w-16 h-16 rounded-[16px] neu-inset-sm flex items-center justify-center mx-auto mb-5">
             <Check className="w-7 h-7 text-[var(--cf-success)]" />
           </div>
-          <h1 className="text-[20px] font-semibold text-foreground mb-2">You're all set, {data.fullName.split(' ')[0]}</h1>
+          <h1 className="text-[20px] font-semibold text-foreground mb-2">You&apos;re all set, {data.fullName.split(' ')[0]}</h1>
           <p className="text-sm text-muted-foreground mb-8">Your workspace for {data.company} is ready. Connect a mailbox and import your first leads to get started.</p>
           <button onClick={() => router.push('/app')} className="w-full rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 py-2.5 rounded-xl hover:opacity-90 inline-flex items-center justify-center gap-2">
             Go to dashboard <ArrowRight className="w-4 h-4" />

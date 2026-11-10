@@ -48,6 +48,128 @@ function timeAgo(iso: string) {
   return `${Math.round(hours / 24)} day ago`;
 }
 
+type SidebarProps = {
+  collapsed: boolean;
+  organization: ActiveOrganization;
+  user: SessionUser;
+  isPlatformAdmin: boolean;
+  pathname: string;
+  userMenuOpen: boolean;
+  signingOut: boolean;
+  onToggleMenu: () => void;
+  onSignOut: () => void;
+};
+
+function SidebarContent({
+  collapsed,
+  organization,
+  user,
+  isPlatformAdmin,
+  pathname,
+  userMenuOpen,
+  signingOut,
+  onToggleMenu,
+  onSignOut,
+}: SidebarProps) {
+  const initials = (user.name || user.email)
+    .split(/[\s@.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(p => p[0]?.toUpperCase())
+    .join('');
+
+  const isActive = (path: string) => {
+    if (path === '/app') return pathname === '/app';
+    return pathname.startsWith(path);
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className={cn('flex items-center gap-3 px-4 py-4 border-b border-border', collapsed && 'justify-center px-3')}>
+        {collapsed ? (
+          <Image src="/favicon.png" alt="ColdFox fox logo" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full" sizes="36px" />
+        ) : (
+          <span className="flex min-w-0 flex-1 items-center">
+            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={48} style={{ height: '48px', width: 'auto', maxWidth: '100%' }} sizes="150px" priority />
+          </span>
+        )}
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Workspace navigation">
+        <ul className="space-y-1">
+          {navItems.map(item => (
+            <li key={item.path}>
+              <Link href={item.path} onClick={() => onToggleMenu()}
+                aria-current={isActive(item.path) ? 'page' : undefined}
+                className={cn(navRow, isActive(item.path) ? navRowActive : navRowIdle, collapsed && 'justify-center px-2')}
+                title={collapsed ? item.label : undefined}>
+                <item.icon className="w-4 h-4 shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            </li>
+          ))}
+          {isPlatformAdmin && (
+            <li className="mt-4 border-t border-border pt-4">
+              <Link href="/admin" onClick={() => onToggleMenu()}
+                className={cn(navRow, navRowIdle, collapsed && 'justify-center px-2')}>
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                {!collapsed && <span>Platform admin</span>}
+              </Link>
+            </li>
+          )}
+        </ul>
+      </nav>
+
+      <div className="border-t border-border px-3 py-3">
+        <ul className="space-y-1">
+          {bottomItems.map(item => (
+            <li key={item.path}>
+              <Link href={item.path} onClick={() => onToggleMenu()}
+                aria-current={isActive(item.path) ? 'page' : undefined}
+                className={cn(navRow, isActive(item.path) ? navRowActive : navRowIdle, collapsed && 'justify-center px-2')}>
+                <item.icon className="w-4 h-4 shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        <button
+          className={cn(navRow, 'mt-2 w-full cursor-pointer text-left text-muted-foreground hover:text-foreground hover:shadow-[var(--shadow-inset-sm)]', collapsed && 'justify-center px-2')}
+          onClick={() => onToggleMenu()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onToggleMenu(); }}
+          aria-expanded={userMenuOpen}>
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-medium text-accent-foreground">
+            {initials || 'CF'}
+          </span>
+          {!collapsed && (
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[13px] font-medium text-foreground">{user.name}</span>
+              <span className="block truncate text-[12px] text-muted-foreground">{organization.planName} plan</span>
+            </span>
+          )}
+          {!collapsed && <ChevronsUpDown className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />}
+        </button>
+        {userMenuOpen && !collapsed && (
+          <div className="mt-2 overflow-hidden rounded-[12px] bg-card py-1 text-[13px] shadow-[var(--shadow-raised)]">
+            <div className="border-b border-border px-3 py-2">
+              <p className="truncate text-[12px] text-muted-foreground">{user.email}</p>
+            </div>
+            <Link href="/app/settings" className="flex items-center gap-2 px-3 py-2 text-foreground transition-colors duration-[var(--dur)] hover:bg-muted" onClick={() => onToggleMenu()}>
+              <User className="w-4 h-4 text-muted-foreground" /> Profile and settings
+            </Link>
+            <button onClick={onSignOut} disabled={signingOut} className="flex w-full items-center gap-2 px-3 py-2 text-destructive transition-colors duration-[var(--dur)] hover:bg-muted disabled:opacity-60">
+              <LogOut className="w-4 h-4" /> {signingOut ? 'Signing out' : 'Sign out'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function AppLayout({
   user,
   organization,
@@ -118,94 +240,24 @@ export function AppLayout({
   };
   const themeLabel = theme === 'light' ? 'Light mode' : theme === 'dark' ? 'Dark mode' : 'System mode';
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      <div className={cn('flex items-center gap-3 px-4 py-4 border-b border-border', collapsed && 'justify-center px-3')}>
-        {collapsed ? (
-          <Image src="/favicon.png" alt="ColdFox fox logo" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full" />
-        ) : (
-          <span className="flex min-w-0 flex-1 items-center">
-            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '48px', width: 'auto', maxWidth: '100%' }} priority />
-          </span>
-        )}
-      </div>
-
-      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Workspace navigation">
-        <ul className="space-y-1">
-          {navItems.map(item => (
-            <li key={item.path}>
-              <Link href={item.path} onClick={() => setMobileOpen(false)}
-                aria-current={isActive(item.path) ? 'page' : undefined}
-                className={cn(navRow, isActive(item.path) ? navRowActive : navRowIdle, collapsed && 'justify-center px-2')}
-                title={collapsed ? item.label : undefined}>
-                <item.icon className="w-4 h-4 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
-            </li>
-          ))}
-          {isPlatformAdmin && (
-            <li className="mt-4 border-t border-border pt-4">
-              <Link href="/admin" onClick={() => setMobileOpen(false)}
-                className={cn(navRow, navRowIdle, collapsed && 'justify-center px-2')}>
-                <ShieldCheck className="w-4 h-4 shrink-0" />
-                {!collapsed && <span>Platform admin</span>}
-              </Link>
-            </li>
-          )}
-        </ul>
-      </nav>
-
-      <div className="border-t border-border px-3 py-3">
-        <ul className="space-y-1">
-          {bottomItems.map(item => (
-            <li key={item.path}>
-              <Link href={item.path} onClick={() => setMobileOpen(false)}
-                aria-current={isActive(item.path) ? 'page' : undefined}
-                className={cn(navRow, isActive(item.path) ? navRowActive : navRowIdle, collapsed && 'justify-center px-2')}>
-                <item.icon className="w-4 h-4 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <button
-          className={cn(navRow, 'mt-2 w-full cursor-pointer text-left text-muted-foreground hover:text-foreground hover:shadow-[var(--shadow-inset-sm)]', collapsed && 'justify-center px-2')}
-          onClick={() => setUserMenuOpen(!userMenuOpen)} role="button" tabIndex={0}
-          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setUserMenuOpen(!userMenuOpen); }}
-          aria-expanded={userMenuOpen}>
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[12px] font-medium text-accent-foreground">
-            {initials || 'CF'}
-          </span>
-          {!collapsed && (
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13px] font-medium text-foreground">{user.name}</span>
-              <span className="block truncate text-[12px] text-muted-foreground">{organization.planName} plan</span>
-            </span>
-          )}
-          {!collapsed && <ChevronsUpDown className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />}
-        </button>
-        {userMenuOpen && !collapsed && (
-          <div className="mt-2 overflow-hidden rounded-[12px] bg-card py-1 text-[13px] shadow-[var(--shadow-raised)]">
-            <div className="border-b border-border px-3 py-2">
-              <p className="truncate text-[12px] text-muted-foreground">{user.email}</p>
-            </div>
-            <Link href="/app/settings" className="flex items-center gap-2 px-3 py-2 text-foreground transition-colors duration-[var(--dur)] hover:bg-muted" onClick={() => setUserMenuOpen(false)}>
-              <User className="w-4 h-4 text-muted-foreground" /> Profile and settings
-            </Link>
-            <button onClick={signOut} disabled={signingOut} className="flex w-full items-center gap-2 px-3 py-2 text-destructive transition-colors duration-[var(--dur)] hover:bg-muted disabled:opacity-60">
-              <LogOut className="w-4 h-4" /> {signingOut ? 'Signing out' : 'Sign out'}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+  const sidebar = (
+    <SidebarContent
+      collapsed={collapsed}
+      organization={organization}
+      user={user}
+      isPlatformAdmin={isPlatformAdmin}
+      pathname={pathname}
+      userMenuOpen={userMenuOpen}
+      signingOut={signingOut}
+      onToggleMenu={() => setMobileOpen(false)}
+      onSignOut={signOut}
+    />
   );
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <aside className={cn('hidden lg:flex flex-col neu-shell-side relative sidebar-transition flex-shrink-0', collapsed ? 'w-16' : 'w-60')}>
-        <SidebarContent />
+        {sidebar}
         <button onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="absolute -right-3 top-6 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-card text-muted-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)]">
           {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -216,7 +268,7 @@ export function AppLayout({
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
           <aside className="absolute left-0 top-0 bottom-0 w-64 bg-sidebar z-50 overflow-y-auto">
-            <SidebarContent />
+            {sidebar}
           </aside>
         </div>
       )}

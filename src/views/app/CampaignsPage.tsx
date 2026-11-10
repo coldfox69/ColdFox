@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/components/shared/ToastProvider';
 import { useRouter } from 'next/navigation';
 import { apiFetch, errorMessage } from '@/lib/client/api';
+import { useDebouncedValue } from '@/hooks/use-debounce';
+
 
 const PAGE_SIZE = 5;
 const filters: { value: CampaignStatus | 'all'; label: string }[] = [
@@ -30,6 +32,7 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
   const [items, setItems] = useState<Campaign[]>(initialCampaigns);
   const [busy, setBusy] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 250);
   const [status, setStatus] = useState<CampaignStatus | 'all'>('all');
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDesc, setSortDesc] = useState(true);
@@ -37,7 +40,7 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     const list = items.filter(c =>
       (status === 'all' || c.status === status) &&
       (!q || c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q))
@@ -47,7 +50,7 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
       const cmp = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv));
       return sortDesc ? -cmp : cmp;
     });
-  }, [items, query, status, sortKey, sortDesc]);
+  }, [items, debouncedQuery, status, sortKey, sortDesc]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(page, pageCount);

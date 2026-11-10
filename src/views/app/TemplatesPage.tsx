@@ -11,6 +11,8 @@ import { type TemplateVM as Template } from '@/lib/view-models';
 import { cn } from '@/lib/utils';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useRouter } from 'next/navigation';
+import { useDebouncedValue } from '@/hooks/use-debounce';
+
 
 type Scope = 'all' | 'personal' | 'shared';
 type Editing = Template | 'new' | null;
@@ -23,6 +25,7 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
   const [items, setItems] = useState<Template[]>(initialTemplates);
   const [busy, setBusy] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 250);
   const [category, setCategory] = useState('All categories');
   const [scope, setScope] = useState<Scope>('all');
   const [editing, setEditing] = useState<Editing>(null);
@@ -31,13 +34,13 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
   const [testIds, setTestIds] = useState<string[]>([]);
 
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     return items.filter(t =>
       (category === 'All categories' || t.category === category) &&
       (scope === 'all' || (scope === 'shared' ? t.isShared : !t.isShared)) &&
       (!q || [t.name, t.subject, t.tags.join(' ')].join(' ').toLowerCase().includes(q)),
     );
-  }, [items, query, category, scope]);
+  }, [items, debouncedQuery, category, scope]);
 
   const saveTemplate = async (values: Pick<Template, 'name' | 'subject' | 'body' | 'category' | 'isShared'>) => {
     const payload = {
@@ -200,7 +203,7 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
           Compare up to 3 templates to see which copy gets more replies. Each lead receives one variant at random and results are reported per variant. This tests message content; it does not change how mailbox providers filter email.
         </p>
         {testTemplates.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Select templates above with "Add to test" to start a comparison.</p>
+          <p className="text-sm text-muted-foreground">Select templates above with &quot;Add to test&quot; to start a comparison.</p>
         ) : (
           <div className="flex flex-col sm:flex-row gap-3">
             {testTemplates.map(t => (

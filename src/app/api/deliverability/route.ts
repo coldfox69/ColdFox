@@ -6,11 +6,14 @@ import { assertDomain, checkDomainAuthentication } from '@/lib/email/deliverabil
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/** Upper bound for the sending domain list. */
+const DOMAIN_LIMIT = 200;
+
 export async function GET() {
   return withApi(async () => {
     const session = await requireApiSession();
     const db = createServiceClient();
-    const { data: domains, error } = await db.from('sending_domains').select('*').eq('organization_id', session.organizationId).order('created_at', { ascending: false });
+    const { data: domains, error } = await db.from('sending_domains').select('*').eq('organization_id', session.organizationId).order('created_at', { ascending: false }).limit(DOMAIN_LIMIT);
     if (error) throw new ApiError(500, 'Could not load sending domains.');
     const checks = domains?.length
       ? await db.from('domain_authentication_checks').select('*').eq('organization_id', session.organizationId).in('domain_id', domains.map((d) => d.id)).order('checked_at', { ascending: false }).limit(500)

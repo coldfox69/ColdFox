@@ -7,6 +7,8 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useToast } from '@/components/shared/ToastProvider';
+import { useDebouncedValue } from '@/hooks/use-debounce';
+
 
 export interface SuppressionData {
   entries: Array<{
@@ -24,12 +26,13 @@ export interface SuppressionData {
 export default function SuppressionPage({ data }: { data: SuppressionData }) {
   const toast = useToast();
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 250);
   const [newEmail, setNewEmail] = useState('');
   const [newReason, setNewReason] = useState('manual');
   const [newNotes, setNewNotes] = useState('');
 
   const filtered = data.entries.filter(
-    (e) => !query || e.email.toLowerCase().includes(query.toLowerCase()) || e.reason.toLowerCase().includes(query.toLowerCase()),
+    (e) => !debouncedQuery || e.email.toLowerCase().includes(debouncedQuery.toLowerCase()) || e.reason.toLowerCase().includes(debouncedQuery.toLowerCase()),
   );
 
   const addSuppression = async () => {

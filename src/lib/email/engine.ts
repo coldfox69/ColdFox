@@ -63,9 +63,14 @@ export async function saveMailboxCredentials(mailboxId: string, organizationId: 
 
 export async function loadMailboxCredentials(mailboxId: string): Promise<{ credentials: MailboxCredentials; mailbox: Record<string, unknown> }> {
   const db = service();
-  const { data: mailbox, error } = await db.from('mailboxes').select('*').eq('id', mailboxId).maybeSingle();
+  // The mailbox row and the encrypted credentials are independent reads: fetch them together.
+  const [mailboxResult, credentialsResult] = await Promise.all([
+    db.from('mailboxes').select('*').eq('id', mailboxId).maybeSingle(),
+    db.from('mailbox_credentials').select('encrypted_payload').eq('mailbox_id', mailboxId).maybeSingle(),
+  ]);
+  const { data: mailbox, error } = mailboxResult;
   if (error || !mailbox) throw new Error('Mailbox not found.');
-  const { data: stored } = await db.from('mailbox_credentials').select('encrypted_payload').eq('mailbox_id', mailboxId).maybeSingle();
+  const { data: stored } = credentialsResult;
   if (!stored?.encrypted_payload) throw new Error('Mailbox is not connected. Reconnect it and try again.');
   const config = decryptSecret<Record<string, unknown>>(stored.encrypted_payload);
   return { credentials: mapCredentials(mailbox, config), mailbox };
@@ -199,16 +204,16 @@ export async function seedCampaignExecutions(organizationId: string, campaignId:
   const initialStep = steps[0];
   if (!initialStep) throw new Error('Campaign has no sending steps.');
 
-  const { data: settingsRows } = await db.from('campaign_settings').select('*').eq('campaign_id', campaignId).maybeSingle();
-  const settings = settingsRows ?? {};
+  // Settings and campaign leads do not depend on each other: read them in one round-trip.
+  const [settingsResult, campaignLeadsResult] = await Promise.all([
+    db.from('campaign_settings').select('*').eq('campaign_id', campaignId).maybeSingle(),
+    db.from('campaign_leads').select('id, lead_id, status').eq('campaign_id', campaignId).eq('organization_id', organizationId),
+  ]);
+  const settings = settingsResult.data ?? {};
   const timezone = String(campaign.timezone || 'UTC');
   const first = nextSendWindow(startAt, timezone, String(settings.send_window_start ?? '09:00'), String(settings.send_window_end ?? '17:00'), (settings.weekdays as number[]) ?? [1, 2, 3, 4, 5]);
 
-  const { data: campaignLeads } = await db
-    .from('campaign_leads')
-    .select('id, lead_id, status')
-    .eq('campaign_id', campaignId)
-    .eq('organization_id', organizationId);
+  const campaignLeads = campaignLeadsResult.data;
   if (!campaignLeads?.length) return { queued: 0 };
 
   const rows = campaignLeads
@@ -225,13 +230,15 @@ export async function seedCampaignExecutions(organizationId: string, campaignId:
       idempotency_key: `campaign:${campaignId}:lead:${cl.lead_id}:step:${initialStep.step_order}`,
     }));
 
+  const updates: Array<PromiseLike<unknown>> = [];
   if (rows.length) {
     const { error: insertError } = await db.from('campaign_executions').upsert(rows, { onConflict: 'idempotency_key', ignoreDuplicates: true });
     if (insertError) throw new Error(`Could not queue campaign: ${insertError.message}`);
-    await db.from('campaign_leads').update({ status: 'active', next_send_at: first.toISOString() }).in('id', campaignLeads.map((c) => c.id)).in('status', ['queued', 'active']);
+    updates.push(db.from('campaign_leads').update({ status: 'active', next_send_at: first.toISOString() }).in('id', campaignLeads.map((c) => c.id)).in('status', ['queued', 'active']));
   }
 
-  await db.from('campaigns').update({ total_leads: campaignLeads.length }).eq('id', campaignId);
+  updates.push(db.from('campaigns').update({ total_leads: campaignLeads.length }).eq('id', campaignId));
+  await Promise.all(updates);
   return { queued: rows.length };
 }
 
@@ -243,14 +250,35 @@ export async function activateScheduledCampaigns() {
     .eq('status', 'scheduled')
     .lte('launch_at', new Date().toISOString())
     .limit(20);
+  const campaigns = due ?? [];
+
+  // Campaigns are independent of each other, so activate them concurrently.
+  // A failure inside one campaign must not stop the others from being activated.
+  const outcomes = await Promise.allSettled(
+    campaigns.map(async (campaign) => {
+      const { error } = await db.from('campaigns').update({ status: 'active', started_at: new Date().toISOString() }).eq('id', campaign.id).eq('status', 'scheduled');
+      if (error) return false;
+      // Steps are created before the seed so the seed reuses them, but the schedule
+      // bookkeeping does not depend on either of them.
+      await Promise.all([
+        (async () => {
+          await ensureCampaignSteps(campaign as CampaignRecord);
+          await seedCampaignExecutions(campaign.organization_id as string, campaign.id as string);
+        })(),
+        db.from('campaign_schedules').update({ status: 'completed' }).eq('campaign_id', campaign.id).eq('status', 'pending'),
+      ]);
+      return true;
+    }),
+  );
+
   let activated = 0;
-  for (const campaign of due ?? []) {
-    const { error } = await db.from('campaigns').update({ status: 'active', started_at: new Date().toISOString() }).eq('id', campaign.id).eq('status', 'scheduled');
-    if (error) continue;
-    await ensureCampaignSteps(campaign as CampaignRecord);
-    await seedCampaignExecutions(campaign.organization_id as string, campaign.id as string);
-    await db.from('campaign_schedules').update({ status: 'completed' }).eq('campaign_id', campaign.id).eq('status', 'pending');
-    activated += 1;
+  for (const outcome of outcomes) {
+    if (outcome.status === 'fulfilled') {
+      if (outcome.value) activated += 1;
+      continue;
+    }
+    // Keep the original contract: the first failure is still surfaced to the caller.
+    throw outcome.reason;
   }
   return activated;
 }
@@ -264,6 +292,31 @@ function classifyReply(text: string): 'interested' | 'not_interested' | 'out_of_
   if (/interested|let'?s talk|book a (call|meeting)|schedule|happy to chat|tell me more|sounds good/.test(lower)) return 'interested';
   if (/\?/.test(text)) return 'question';
   return 'other';
+}
+
+async function createThread(input: {
+  organizationId: string;
+  mailboxId: string | null;
+  leadId: string | null;
+  campaignId: string | null;
+  subject: string;
+  providerThreadId?: string | null;
+}): Promise<Record<string, unknown>> {
+  const db = service();
+  const { data, error } = await db
+    .from('email_threads')
+    .insert({
+      organization_id: input.organizationId,
+      mailbox_id: input.mailboxId,
+      lead_id: input.leadId,
+      campaign_id: input.campaignId,
+      provider_thread_id: input.providerThreadId ?? null,
+      subject: input.subject,
+    })
+    .select('*')
+    .single();
+  if (error || !data) throw new Error(`Could not create thread: ${error?.message ?? 'unknown error'}`);
+  return data;
 }
 
 async function getOrCreateThread(input: {
@@ -296,20 +349,7 @@ async function getOrCreateThread(input: {
       .maybeSingle();
     if (existing) return existing;
   }
-  const { data, error } = await db
-    .from('email_threads')
-    .insert({
-      organization_id: input.organizationId,
-      mailbox_id: input.mailboxId,
-      lead_id: input.leadId,
-      campaign_id: input.campaignId,
-      provider_thread_id: input.providerThreadId ?? null,
-      subject: input.subject,
-    })
-    .select('*')
-    .single();
-  if (error || !data) throw new Error(`Could not create thread: ${error?.message ?? 'unknown error'}`);
-  return data;
+  return createThread(input);
 }
 
 function renderStepContent(step: Record<string, unknown>, template: Record<string, unknown> | null, vars: Record<string, string | null | undefined>) {
@@ -342,17 +382,28 @@ export async function runSendingTick(limit = 25): Promise<SendTickResult> {
     .limit(Math.max(1, Math.min(limit, 100)));
   if (error) throw new Error(`Could not load due executions: ${error.message}`);
 
-  for (const execution of due ?? []) {
-    result.processed += 1;
-    try {
-      const outcome = await sendExecution(execution.id as string);
-      if (outcome === 'sent') result.sent += 1;
+  const executions = due ?? [];
+  result.processed = executions.length;
+
+  // Executions are independent of each other: send them in bounded parallel batches.
+  // One failing execution must never stop the remaining ones.
+  const outcomes: Array<PromiseSettledResult<'sent' | 'skipped'>> = [];
+  const batchSize = 8;
+  for (let index = 0; index < executions.length; index += batchSize) {
+    const batch = executions.slice(index, index + batchSize);
+    const settled = await Promise.allSettled(batch.map((execution) => sendExecution(execution.id as string)));
+    outcomes.push(...settled);
+  }
+
+  for (const outcome of outcomes) {
+    if (outcome.status === 'fulfilled') {
+      if (outcome.value === 'sent') result.sent += 1;
       else result.skipped += 1;
-    } catch (err) {
-      result.failed += 1;
-      const message = err instanceof Error ? err.message : 'Unknown send error';
-      result.errors.push(message.slice(0, 300));
+      continue;
     }
+    result.failed += 1;
+    const message = outcome.reason instanceof Error ? outcome.reason.message : 'Unknown send error';
+    result.errors.push(message.slice(0, 300));
   }
   return result;
 }
@@ -374,8 +425,13 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
     return 'skipped';
   }
 
-  const { data: campaignLead } = await db.from('campaign_leads').select('*').eq('id', execution.campaign_lead_id).maybeSingle();
-  const { data: lead } = await db.from('leads').select('*').eq('id', execution.lead_id).maybeSingle();
+  // The campaign lead and the lead itself are independent reads.
+  const [campaignLeadResult, leadResult] = await Promise.all([
+    db.from('campaign_leads').select('*').eq('id', execution.campaign_lead_id).maybeSingle(),
+    db.from('leads').select('*').eq('id', execution.lead_id).maybeSingle(),
+  ]);
+  const campaignLead = campaignLeadResult.data;
+  const lead = leadResult.data;
   if (!campaignLead || !lead) throw new Error('Lead for this execution no longer exists.');
 
   if (['unsubscribed', 'bounced', 'not_interested', 'replied'].includes(String(lead.status)) || ['replied', 'unsubscribed', 'bounced'].includes(String(campaignLead.status))) {
@@ -412,7 +468,15 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
   if (!claimed) return 'skipped';
 
   try {
-    const { data: settings } = await db.from('campaign_settings').select('*').eq('campaign_id', execution.campaign_id).maybeSingle();
+    // Settings, the current step and the organisation do not depend on each other.
+    const [settingsResult, stepResult, orgResult] = await Promise.all([
+      db.from('campaign_settings').select('*').eq('campaign_id', execution.campaign_id).maybeSingle(),
+      execution.step_id ? db.from('campaign_steps').select('*').eq('id', execution.step_id).maybeSingle() : Promise.resolve({ data: null }),
+      db.from('organizations').select('name').eq('id', execution.organization_id).maybeSingle(),
+    ]);
+    const settings = settingsResult.data;
+    const step = stepResult.data;
+    const org = orgResult.data;
     const timezone = String(campaign.timezone || 'UTC');
     const now = new Date();
     const windowStart = nextSendWindow(now, timezone, String(settings?.send_window_start ?? '09:00'), String(settings?.send_window_end ?? '17:00'), (settings?.weekdays as number[]) ?? [1, 2, 3, 4, 5]);
@@ -421,15 +485,11 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
       return 'skipped';
     }
 
-    const { data: step } = execution.step_id
-      ? await db.from('campaign_steps').select('*').eq('id', execution.step_id).maybeSingle()
-      : { data: null };
+    // The template id can come from the step, so this read depends on the step above.
     const templateId = step?.template_id ?? campaign.template_id ?? null;
     const { data: template } = templateId
       ? await db.from('email_templates').select('*').eq('id', templateId).eq('organization_id', execution.organization_id).maybeSingle()
       : { data: null };
-
-    const { data: org } = await db.from('organizations').select('name').eq('id', execution.organization_id).maybeSingle();
     const vars = {
       ...buildLeadVariables(lead),
       sender_name: String(mailbox.display_name || org?.name || 'ColdFox user'),
@@ -491,10 +551,11 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
       error: null,
     }).eq('id', executionId);
 
-    await db.from('campaign_leads').update({ status: step?.step_type === 'follow_up' ? 'completed' : 'sent', last_sent_at: new Date().toISOString(), current_step: Number(execution.step_order ?? 1) }).eq('id', execution.campaign_lead_id);
-    await db.from('leads').update({ status: lead.status === 'new' ? 'contacted' : lead.status, last_contacted_at: new Date().toISOString() }).eq('id', execution.lead_id);
-
+    // Every write below is independent: run them together, and never let one of
+    // them abort the others.
     await Promise.allSettled([
+      db.from('campaign_leads').update({ status: step?.step_type === 'follow_up' ? 'completed' : 'sent', last_sent_at: new Date().toISOString(), current_step: Number(execution.step_order ?? 1) }).eq('id', execution.campaign_lead_id),
+      db.from('leads').update({ status: lead.status === 'new' ? 'contacted' : lead.status, last_contacted_at: new Date().toISOString() }).eq('id', execution.lead_id),
       db.rpc('increment_campaign_stat', { p_campaign: execution.campaign_id, p_stat: 'emails_sent' }),
       db.rpc('record_mailbox_send', { p_mailbox: campaign.mailbox_id, p_org: execution.organization_id, p_success: true }),
       db.rpc('record_usage', { p_org: execution.organization_id, p_metric: 'emails', p_quantity: 1, p_metadata: { campaign_id: execution.campaign_id } }),
@@ -521,34 +582,40 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
     const message = err instanceof Error ? err.message : 'Unknown send error';
     // A failed provider call is ambiguous: the message may have been accepted.
     // Never auto-retry; a human must confirm before resending.
-    await db.from('campaign_executions').update({
-      status: 'failed',
-      error: message.slice(0, 1000),
-      finished_at: new Date().toISOString(),
-    }).eq('id', executionId);
-    await db.from('campaign_leads').update({ status: 'error', error: message.slice(0, 500), next_send_at: null }).eq('id', execution.campaign_lead_id);
-    // Record the failure against the mailbox, but do not flip its status:
-    // a bad template should not block an otherwise healthy account.
-    await db.from('mailboxes').update({ last_error: message.slice(0, 500) }).eq('id', campaign.mailbox_id);
-    await db.rpc('record_mailbox_send', { p_mailbox: campaign.mailbox_id, p_org: execution.organization_id, p_success: false }).then(() => undefined);
+    await Promise.allSettled([
+      db.from('campaign_executions').update({
+        status: 'failed',
+        error: message.slice(0, 1000),
+        finished_at: new Date().toISOString(),
+      }).eq('id', executionId),
+      db.from('campaign_leads').update({ status: 'error', error: message.slice(0, 500), next_send_at: null }).eq('id', execution.campaign_lead_id),
+      // Record the failure against the mailbox, but do not flip its status:
+      // a bad template should not block an otherwise healthy account.
+      db.from('mailboxes').update({ last_error: message.slice(0, 500) }).eq('id', campaign.mailbox_id),
+      db.rpc('record_mailbox_send', { p_mailbox: campaign.mailbox_id, p_org: execution.organization_id, p_success: false }).then(() => undefined),
+    ]);
     throw err;
   }
 }
 
 async function scheduleNextStep(execution: Record<string, unknown>, campaign: Record<string, unknown>, currentStep: Record<string, unknown> | null) {
   const db = service();
-  const { data: settings } = await db.from('campaign_settings').select('*').eq('campaign_id', campaign.id).maybeSingle();
+  // The campaign settings and the next step are independent reads.
+  const [settingsResult, nextStepResult] = await Promise.all([
+    db.from('campaign_settings').select('*').eq('campaign_id', campaign.id).maybeSingle(),
+    db.from('campaign_steps')
+      .select('*')
+      .eq('campaign_id', campaign.id)
+      .gt('step_order', Number(execution.step_order ?? 1))
+      .order('step_order')
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  const settings = settingsResult.data;
   if (!settings) return;
   if (currentStep && currentStep.step_type === 'follow_up' && Number(currentStep.step_order) >= Number(settings.max_followups ?? 0) + 1) return;
 
-  const { data: nextStep } = await db
-    .from('campaign_steps')
-    .select('*')
-    .eq('campaign_id', campaign.id)
-    .gt('step_order', Number(execution.step_order ?? 1))
-    .order('step_order')
-    .limit(1)
-    .maybeSingle();
+  const nextStep = nextStepResult.data;
   if (!nextStep) return;
 
   const delayMs = (Number(nextStep.delay_days ?? 0) * 86_400 + Number(nextStep.delay_hours ?? 0) * 3_600_000);
@@ -559,21 +626,24 @@ async function scheduleNextStep(execution: Record<string, unknown>, campaign: Re
     String(settings.send_window_end ?? '17:00'),
     (settings.weekdays as number[]) ?? [1, 2, 3, 4, 5],
   );
-  await db.from('campaign_executions').upsert(
-    {
-      organization_id: execution.organization_id,
-      campaign_id: execution.campaign_id,
-      campaign_lead_id: execution.campaign_lead_id,
-      lead_id: execution.lead_id,
-      step_id: nextStep.id,
-      step_order: nextStep.step_order,
-      status: 'queued',
-      scheduled_for: scheduled.toISOString(),
-      idempotency_key: `campaign:${execution.campaign_id}:lead:${execution.lead_id}:step:${nextStep.step_order}`,
-    },
-    { onConflict: 'idempotency_key', ignoreDuplicates: true },
-  );
-  await db.from('campaign_leads').update({ next_send_at: scheduled.toISOString() }).eq('id', execution.campaign_lead_id);
+  // Queuing the next execution and moving the campaign lead forward are independent writes.
+  await Promise.all([
+    db.from('campaign_executions').upsert(
+      {
+        organization_id: execution.organization_id,
+        campaign_id: execution.campaign_id,
+        campaign_lead_id: execution.campaign_lead_id,
+        lead_id: execution.lead_id,
+        step_id: nextStep.id,
+        step_order: nextStep.step_order,
+        status: 'queued',
+        scheduled_for: scheduled.toISOString(),
+        idempotency_key: `campaign:${execution.campaign_id}:lead:${execution.lead_id}:step:${nextStep.step_order}`,
+      },
+      { onConflict: 'idempotency_key', ignoreDuplicates: true },
+    ),
+    db.from('campaign_leads').update({ next_send_at: scheduled.toISOString() }).eq('id', execution.campaign_lead_id),
+  ]);
 }
 
 // ── inbox sync ──────────────────────────────────────────────────
@@ -598,6 +668,37 @@ function gmailBody(payload: Record<string, unknown> | undefined): { text: string
   return { text, html };
 }
 
+async function fetchGmailMessage(token: string, messageId: string): Promise<InboundEmail | null> {
+  const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!res.ok) return null;
+  const msg = (await res.json()) as { id: string; threadId: string; payload?: Record<string, unknown>; internalDate?: string };
+  const headers = ((msg.payload?.headers as { name: string; value: string }[] | undefined) ?? []).reduce<Record<string, string>>((acc, h) => {
+    acc[h.name.toLowerCase()] = h.value;
+    return acc;
+  }, {});
+  const fromMatch = /<([^>]+)>|([^\s]+@[^\s]+)/.exec(headers.from ?? '');
+  const fromEmail = (fromMatch?.[1] || fromMatch?.[2] || '').toLowerCase();
+  if (!fromEmail) return null;
+  const body = gmailBody(msg.payload);
+  return {
+    providerMessageId: msg.id,
+    threadId: msg.threadId,
+    fromEmail,
+    fromName: (headers.from ?? '').replace(/<[^>]+>/, '').replace(/"/g, '').trim() || undefined,
+    to: (headers.to ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+    subject: headers.subject ?? '(no subject)',
+    text: body.text || (body.html ?? '').replace(/<[^>]+>/g, ' '),
+    html: body.html,
+    messageId: headers['message-id'],
+    inReplyTo: headers['in-reply-to'],
+    references: (headers.references ?? '').split(/\s+/).filter(Boolean),
+    receivedAt: new Date(Number(msg.internalDate ?? Date.now())).toISOString(),
+  };
+}
+
 async function fetchGmailMessages(creds: MailboxCredentials): Promise<InboundEmail[]> {
   const token = await getAccessToken(creds);
   const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=25&q=' + encodeURIComponent('in:inbox newer_than:2d'), {
@@ -606,36 +707,18 @@ async function fetchGmailMessages(creds: MailboxCredentials): Promise<InboundEma
   });
   if (!listRes.ok) throw new Error(`Gmail inbox request failed (${listRes.status}).`);
   const list = (await listRes.json()) as { messages?: { id: string; threadId: string }[] };
+  const items = (list.messages ?? []).slice(0, 25);
   const out: InboundEmail[] = [];
-  for (const item of (list.messages ?? []).slice(0, 25)) {
-    const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=full`, {
-      headers: { Authorization: `Bearer ${token}` },
-      signal: AbortSignal.timeout(20_000),
-    });
-    if (!res.ok) continue;
-    const msg = (await res.json()) as { id: string; threadId: string; payload?: Record<string, unknown>; internalDate?: string };
-    const headers = ((msg.payload?.headers as { name: string; value: string }[] | undefined) ?? []).reduce<Record<string, string>>((acc, h) => {
-      acc[h.name.toLowerCase()] = h.value;
-      return acc;
-    }, {});
-    const fromMatch = /<([^>]+)>|([^\s]+@[^\s]+)/.exec(headers.from ?? '');
-    const fromEmail = (fromMatch?.[1] || fromMatch?.[2] || '').toLowerCase();
-    if (!fromEmail) continue;
-    const body = gmailBody(msg.payload);
-    out.push({
-      providerMessageId: msg.id,
-      threadId: msg.threadId,
-      fromEmail,
-      fromName: (headers.from ?? '').replace(/<[^>]+>/, '').replace(/"/g, '').trim() || undefined,
-      to: (headers.to ?? '').split(',').map((s) => s.trim()).filter(Boolean),
-      subject: headers.subject ?? '(no subject)',
-      text: body.text || (body.html ?? '').replace(/<[^>]+>/g, ' '),
-      html: body.html,
-      messageId: headers['message-id'],
-      inReplyTo: headers['in-reply-to'],
-      references: (headers.references ?? '').split(/\s+/).filter(Boolean),
-      receivedAt: new Date(Number(msg.internalDate ?? Date.now())).toISOString(),
-    });
+  // Fetch the message bodies in small parallel batches: 25 sequential requests with a
+  // 20s timeout each can block the worker for minutes.
+  const batchSize = 5;
+  for (let index = 0; index < items.length; index += batchSize) {
+    const batch = items.slice(index, index + batchSize);
+    const settled = await Promise.allSettled(batch.map((item) => fetchGmailMessage(token, item.id)));
+    for (const outcome of settled) {
+      if (outcome.status === 'rejected') throw outcome.reason;
+      if (outcome.value) out.push(outcome.value);
+    }
   }
   return out;
 }
@@ -693,52 +776,77 @@ export async function syncMailbox(mailboxId: string): Promise<{ synced: number; 
   else if (credentials.kind === 'gmail') inbound = await fetchGmailMessages(credentials);
   else inbound = await fetchGraphMessages(credentials);
 
+  const organizationId = mailbox.organization_id as string;
+  const selfAddress = String(mailbox.email_address).toLowerCase();
+  const candidates = inbound.filter((message) => message.fromEmail !== selfAddress);
+
+  // ── batched reads: one round-trip per table for the whole batch ──
+  const seenProviderMessageIds = new Set<string>();
+  const providerMessageIds = [...new Set(candidates.map((message) => message.providerMessageId))];
+  if (providerMessageIds.length) {
+    const { data } = await db.from('email_messages').select('provider_message_id').in('provider_message_id', providerMessageIds);
+    for (const row of data ?? []) seenProviderMessageIds.add(String(row.provider_message_id));
+  }
+
+  const leadsByEmail = new Map<string, Record<string, unknown>>();
+  const senderEmails = [...new Set(candidates.map((message) => message.fromEmail))];
+  if (senderEmails.length) {
+    const { data } = await db.from('leads').select('*').eq('organization_id', organizationId).in('email_normalized', senderEmails).is('deleted_at', null);
+    for (const row of data ?? []) leadsByEmail.set(String(row.email_normalized), row);
+  }
+
+  const leadIds = [...new Set([...leadsByEmail.values()].map((lead) => String(lead.id)))];
+  const threadsByLead = new Map<string, Record<string, unknown>>();
+  if (leadIds.length) {
+    const { data } = await db.from('email_threads').select('*').eq('organization_id', organizationId).in('lead_id', leadIds).order('last_message_at', { ascending: false });
+    for (const row of data ?? []) {
+      const key = String(row.lead_id);
+      if (!threadsByLead.has(key)) threadsByLead.set(key, row);
+    }
+  }
+
+  const providerThreadIds = [...new Set(candidates.map((message) => message.threadId ?? '').filter((id) => Boolean(id)))];
+  const threadsByProvider = new Map<string, Record<string, unknown>>();
+  if (providerThreadIds.length) {
+    const { data } = await db.from('email_threads').select('*').eq('organization_id', organizationId).eq('mailbox_id', mailboxId).in('provider_thread_id', providerThreadIds);
+    for (const row of data ?? []) threadsByProvider.set(String(row.provider_thread_id), row);
+  }
+
   let synced = 0;
   let replies = 0;
-  for (const message of inbound) {
-    if (message.fromEmail === String(mailbox.email_address).toLowerCase()) continue;
-    const { data: existing } = await db.from('email_messages').select('id').eq('provider_message_id', message.providerMessageId).maybeSingle();
-    if (existing) continue;
+  // Local mirrors of the row state the sequential implementation re-read for every
+  // message, so the batched version keeps producing the same values.
+  const unreadByThread = new Map<string, number>();
+  const leadStatusById = new Map<string, string>();
 
-    const { data: lead } = await db
-      .from('leads')
-      .select('*')
-      .eq('organization_id', mailbox.organization_id)
-      .eq('email_normalized', message.fromEmail)
-      .is('deleted_at', null)
-      .maybeSingle();
+  for (const message of candidates) {
+    if (seenProviderMessageIds.has(message.providerMessageId)) continue;
 
-    const { data: outboundThread } = lead
-      ? await db
-          .from('email_threads')
-          .select('*')
-          .eq('organization_id', mailbox.organization_id)
-          .eq('lead_id', lead.id)
-          .order('last_message_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-      : { data: null };
-
-    const thread =
-      outboundThread ??
-      (await getOrCreateThread({
-        organizationId: mailbox.organization_id,
+    const lead = leadsByEmail.get(message.fromEmail) ?? null;
+    const leadId = lead ? String(lead.id) : null;
+    let thread = (leadId ? threadsByLead.get(leadId) : undefined) ?? (message.threadId ? threadsByProvider.get(message.threadId) : undefined) ?? null;
+    if (!thread) {
+      thread = await createThread({
+        organizationId,
         mailboxId,
-        leadId: (lead?.id as string | undefined) ?? null,
+        leadId,
         campaignId: null,
         subject: message.subject,
         providerThreadId: message.threadId ?? null,
-      }));
+      });
+      if (leadId) threadsByLead.set(leadId, thread);
+      if (message.threadId) threadsByProvider.set(message.threadId, thread);
+    }
 
     const classification = classifyReply(message.text);
     const { data: inserted, error } = await db
       .from('email_messages')
       .insert({
-        organization_id: mailbox.organization_id,
+        organization_id: organizationId,
         thread_id: thread.id,
         mailbox_id: mailboxId,
-        lead_id: lead?.id ?? null,
-        campaign_id: thread.campaign_id ?? null,
+        lead_id: (lead?.id as string | null) ?? null,
+        campaign_id: (thread.campaign_id as string | null) ?? null,
         direction: 'inbound',
         from_email: message.fromEmail,
         from_name: message.fromName ?? null,
@@ -757,67 +865,81 @@ export async function syncMailbox(mailboxId: string): Promise<{ synced: number; 
       .single();
     if (error || !inserted) continue;
 
-    await db.from('email_threads').update({ last_message_at: message.receivedAt, unread_count: Number(thread.unread_count ?? 0) + 1, subject: thread.subject ?? message.subject }).eq('id', thread.id);
+    const threadId = String(thread.id);
+    const unreadCount = (unreadByThread.get(threadId) ?? Number((thread.unread_count as number | null) ?? 0)) + 1;
+    unreadByThread.set(threadId, unreadCount);
+    const leadStatus = leadId ? leadStatusById.get(leadId) ?? String(lead!.status) : null;
+
+    const writes: Array<PromiseLike<unknown>> = [
+      db.from('email_threads').update({ last_message_at: message.receivedAt, unread_count: unreadCount, subject: thread.subject ?? message.subject }).eq('id', threadId),
+    ];
+    if (leadId && leadStatus !== 'unsubscribed' && leadStatus !== 'bounced') {
+      writes.push(db.from('leads').update({ status: classification === 'not_interested' ? 'not_interested' : 'replied', next_follow_up_at: null }).eq('id', leadId));
+    }
+    if (leadId) {
+      const threadCampaignId = thread.campaign_id as string | null;
+      if (threadCampaignId) {
+        writes.push(db.from('campaign_leads').update({ status: 'replied', next_send_at: null }).eq('campaign_id', threadCampaignId).eq('lead_id', leadId));
+        writes.push(db.from('campaign_executions').update({ status: 'cancelled', finished_at: new Date().toISOString() }).eq('campaign_id', threadCampaignId).eq('lead_id', leadId).in('status', ['queued', 'processing']));
+        writes.push(db.rpc('increment_campaign_stat', { p_campaign: threadCampaignId, p_stat: 'replies' }));
+        writes.push(db.from('campaign_events').insert({ organization_id: organizationId, campaign_id: threadCampaignId, lead_id: leadId, event_type: 'replied', metadata: { classification } }));
+      }
+      writes.push(db.from('email_replies').insert({ organization_id: organizationId, thread_id: threadId, message_id: inserted.id, lead_id: leadId, campaign_id: thread.campaign_id, classification }));
+      writes.push(db.from('email_events').insert({ organization_id: organizationId, campaign_id: thread.campaign_id, lead_id: leadId, event_type: 'replied', metadata: { classification } }));
+      const notifyUser = (lead!.owner_id as string | null) ?? (mailbox.user_id as string | null);
+      if (notifyUser) {
+        // notifications are best-effort
+        writes.push(
+          db
+            .from('notifications')
+            .insert({
+              organization_id: organizationId,
+              user_id: notifyUser,
+              notification_type: 'reply',
+              title: `New reply from ${String((lead!.first_name as string | null) ?? (lead!.email as string))}`,
+              body: message.subject,
+              link: '/app/inbox',
+            })
+            .then(() => undefined, () => undefined),
+        );
+      }
+    }
+    // Every write for this message is independent: run them together, and a failing
+    // write must never abort the rest of the message.
+    await Promise.allSettled(writes);
     synced += 1;
 
-    if (lead) {
-      if (lead.status !== 'unsubscribed' && lead.status !== 'bounced') {
-        await db.from('leads').update({ status: classification === 'not_interested' ? 'not_interested' : 'replied', next_follow_up_at: null }).eq('id', lead.id);
-      }
-      if (thread.campaign_id) {
-        await db.from('campaign_leads').update({ status: 'replied', next_send_at: null }).eq('campaign_id', thread.campaign_id).eq('lead_id', lead.id);
-        await db.from('campaign_executions').update({ status: 'cancelled', finished_at: new Date().toISOString() }).eq('campaign_id', thread.campaign_id).eq('lead_id', lead.id).in('status', ['queued', 'processing']);
-        await db.rpc('increment_campaign_stat', { p_campaign: thread.campaign_id, p_stat: 'replies' });
-        await db.from('campaign_events').insert({ organization_id: mailbox.organization_id, campaign_id: thread.campaign_id, lead_id: lead.id, event_type: 'replied', metadata: { classification } });
-      }
-      await db.from('email_replies').insert({
-        organization_id: mailbox.organization_id,
-        thread_id: thread.id,
-        message_id: inserted.id,
-        lead_id: lead.id,
-        campaign_id: thread.campaign_id,
-        classification,
-      });
-      await db.from('email_events').insert({ organization_id: mailbox.organization_id, campaign_id: thread.campaign_id, lead_id: lead.id, event_type: 'replied', metadata: { classification } });
-      const notifyUser = (lead.owner_id as string | null) ?? (mailbox.user_id as string | null);
-      if (notifyUser) {
-        try {
-          await db.from('notifications').insert({
-            organization_id: mailbox.organization_id,
-            user_id: notifyUser,
-            notification_type: 'reply',
-            title: `New reply from ${lead.first_name ?? lead.email}`,
-            body: message.subject,
-            link: '/app/inbox',
-          });
-        } catch {
-          // notifications are best-effort
-        }
-      }
+    if (leadId) {
       replies += 1;
-
       if (classification === 'unsubscribe') {
-        await db.from('suppression_entries').upsert(
-          {
-            organization_id: mailbox.organization_id,
-            email: lead.email,
-            email_normalized: String(lead.email).toLowerCase().trim(),
-            reason_key: 'unsubscribed',
-            source: 'reply',
-            notes: 'Recipient asked to stop emailing in a reply.',
-          },
-          { onConflict: 'organization_id,email_normalized' },
-        );
-        await db.from('leads').update({ status: 'unsubscribed' }).eq('id', lead.id);
+        await Promise.allSettled([
+          db.from('suppression_entries').upsert(
+            {
+              organization_id: organizationId,
+              email: lead!.email as string,
+              email_normalized: String(lead!.email).toLowerCase().trim(),
+              reason_key: 'unsubscribed',
+              source: 'reply',
+              notes: 'Recipient asked to stop emailing in a reply.',
+            },
+            { onConflict: 'organization_id,email_normalized' },
+          ),
+          db.from('leads').update({ status: 'unsubscribed' }).eq('id', leadId),
+        ]);
+        leadStatusById.set(leadId, 'unsubscribed');
+      } else if (leadStatus !== 'unsubscribed' && leadStatus !== 'bounced') {
+        leadStatusById.set(leadId, classification === 'not_interested' ? 'not_interested' : 'replied');
       }
     }
   }
 
-  await db.from('mailboxes').update({ status: 'connected', last_sync_at: new Date().toISOString(), last_error: null }).eq('id', mailboxId);
-  await db.from('mailbox_sync_state').upsert(
-    { mailbox_id: mailboxId, organization_id: mailbox.organization_id, last_sync_at: new Date().toISOString(), last_error: null },
-    { onConflict: 'mailbox_id' },
-  );
+  await Promise.all([
+    db.from('mailboxes').update({ status: 'connected', last_sync_at: new Date().toISOString(), last_error: null }).eq('id', mailboxId),
+    db.from('mailbox_sync_state').upsert(
+      { mailbox_id: mailboxId, organization_id: organizationId, last_sync_at: new Date().toISOString(), last_error: null },
+      { onConflict: 'mailbox_id' },
+    ),
+  ]);
   return { synced, replies };
 }
 
@@ -831,15 +953,20 @@ export async function runWorkerTick(limit = 25) {
   const summary = { activated, ...sent, mailboxesSynced: 0, syncErrors: [] as string[] };
 
   const { data: mailboxes } = await db.from('mailboxes').select('id').in('status', ['connected', 'syncing']).limit(5);
-  for (const mailbox of mailboxes ?? []) {
-    try {
-      await syncMailbox(mailbox.id as string);
+  const targets = mailboxes ?? [];
+  // Mailboxes are independent of each other: sync them concurrently instead of
+  // waiting for each mailbox to finish before starting the next one.
+  const outcomes = await Promise.allSettled(targets.map((mailbox) => syncMailbox(mailbox.id as string)));
+  const errorWrites: Array<PromiseLike<unknown>> = [];
+  outcomes.forEach((outcome, index) => {
+    if (outcome.status === 'fulfilled') {
       summary.mailboxesSynced += 1;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Sync failed';
-      summary.syncErrors.push(message.slice(0, 200));
-      await db.from('mailboxes').update({ last_error: message.slice(0, 500) }).eq('id', mailbox.id);
+      return;
     }
-  }
+    const message = outcome.reason instanceof Error ? outcome.reason.message : 'Sync failed';
+    summary.syncErrors.push(message.slice(0, 200));
+    errorWrites.push(db.from('mailboxes').update({ last_error: message.slice(0, 500) }).eq('id', targets[index].id));
+  });
+  await Promise.allSettled(errorWrites);
   return summary;
 }

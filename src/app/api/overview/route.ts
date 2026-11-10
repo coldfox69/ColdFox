@@ -1,18 +1,30 @@
 import { withApi, ok, requireApiSession, ApiError } from '@/lib/http';
+import { countByValue } from '@/lib/data/app';
+import { CAMPAIGN_STATUSES } from '@/lib/validation';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
+
+/** Upper bound for the campaign rows used to aggregate the sending counters. */
+const CAMPAIGN_LIMIT = 1000;
+
+/** Upper bound for the email event rows used to build the chart. */
+const EVENT_LIMIT = 5000;
 
 export async function GET() {
   return withApi(async () => {
     const session = await requireApiSession();
     const db = createServiceClient();
     const since = new Date(Date.now() - 56 * 86_400_000).toISOString();
-    const [leads, campaigns, mailboxes, events] = await Promise.all([
-      db.from('leads').select('status').eq('organization_id', session.organizationId).is('deleted_at', null).limit(50000),
-      db.from('campaigns').select('*, mailbox:mailboxes(email_address)').eq('organization_id', session.organizationId).limit(1000),
-      db.from('mailboxes').select('*').eq('organization_id', session.organizationId).limit(200),
-      db.from('email_events').select('event_type, occurred_at').eq('organization_id', session.organizationId).gte('occurred_at', since).limit(20000),
+    const [leads, campaigns, campaignStatuses, mailboxes, events] = await Promise.all([
+      // Exact head count: the total is all we need, no lead rows are transferred.
+      db.from('leads').select('id', { count: 'exact', head: true }).eq('organization_id', session.organizationId).is('deleted_at', null),
+      db.from('campaigns').select('id, name, description, status, total_leads, emails_sent, replies, bounces, unsubscribes, created_at, launch_at, mailbox_id, template_id, mailbox:mailboxes(email_address)').eq('organization_id', session.organizationId).order('created_at', { ascending: false }).limit(CAMPAIGN_LIMIT),
+      // Exact per status counts, no campaign rows are transferred.
+      countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES, (query) => query.eq('organization_id', session.organizationId)),
+      db.from('mailboxes').select('id, email_address, display_name, provider, status, daily_limit, sent_today, warmup_enabled, reputation, last_error, created_at').eq('organization_id', session.organizationId).limit(200),
+      // Bounded sample of the 56 day window, newest first.
+      db.from('email_events').select('event_type, occurred_at').eq('organization_id', session.organizationId).gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(EVENT_LIMIT),
     ]);
     if (leads.error || campaigns.error || mailboxes.error || events.error) throw new ApiError(500, 'Could not load overview.');
 
@@ -25,8 +37,8 @@ export async function GET() {
 
     return ok({
       totals: {
-        totalLeads: leads.data?.length ?? 0,
-        activeCampaigns: campaignRows.filter((row) => String(row.status) === 'active').length,
+        totalLeads: leads.count ?? 0,
+        activeCampaigns: campaignStatuses.active ?? 0,
         emailsSent: campaignRows.reduce((sum, row) => sum + Number(row.emails_sent ?? 0), 0),
         delivered: eventCounts.delivered ?? 0,
         replied: campaignRows.reduce((sum, row) => sum + Number(row.replies ?? 0), 0),

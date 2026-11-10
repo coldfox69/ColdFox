@@ -113,3 +113,87 @@ export async function recordAiUsage(input: {
     }),
   ]);
 }
+
+/**
+ * Streaming variant of the Groq call. Yields text deltas as the model
+ * produces them so the client can render the response token by token.
+ */
+export async function* callGroqStream(options: {
+  system: string;
+  user: string;
+  temperature?: number;
+  maxTokens?: number;
+  model?: string;
+  signal?: AbortSignal;
+}): AsyncGenerator<string, AiUsage, void> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new ApiError(503, 'AI is not configured on this deployment. Add GROQ_API_KEY to enable it.', 'ai_not_configured');
+  }
+  const model = options.model || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+
+  const response = await fetch(GROQ_ENDPOINT, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      temperature: options.temperature ?? 0.5,
+      max_tokens: options.maxTokens ?? 1400,
+      response_format: { type: 'json_object' },
+      stream: true,
+      messages: [
+        { role: 'system', content: options.system },
+        { role: 'user', content: options.user },
+      ],
+    }),
+    signal: options.signal ?? AbortSignal.timeout(60_000),
+  });
+
+  if (!response.ok || !response.body) {
+    const text = await response.text().catch(() => '');
+    console.error('[groq] stream request failed', response.status, text.slice(0, 400));
+    if (response.status === 429) throw new ApiError(429, 'The AI service is busy. Please try again in a moment.', 'ai_rate_limited');
+    throw new ApiError(502, 'The AI service could not complete this request.', 'ai_upstream_error');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let tokensIn = 0;
+  let tokensOut = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, newlineIndex).trim();
+        buffer = buffer.slice(newlineIndex + 1);
+        if (!line.startsWith('data:')) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(payload) as {
+            choices?: { delta?: { content?: string } }[];
+            usage?: { prompt_tokens?: number; completion_tokens?: number };
+          };
+          if (parsed.usage) {
+            tokensIn = parsed.usage.prompt_tokens ?? tokensIn;
+            tokensOut = parsed.usage.completion_tokens ?? tokensOut;
+          }
+          const delta = parsed.choices?.[0]?.delta?.content;
+          if (delta) yield delta;
+        } catch {
+          // Ignore partial or non-JSON keep-alive lines.
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return { model, tokensIn, tokensOut } satisfies AiUsage;
+}

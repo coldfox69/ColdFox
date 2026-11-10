@@ -3,6 +3,9 @@ import { createServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
 
+/** Upper bound for a message list. */
+const MESSAGE_LIMIT = 500;
+
 export async function GET(request: Request) {
   return withApi(async () => {
     const session = await requireApiSession();
@@ -23,7 +26,8 @@ export async function GET(request: Request) {
         .select('*')
         .eq('thread_id', threadId)
         .eq('organization_id', session.organizationId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .limit(MESSAGE_LIMIT);
       return ok({ thread, messages: messages ?? [] });
     }
 
@@ -45,7 +49,7 @@ export async function GET(request: Request) {
           .eq('organization_id', session.organizationId)
           .in('thread_id', ids)
           .order('created_at', { ascending: false })
-          .limit(2000)
+          .limit(MESSAGE_LIMIT)
       : { data: [] as Record<string, unknown>[] };
 
     const latest = new Map<string, Record<string, unknown>>();

@@ -1,7 +1,12 @@
 import { withApi, ok, requirePlatformAdmin, ApiError, writeAudit } from '@/lib/http';
+import { countByValue } from '@/lib/data/app';
+import { CAMPAIGN_STATUSES, JOB_STATUSES, MAILBOX_STATUSES } from '@/lib/validation';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
+
+/** Upper bound for a table style admin module. */
+const TABLE_LIMIT = 200;
 
 const PERMISSIONS: Record<string, string> = {
   users: 'users.view',
@@ -55,12 +60,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ mod
         );
       }
       case 'organizations': {
-        const { data, error } = await db.from('organizations').select('*, plan:subscription_plans(name)').order('created_at', { ascending: false }).limit(500);
+        const { data, error } = await db.from('organizations').select('*, plan:subscription_plans(name)').order('created_at', { ascending: false }).limit(TABLE_LIMIT);
         if (error) throw new ApiError(500, 'Could not load organizations.');
         return ok(data ?? []);
       }
       case 'subscriptions': {
-        const { data, error } = await db.from('subscriptions').select('*, organization:organizations(name, slug)').order('created_at', { ascending: false }).limit(500);
+        const { data, error } = await db.from('subscriptions').select('*, organization:organizations(name, slug)').order('created_at', { ascending: false }).limit(TABLE_LIMIT);
         if (error) throw new ApiError(500, 'Could not load subscriptions.');
         return ok(data ?? []);
       }
@@ -69,31 +74,31 @@ export async function GET(_request: Request, { params }: { params: Promise<{ mod
         return ok(data ?? []);
       }
       case 'campaigns': {
-        const { data } = await db.from('campaigns').select('id, name, status, total_leads, emails_sent, replies, bounces, created_at, organization:organizations(name)').order('created_at', { ascending: false }).limit(500);
+        const { data } = await db.from('campaigns').select('id, name, status, total_leads, emails_sent, replies, bounces, created_at, organization:organizations(name)').order('created_at', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'mailboxes': {
-        const { data } = await db.from('mailboxes').select('id, email_address, provider, status, daily_limit, sent_today, reputation, last_sync_at, last_error, created_at, organization:organizations(name)').order('created_at', { ascending: false }).limit(500);
+        const { data } = await db.from('mailboxes').select('id, email_address, provider, status, daily_limit, sent_today, reputation, last_sync_at, last_error, created_at, organization:organizations(name)').order('created_at', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'email-activity': {
-        const { data } = await db.from('email_events').select('*').order('occurred_at', { ascending: false }).limit(500);
+        const { data } = await db.from('email_events').select('*').order('occurred_at', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'ai-usage': {
-        const { data } = await db.from('ai_usage_records').select('*, organization:organizations(name)').order('created_at', { ascending: false }).limit(500);
+        const { data } = await db.from('ai_usage_records').select('*, organization:organizations(name)').order('created_at', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'api-usage': {
-        const { data } = await db.from('rate_limits').select('*').order('window_start', { ascending: false }).limit(500);
+        const { data } = await db.from('rate_limits').select('*').order('window_start', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'tickets': {
-        const { data } = await db.from('support_tickets').select('*, organization:organizations(name)').order('created_at', { ascending: false }).limit(500);
+        const { data } = await db.from('support_tickets').select('*, organization:organizations(name)').order('created_at', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'announcements': {
-        const { data } = await db.from('announcements').select('*').order('created_at', { ascending: false }).limit(200);
+        const { data } = await db.from('announcements').select('*').order('created_at', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'feature-flags': {
@@ -101,24 +106,18 @@ export async function GET(_request: Request, { params }: { params: Promise<{ mod
         return ok(data ?? []);
       }
       case 'system-health': {
-        const [jobs, errors, mailboxes, campaigns] = await Promise.all([
-          db.from('background_jobs').select('status').limit(5000),
+        // Exact per status counts with head requests: no row payloads are
+        // transferred for the platform wide health breakdown.
+        const [jobs, mailboxes, campaigns, errors] = await Promise.all([
+          countByValue(db, 'background_jobs', 'status', JOB_STATUSES),
+          countByValue(db, 'mailboxes', 'status', MAILBOX_STATUSES),
+          countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES),
           db.from('error_logs').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 86_400_000).toISOString()),
-          db.from('mailboxes').select('status').limit(5000),
-          db.from('campaigns').select('status').limit(5000),
         ]);
-        const group = (rows: { status: string }[] | null, key: string) => {
-          const out: Record<string, number> = {};
-          for (const row of rows ?? []) {
-            const value = String((row as Record<string, unknown>)[key]);
-            out[value] = (out[value] ?? 0) + 1;
-          }
-          return out;
-        };
         return ok({
-          jobs: group(jobs.data as { status: string }[] | null, 'status'),
-          mailboxes: group(mailboxes.data as { status: string }[] | null, 'status'),
-          campaigns: group(campaigns.data as { status: string }[] | null, 'status'),
+          jobs,
+          mailboxes,
+          campaigns,
           errorsLast24h: errors.count ?? 0,
           integrations: {
             supabase: true,
@@ -131,32 +130,32 @@ export async function GET(_request: Request, { params }: { params: Promise<{ mod
         });
       }
       case 'jobs': {
-        const { data } = await db.from('background_jobs').select('*').order('created_at', { ascending: false }).limit(500);
+        const { data } = await db.from('background_jobs').select('*').order('created_at', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'errors': {
-        const { data } = await db.from('error_logs').select('id, level, message, context, created_at').order('created_at', { ascending: false }).limit(500);
+        const { data } = await db.from('error_logs').select('id, level, message, context, created_at').order('created_at', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'audit': {
-        const { data } = await db.from('audit_logs').select('id, action, entity_type, entity_id, actor_email, ip_hash, metadata, created_at, organization:organizations(name)').order('created_at', { ascending: false }).limit(500);
+        const { data } = await db.from('audit_logs').select('id, action, entity_type, entity_id, actor_email, ip_hash, metadata, created_at, organization:organizations(name)').order('created_at', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'roles': {
         const [roles, admins] = await Promise.all([
           db.from('admin_roles').select('*').order('key'),
-          db.from('platform_admins').select('user_id, role, granted_at').limit(200),
+          db.from('platform_admins').select('user_id, role, granted_at').limit(TABLE_LIMIT),
         ]);
         return ok({ roles: roles.data ?? [], admins: admins.data ?? [] });
       }
       case 'webhooks': {
-        const { data } = await db.from('webhook_events').select('id, provider, event_id, signature_valid, processed_at, error, received_at').order('received_at', { ascending: false }).limit(500);
+        const { data } = await db.from('webhook_events').select('id, provider, event_id, signature_valid, processed_at, error, received_at').order('received_at', { ascending: false }).limit(TABLE_LIMIT);
         return ok(data ?? []);
       }
       case 'abuse': {
         const [complaints, bounces] = await Promise.all([
-          db.from('email_complaints').select('*').order('occurred_at', { ascending: false }).limit(200),
-          db.from('email_bounces').select('*').order('occurred_at', { ascending: false }).limit(200),
+          db.from('email_complaints').select('*').order('occurred_at', { ascending: false }).limit(TABLE_LIMIT),
+          db.from('email_bounces').select('*').order('occurred_at', { ascending: false }).limit(TABLE_LIMIT),
         ]);
         return ok({ complaints: complaints.data ?? [], bounces: bounces.data ?? [] });
       }

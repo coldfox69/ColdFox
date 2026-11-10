@@ -23,6 +23,27 @@ export const LEAD_STATUSES = [
 ] as const;
 export const leadStatusSchema = z.enum(LEAD_STATUSES);
 
+/**
+ * Status values allowed by the database (see supabase/migrations). They are the
+ * finite set used to build exact per-status breakdowns with count queries
+ * instead of pulling whole columns into memory.
+ */
+export const CAMPAIGN_STATUSES = [
+  'draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled',
+] as const;
+export const MAILBOX_STATUSES = [
+  'connected', 'error', 'syncing', 'disconnected',
+] as const;
+export const JOB_STATUSES = [
+  'queued', 'processing', 'completed', 'failed', 'cancelled',
+] as const;
+export const TICKET_STATUSES = [
+  'open', 'in_progress', 'waiting', 'resolved', 'closed',
+] as const;
+export const EXECUTION_STATUSES = [
+  'running', 'waiting', 'completed', 'failed', 'stopped', 'cancelled',
+] as const;
+
 export const leadInputSchema = z.object({
   first_name: z.string().trim().max(80).optional().nullable(),
   last_name: z.string().trim().max(80).optional().nullable(),
@@ -48,11 +69,21 @@ export const leadUpdateSchema = leadInputSchema.partial().extend({
   email: emailSchema.optional(),
 });
 
+/**
+ * Shared pagination parameters for list endpoints.
+ * `page` is 1-based, `pageSize` defaults to 50 rows and is capped at 200 so a
+ * single request can never pull an unbounded result set.
+ */
+export const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).max(10000).optional().default(1),
+  pageSize: z.coerce.number().int().min(1).max(200).optional().default(50),
+});
+
 export const leadListQuerySchema = z.object({
   q: z.string().trim().max(120).optional().default(''),
   status: z.union([leadStatusSchema, z.literal('all')]).optional().default('all'),
   tag: z.string().trim().max(40).optional(),
-  page: z.coerce.number().int().min(1).max(10000).optional().default(1),
+  page: paginationSchema.shape.page,
   pageSize: z.coerce.number().int().min(1).max(100).optional().default(25),
   sort: z.enum(['created_at', 'name', 'company_name', 'last_contacted_at']).optional().default('created_at'),
   dir: z.enum(['asc', 'desc']).optional().default('desc'),
@@ -118,6 +149,8 @@ export const aiEmailRequestSchema = z.object({
   tone: z.enum(['professional', 'friendly', 'direct', 'consultative', 'formal']).default('professional'),
   subject: z.string().trim().max(300).optional(),
   body: z.string().trim().max(20000).optional(),
+  /** Stream the answer token by token instead of waiting for the full reply. */
+  stream: z.boolean().optional().default(false),
   lead: z
     .object({
       first_name: z.string().max(80).optional(),

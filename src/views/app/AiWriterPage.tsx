@@ -5,7 +5,7 @@ import { Send, Sparkles, Copy, Save, Wand2, ShieldCheck, AlertTriangle, CheckCir
 import { PageHeader } from '@/components/shared/PageHeader';
 import { useToast } from '@/components/shared/ToastProvider';
 import { cn } from '@/lib/utils';
-import { apiFetch, errorMessage } from '@/lib/client/api';
+import { apiFetch, apiStream, errorMessage, extractPartialJsonString } from '@/lib/client/api';
 import type { TemplateVM } from '@/lib/view-models';
 
 type Tone = 'professional' | 'friendly' | 'direct' | 'consultative' | 'formal';
@@ -59,21 +59,41 @@ export default function AiWriterPage() {
     if (!prompt) return;
     setBusy(true);
     setError('');
+    setGenerating(true);
     try {
       setMessages((current) => [
         ...current,
         { id: current.length, role: 'user', text: prompt },
         { id: current.length + 1, role: 'assistant', text: 'Generating your draft with Groq…' },
       ]);
-      const result = await apiFetch<AiEmailResult>('/api/ai/email', {
-        method: 'POST',
-        body: JSON.stringify({
-          mode: 'generate',
-          prompt,
-          tone,
-          sender: { name: '' },
-        }),
-      });
+
+      // Streamed so the draft appears token by token instead of after the
+      // whole generation finishes.
+      let raw = '';
+      let streamedSubject = '';
+      let streamedBody = '';
+      let final: AiEmailResult | null = null;
+
+      await apiStream<{ type: string; text?: string; data?: AiEmailResult; error?: string }>(
+        '/api/ai/email',
+        { mode: 'generate', prompt, tone, sender: { name: '' }, stream: true },
+        (event) => {
+          if (event.type === 'delta' && typeof event.text === 'string') {
+            raw += event.text;
+            streamedSubject = extractPartialJsonString(raw, 'subject');
+            streamedBody = extractPartialJsonString(raw, 'body');
+            if (streamedSubject) setSubject(streamedSubject);
+            if (streamedBody) setBody(streamedBody);
+          } else if (event.type === 'done' && event.data) {
+            final = event.data;
+          } else if (event.type === 'error') {
+            throw new Error(event.error || 'The AI request failed.');
+          }
+        },
+      );
+
+      if (!final) throw new Error('The AI did not return a complete draft. Please retry.');
+      const result = final as AiEmailResult;
       setDraft(result);
       setSubject(result.subject);
       setBody(result.body);
@@ -86,6 +106,7 @@ export default function AiWriterPage() {
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
+      setGenerating(false);
       setBusy(false);
     }
   };

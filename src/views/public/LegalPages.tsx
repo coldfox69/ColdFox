@@ -1,4 +1,5 @@
 import { PublicNavbar, PublicFooter } from '@/components/layout/PublicLayout';
+import Link from 'next/link';
 import { Check } from 'lucide-react';
 
 function PolicySection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -142,7 +143,7 @@ export function UnsubscribePage() {
         <p className="mt-3 text-[14px] leading-[1.7] text-muted-foreground">
           To stop emails from a ColdFox user, open the unsubscribe link at the bottom of their email. That link processes your request directly.
         </p>
-        <a href="/" className="mt-6 inline-block text-[13px] text-accent-foreground hover:underline">Return to ColdFox</a>
+        <Link href="/" className="mt-6 inline-block text-[13px] text-accent-foreground hover:underline">Return to ColdFox</Link>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { withApi, ok, requireApiSession, enforceRateLimit, ApiError, assertRole,
 import { parseSpreadsheet } from '@/lib/import/spreadsheet';
 import { createServiceClient } from '@/lib/supabase/service';
 import { CRM_FIELDS } from '@/lib/ai/columns';
-import { syncLeadTags } from '@/lib/leads';
+import { syncLeadTagsBulk } from '@/lib/leads';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -104,17 +104,45 @@ export async function POST(request: Request) {
     }
 
     const createdIds: string[] = [];
+    const leadEmailById = new Map<string, string>();
     for (let i = 0; i < candidates.length; i += 400) {
       const chunk = candidates.slice(i, i + 400);
-      const { data, error } = await db.from('leads').insert(chunk).select('id');
+      const { data, error } = await db.from('leads').insert(chunk).select('id, email_normalized');
       if (!error && data) {
-        createdIds.push(...data.map((r) => r.id as string));
+        for (const row of data) {
+          const id = row.id as string;
+          createdIds.push(id);
+          leadEmailById.set(id, String(row.email_normalized));
+        }
+        continue;
+      }
+      // Retry the chunk as one bulk insert and read the ids back afterwards.
+      const bulk = await db.from('leads').insert(chunk);
+      if (!bulk.error) {
+        const emails = chunk.map((row) => String(row.email));
+        for (let j = 0; j < emails.length; j += 100) {
+          const { data: inserted } = await db
+            .from('leads')
+            .select('id, email_normalized')
+            .eq('organization_id', session.organizationId)
+            .is('deleted_at', null)
+            .in('email_normalized', emails.slice(j, j + 100));
+          for (const row of inserted ?? []) {
+            const id = row.id as string;
+            createdIds.push(id);
+            leadEmailById.set(id, String(row.email_normalized));
+          }
+        }
         continue;
       }
       // A race or malformed row should not abort the whole import.
       for (const single of chunk) {
-        const { data: one } = await db.from('leads').insert(single).select('id').maybeSingle();
-        if (one) createdIds.push(one.id as string);
+        const { data: one } = await db.from('leads').insert(single).select('id, email_normalized').maybeSingle();
+        if (one) {
+          const id = one.id as string;
+          createdIds.push(id);
+          leadEmailById.set(id, String(one.email_normalized));
+        }
       }
     }
 
@@ -127,11 +155,12 @@ export async function POST(request: Request) {
         const raw = String(row[tagIdx] ?? '').trim();
         if (email && raw) tagByEmail.set(email, raw.split(/[;,|]/).map((t) => t.trim()).filter(Boolean).slice(0, 10));
       }
-      const { data: inserted } = await db.from('leads').select('id, email_normalized').eq('organization_id', session.organizationId).in('id', createdIds);
-      for (const lead of inserted ?? []) {
-        const tags = tagByEmail.get(String(lead.email_normalized));
-        if (tags?.length) await syncLeadTags(db, session.organizationId, lead.id as string, tags);
+      const assignments = new Map<string, string[]>();
+      for (const [leadId, email] of leadEmailById) {
+        const tags = tagByEmail.get(email);
+        if (tags?.length) assignments.set(leadId, tags);
       }
+      await syncLeadTagsBulk(db, session.organizationId, assignments);
     }
 
     if (createdIds.length) {

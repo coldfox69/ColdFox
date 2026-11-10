@@ -8,6 +8,8 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { cn } from '@/lib/utils';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useToast } from '@/components/shared/ToastProvider';
+import { useDebouncedValue } from '@/hooks/use-debounce';
+
 
 export interface DeliverabilityData {
   domains: Array<{
@@ -42,9 +44,10 @@ const statusVariant: Record<string, 'success' | 'warning' | 'danger' | 'muted'> 
 export default function DeliverabilityPage({ data }: { data: DeliverabilityData }) {
   const toast = useToast();
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 250);
 
   const filtered = data.domains.filter(
-    (d) => !query || d.domain.toLowerCase().includes(query.toLowerCase()),
+    (d) => !debouncedQuery || d.domain.toLowerCase().includes(debouncedQuery.toLowerCase()),
   );
 
   const checkDomain = async (domain: (typeof filtered)[number]) => {

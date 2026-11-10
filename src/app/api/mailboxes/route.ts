@@ -1,26 +1,29 @@
-import { withApi, ok, parseBody, requireApiSession, assertRole, ApiError, enforceRateLimit, writeAudit } from '@/lib/http';
-import { smtpMailboxSchema } from '@/lib/validation';
+import { withApi, ok, parseBody, parseQuery, requireApiSession, assertRole, ApiError, enforceRateLimit, writeAudit } from '@/lib/http';
+import { smtpMailboxSchema, paginationSchema } from '@/lib/validation';
 import { createServiceClient } from '@/lib/supabase/service';
 import { saveMailboxCredentials } from '@/lib/email/engine';
 import { testMailboxConnection } from '@/lib/email/providers';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   return withApi(async () => {
     const session = await requireApiSession();
+    const { page, pageSize } = parseQuery(request, paginationSchema);
     const db = createServiceClient();
-    const { data, error } = await db
+    const from = (page - 1) * pageSize;
+    const { data, error, count } = await db
       .from('mailboxes')
-      .select('id, email_address, display_name, provider, status, daily_limit, sent_today, warmup_enabled, reputation, last_sync_at, last_error, is_default, created_at')
+      .select('id, email_address, display_name, provider, status, daily_limit, sent_today, warmup_enabled, reputation, last_sync_at, last_error, is_default, created_at', { count: 'exact' })
       .eq('organization_id', session.organizationId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, from + pageSize - 1);
     if (error) throw new ApiError(500, 'Could not load mailboxes.');
     const configured = {
       gmail: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
       outlook: Boolean(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET),
     };
-    return ok({ mailboxes: data ?? [], providers: configured });
+    return ok({ mailboxes: data ?? [], providers: configured, page, pageSize, total: count ?? 0 });
   });
 }
 

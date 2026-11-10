@@ -1,6 +1,9 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { cacheRemember } from '@/lib/cache';
 import { tagsForLeads } from '@/lib/leads';
+import type { PostgrestFilterBuilder, SupabaseClient } from '@supabase/supabase-js';
+import { CAMPAIGN_STATUSES, EXECUTION_STATUSES } from '@/lib/validation';
 import {
   formatDate,
   formatDateTime,
@@ -23,6 +26,55 @@ import {
 } from '@/lib/view-models';
 
 type Row = Record<string, unknown>;
+
+/** PostgREST builder used by the shared count helpers. */
+type CountQuery = PostgrestFilterBuilder<any, any, any, any>;
+
+/** Upper bound for the message lists rendered by the inbox. */
+const INBOX_MESSAGE_LIMIT = 500;
+
+/** Upper bound for the org scoped list loaders. */
+const LIST_LIMIT = 200;
+
+/** Upper bound for the campaign rows used to aggregate the sending counters. */
+const CAMPAIGN_SAMPLE_LIMIT = 1000;
+
+/**
+ * Upper bound for the email event rows used to build the activity chart.
+ * The window is queried newest first so the most recent 56 days are kept.
+ */
+const EVENT_SAMPLE_LIMIT = 5000;
+
+/** Upper bound for the support messages loaded with the ticket list. */
+const SUPPORT_MESSAGE_LIMIT = 500;
+
+/**
+ * Counts the rows of every value in `values` for the given `column`.
+ *
+ * `head: true` makes PostgREST return the row count in a response header, so
+ * no row payload is transferred at all. Counting this way keeps breakdowns over
+ * large tables (leads, campaigns, executions) cheap instead of pulling tens of
+ * thousands of rows into memory just to count them.
+ */
+export async function countByValue(
+  db: SupabaseClient,
+  table: string,
+  column: string,
+  values: readonly string[],
+  scope?: (query: CountQuery) => CountQuery,
+): Promise<Record<string, number>> {
+  const entries = await Promise.all(
+    values.map(async (value) => {
+      let query = db.from(table).select('id', { count: 'exact', head: true }).eq(column, value);
+      if (scope) query = scope(query);
+      const { count } = await query;
+      return [value, count ?? 0] as const;
+    }),
+  );
+  const counts: Record<string, number> = {};
+  for (const [value, count] of entries) if (count > 0) counts[value] = count;
+  return counts;
+}
 
 const str = (value: unknown, fallback = ''): string => (value === null || value === undefined ? fallback : String(value));
 const num = (value: unknown): number => (Number.isFinite(Number(value)) ? Number(value) : 0);
@@ -121,10 +173,10 @@ export async function getCampaigns(orgId: string): Promise<CampaignVM[]> {
   const db = createServiceClient();
   const { data, error } = await db
     .from('campaigns')
-    .select('*, mailbox:mailboxes(email_address)')
+    .select('id, name, description, status, total_leads, emails_sent, replies, bounces, unsubscribes, created_at, launch_at, mailbox_id, template_id, mailbox:mailboxes(email_address)')
     .eq('organization_id', orgId)
     .order('created_at', { ascending: false })
-    .limit(500);
+    .limit(LIST_LIMIT);
   if (error) return [];
   return (data ?? []).map(mapCampaign);
 }
@@ -133,7 +185,7 @@ export async function getLeads(orgId: string, limit = 1000): Promise<LeadVM[]> {
   const db = createServiceClient();
   const { data, error } = await db
     .from('leads')
-    .select('*')
+    .select('id, first_name, last_name, email, company_name, job_title, status, source, last_contacted_at, next_follow_up_at, industry, website, phone, linkedin_url, created_at')
     .eq('organization_id', orgId)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
@@ -196,7 +248,8 @@ export async function getMailboxes(orgId: string): Promise<{ mailboxes: MailboxV
     .from('mailboxes')
     .select('id, email_address, display_name, provider, status, daily_limit, sent_today, warmup_enabled, reputation, last_sync_at, last_error, created_at')
     .eq('organization_id', orgId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(LIST_LIMIT);
   return {
     mailboxes: (data ?? []).map(mapMailbox),
     providers: {
@@ -210,11 +263,11 @@ export async function getTemplates(orgId: string): Promise<TemplateVM[]> {
   const db = createServiceClient();
   const { data } = await db
     .from('email_templates')
-    .select('*')
+    .select('id, name, subject, body_text, category, tags, is_shared, usage_count, created_at, updated_at')
     .eq('organization_id', orgId)
     .is('archived_at', null)
     .order('updated_at', { ascending: false })
-    .limit(500);
+    .limit(LIST_LIMIT);
   return (data ?? []).map(mapTemplate);
 }
 
@@ -229,8 +282,16 @@ export async function getInbox(orgId: string): Promise<ConversationThreadVM[]> {
   if (error) return [];
 
   const ids = (threads ?? []).map((row) => row.id as string);
+  // Bounded to INBOX_MESSAGE_LIMIT rows: the thread list only needs the most
+  // recent messages, and the bodies are the heaviest columns in the table.
   const { data: messages } = ids.length
-    ? await db.from('email_messages').select('*').eq('organization_id', orgId).in('thread_id', ids).order('created_at', { ascending: true }).limit(3000)
+    ? await db
+        .from('email_messages')
+        .select('id, thread_id, direction, from_email, to_emails, subject, body_text, body_html, snippet, sent_at, received_at, created_at')
+        .eq('organization_id', orgId)
+        .in('thread_id', ids)
+        .order('created_at', { ascending: true })
+        .limit(INBOX_MESSAGE_LIMIT)
     : { data: [] as Row[] };
 
   const grouped = new Map<string, MessageVM[]>();
@@ -266,13 +327,23 @@ export async function getInbox(orgId: string): Promise<ConversationThreadVM[]> {
 }
 
 export async function getOverview(orgId: string): Promise<OverviewVM> {
+  // Cached for 30 seconds: the dashboard aggregates are read on every page
+  // view but only change when the workspace changes.
+  return cacheRemember<OverviewVM>(`overview:${orgId}`, 30, () => getOverviewUncached(orgId));
+}
+
+async function getOverviewUncached(orgId: string): Promise<OverviewVM> {
   const db = createServiceClient();
   const since = new Date(Date.now() - 56 * 86_400_000).toISOString();
-  const [leads, campaigns, mailboxes, events, recentEvents] = await Promise.all([
-    db.from('leads').select('status').eq('organization_id', orgId).is('deleted_at', null).limit(50000),
-    db.from('campaigns').select('*, mailbox:mailboxes(email_address)').eq('organization_id', orgId).limit(1000),
-    db.from('mailboxes').select('*').eq('organization_id', orgId).limit(200),
-    db.from('email_events').select('event_type, occurred_at').eq('organization_id', orgId).gte('occurred_at', since).limit(20000),
+  const [leads, campaigns, campaignStatuses, mailboxes, events, recentEvents] = await Promise.all([
+    // Exact head count: the total is all we need, no lead rows are transferred.
+    db.from('leads').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).is('deleted_at', null),
+    db.from('campaigns').select('id, name, description, status, total_leads, emails_sent, replies, bounces, unsubscribes, created_at, launch_at, mailbox_id, template_id, mailbox:mailboxes(email_address)').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(CAMPAIGN_SAMPLE_LIMIT),
+    // Exact per status counts, no campaign rows are transferred.
+    countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES, (query) => query.eq('organization_id', orgId)),
+    db.from('mailboxes').select('id, email_address, display_name, provider, status, daily_limit, sent_today, warmup_enabled, reputation, last_error, created_at').eq('organization_id', orgId).limit(LIST_LIMIT),
+    // Bounded sample of the 56 day window, newest first.
+    db.from('email_events').select('event_type, occurred_at').eq('organization_id', orgId).gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(EVENT_SAMPLE_LIMIT),
     db.from('campaign_events').select('event_type, occurred_at, campaign:campaigns(name), lead:leads(first_name, last_name, email)').eq('organization_id', orgId).order('occurred_at', { ascending: false }).limit(8),
   ]);
 
@@ -307,8 +378,8 @@ export async function getOverview(orgId: string): Promise<OverviewVM> {
   }
 
   const totals = {
-    totalLeads: leads.data?.length ?? 0,
-    activeCampaigns: campaignRows.filter((row) => row.status === 'active').length,
+    totalLeads: leads.count ?? 0,
+    activeCampaigns: campaignStatuses.active ?? 0,
     emailsSent: campaignRows.reduce((sum, row) => sum + num(row.emails_sent), 0),
     delivered: eventCounts.delivered ?? 0,
     replied: campaignRows.reduce((sum, row) => sum + num(row.replies), 0),
@@ -340,7 +411,7 @@ export async function getOverview(orgId: string): Promise<OverviewVM> {
   const recommendations: string[] = [];
   if (!mailboxRows.length) recommendations.push('Connect a mailbox before launching your first campaign.');
   else if (connected < mailboxRows.length) recommendations.push(`${mailboxRows.length - connected} mailbox(es) need reconnecting before they can send.`);
-  if (totals.activeCampaigns === 0 && campaignRows.some((row) => row.status === 'draft')) recommendations.push('Review your draft campaigns and schedule the next send window.');
+  if (totals.activeCampaigns === 0 && (campaignStatuses.draft ?? 0) > 0) recommendations.push('Review your draft campaigns and schedule the next send window.');
   if (totals.bounced > 0 && totals.emailsSent > 0 && pct(totals.bounced, totals.emailsSent) > 3) recommendations.push('Your bounce rate is above 3%. Verify addresses before the next send.');
   if (!recommendations.length) recommendations.push('Keep daily volume conservative and personalise each message to protect reputation.');
 
@@ -355,13 +426,22 @@ export async function getOverview(orgId: string): Promise<OverviewVM> {
 }
 
 export async function getAnalytics(orgId: string): Promise<AnalyticsVM> {
+  // Cached for 30 seconds for the same reason as the overview.
+  return cacheRemember<AnalyticsVM>(`analytics:${orgId}`, 30, () => getAnalyticsUncached(orgId));
+}
+
+async function getAnalyticsUncached(orgId: string): Promise<AnalyticsVM> {
   const db = createServiceClient();
   const since = new Date(Date.now() - 56 * 86_400_000).toISOString();
-  const [leads, campaigns, mailboxes, events, domains, recent] = await Promise.all([
-    db.from('leads').select('status').eq('organization_id', orgId).is('deleted_at', null).limit(50000),
-    db.from('campaigns').select('*, mailbox:mailboxes(email_address)').eq('organization_id', orgId).limit(2000),
-    db.from('mailboxes').select('*').eq('organization_id', orgId).limit(200),
-    db.from('email_events').select('event_type, occurred_at').eq('organization_id', orgId).gte('occurred_at', since).limit(20000),
+  const [leads, campaigns, campaignStatuses, mailboxes, events, domains, recent] = await Promise.all([
+    // Exact head count: the total is all we need, no lead rows are transferred.
+    db.from('leads').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).is('deleted_at', null),
+    db.from('campaigns').select('id, name, description, status, total_leads, emails_sent, replies, bounces, unsubscribes, created_at, launch_at, mailbox_id, template_id, mailbox:mailboxes(email_address)').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(CAMPAIGN_SAMPLE_LIMIT),
+    // Exact per status counts, no campaign rows are transferred.
+    countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES, (query) => query.eq('organization_id', orgId)),
+    db.from('mailboxes').select('id, email_address, display_name, provider, status, daily_limit, sent_today, warmup_enabled, reputation, last_error, created_at').eq('organization_id', orgId).limit(LIST_LIMIT),
+    // Bounded sample of the 56 day window, newest first.
+    db.from('email_events').select('event_type, occurred_at').eq('organization_id', orgId).gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(EVENT_SAMPLE_LIMIT),
     db.from('sending_domains').select('domain, status').eq('organization_id', orgId).limit(50),
     db.from('campaign_events').select('event_type, occurred_at, campaign:campaigns(name), lead:leads(first_name, last_name, email)').eq('organization_id', orgId).order('occurred_at', { ascending: false }).limit(20),
   ]);
@@ -403,9 +483,9 @@ export async function getAnalytics(orgId: string): Promise<AnalyticsVM> {
 
   return {
     totals: {
-      totalLeads: leads.data?.length ?? 0,
-      activeCampaigns: campaignRows.filter((row) => row.status === 'active').length,
-      campaigns: campaignRows.length,
+      totalLeads: leads.count ?? 0,
+      activeCampaigns: campaignStatuses.active ?? 0,
+      campaigns: Object.values(campaignStatuses).reduce((sum, value) => sum + value, 0),
       emailsSent: sent,
       delivered: eventCounts.delivered ?? 0,
       opened: eventCounts.opened ?? 0,
@@ -463,7 +543,7 @@ export async function getSuppression(orgId: string) {
 
 export async function getDeliverability(orgId: string) {
   const db = createServiceClient();
-  const { data: domains } = await db.from('sending_domains').select('*').eq('organization_id', orgId).order('created_at', { ascending: false });
+  const { data: domains } = await db.from('sending_domains').select('*').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(LIST_LIMIT);
   const domainRows = (domains ?? []) as Row[];
   const checks = domainRows.length
     ? await db.from('domain_authentication_checks').select('*').eq('organization_id', orgId).in('domain_id', domainRows.map((row) => str(row.id))).order('checked_at', { ascending: false }).limit(500)
@@ -497,10 +577,29 @@ export async function getDeliverability(orgId: string) {
 export async function getSupport(orgId: string) {
   const db = createServiceClient();
   const [tickets, categories, articles] = await Promise.all([
-    db.from('support_tickets').select('*, messages:support_messages(id, body, author_type, created_at)').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(100),
+    db.from('support_tickets').select('*').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(100),
     db.from('support_categories').select('key, name'),
     db.from('kb_articles').select('slug, title, body, category').eq('is_published', true).order('title').limit(50),
   ]);
+  const ticketIds = (tickets.data ?? []).map((row) => str((row as Row).id)).filter(Boolean);
+  // Bounded message list instead of an unbounded embedded resource.
+  const { data: ticketMessages } = ticketIds.length
+    ? await db
+        .from('support_messages')
+        .select('id, ticket_id, body, author_type, created_at')
+        .eq('organization_id', orgId)
+        .in('ticket_id', ticketIds)
+        .order('created_at', { ascending: true })
+        .limit(SUPPORT_MESSAGE_LIMIT)
+    : { data: [] as Row[] };
+  const messagesByTicket = new Map<string, Row[]>();
+  for (const message of ticketMessages ?? []) {
+    const typed = message as Row;
+    const key = str(typed.ticket_id);
+    const list = messagesByTicket.get(key) ?? [];
+    list.push(typed);
+    messagesByTicket.set(key, list);
+  }
   return {
     tickets: (tickets.data ?? []).map((row) => {
       const typed = row as Row;
@@ -513,7 +612,7 @@ export async function getSupport(orgId: string) {
         category: str(typed.category_key),
         createdAt: formatDateTime(typed.created_at),
         updatedAt: formatDateTime(typed.updated_at),
-        messages: (Array.isArray(typed.messages) ? typed.messages : []).map((message) => {
+        messages: (messagesByTicket.get(str(typed.id)) ?? []).map((message) => {
           const m = message as Row;
           return { id: str(m.id), body: str(m.body), authorType: str(m.author_type), createdAt: formatDateTime(m.created_at) };
         }),
@@ -526,15 +625,12 @@ export async function getSupport(orgId: string) {
 
 export async function getAutomations(orgId: string) {
   const db = createServiceClient();
-  const [workflows, executions] = await Promise.all([
+  const [workflows, executionCounts] = await Promise.all([
     db.from('automation_workflows').select('*, steps:automation_steps(id, step_order, step_type, config)').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(100),
-    db.from('automation_executions').select('status').eq('organization_id', orgId).limit(5000),
+    // Only the per status totals are needed, so count them instead of pulling
+    // thousands of execution rows into memory.
+    countByValue(db, 'automation_executions', 'status', EXECUTION_STATUSES, (query) => query.eq('organization_id', orgId)),
   ]);
-  const executionCounts: Record<string, number> = {};
-  for (const row of executions.data ?? []) {
-    const key = str((row as Row).status);
-    executionCounts[key] = (executionCounts[key] ?? 0) + 1;
-  }
   return {
     workflows: (workflows.data ?? []).map((row) => {
       const typed = row as Row;

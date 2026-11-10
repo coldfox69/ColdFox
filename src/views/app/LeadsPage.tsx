@@ -13,6 +13,8 @@ import { LeadFormModal } from '@/components/leads/LeadFormModal';
 import { useRouter } from 'next/navigation';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { fromLeadStatus } from '@/lib/view-models';
+import { useDebouncedValue } from '@/hooks/use-debounce';
+
 
 const statusOptions: { value: LeadStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All statuses' },
@@ -31,6 +33,7 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
   const router = useRouter();
   const [items, setItems] = useState<Lead[]>(initialLeads);
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 250);
   const [status, setStatus] = useState<LeadStatus | 'all'>('all');
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'name', desc: false });
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -38,7 +41,7 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
   const [busy, setBusy] = useState(false);
 
   const rows = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     const value = (l: Lead): string => {
       switch (sort.key) {
         case 'name': return `${l.firstName} ${l.lastName}`;
@@ -54,7 +57,7 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
         const cmp = value(a).localeCompare(value(b));
         return sort.desc ? -cmp : cmp;
       });
-  }, [items, query, status, sort]);
+  }, [items, debouncedQuery, status, sort]);
 
   const allSelected = rows.length > 0 && rows.every(l => selected.has(l.id));
   const toggle = (id: string) => setSelected(s => {
@@ -134,7 +137,14 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
 
   const exportCsv = () => {
     toast.show(`Exporting ${rows.length} leads…`, 'info');
-    window.location.href = '/api/leads/export';
+    // A file download has to be a real navigation, so a hidden anchor is
+    // used instead of the router.
+    const anchor = document.createElement('a');
+    anchor.href = '/api/leads/export';
+    anchor.rel = 'noopener';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
   };
 
   const headers: { key: SortKey | null; label: string }[] = [
@@ -155,7 +165,7 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
         description={`${items.length.toLocaleString()} leads in your workspace`}
         actions={
           <>
-            <button onClick={() => window.location.assign('/app/leads/import')} disabled={!canImport} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Upload className="w-4 h-4" /> Import</button>
+            <button onClick={() => router.push('/app/leads/import')} disabled={!canImport} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Upload className="w-4 h-4" /> Import</button>
             <button onClick={exportCsv} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Download className="w-4 h-4" /> Export</button>
             <button onClick={() => setEditing('new')} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Plus className="w-4 h-4" /> Add lead</button>
           </>

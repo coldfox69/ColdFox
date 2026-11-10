@@ -6,6 +6,8 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useToast } from '@/components/shared/ToastProvider';
 import { Search } from 'lucide-react';
+import { useDebouncedValue } from '@/hooks/use-debounce';
+
 
 export interface AdminModuleProps {
   module: string;
@@ -80,6 +82,7 @@ export function AdminModulePage({
   const toast = useToast();
   const [rows, setRows] = useState<Row[]>([]);
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 250);
 
   useEffect(() => {
     let mounted = true;
@@ -96,7 +99,7 @@ export function AdminModulePage({
   }, [module, rowsKey]);
 
   const filtered = rows.filter((item) =>
-    columns.some((col) => String(item[col.key] ?? '').toLowerCase().includes(query.toLowerCase())),
+    columns.some((col) => String(item[col.key] ?? '').toLowerCase().includes(debouncedQuery.toLowerCase())),
   );
 
   return (

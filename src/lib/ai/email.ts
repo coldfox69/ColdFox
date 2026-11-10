@@ -1,7 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { ApiError } from '@/lib/http';
-import { callGroqJson, recordAiUsage } from '@/lib/ai/groq';
+import { callGroqJson, callGroqStream, recordAiUsage, type AiUsage } from '@/lib/ai/groq';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export const aiEmailOutputSchema = z.object({
@@ -38,7 +38,7 @@ Return JSON only with this shape:
 {"subject": string, "body": string, "subjects": string[], "warnings": string[], "unsupported_claims": string[], "suggestions": string[], "compliance": {"sender_identity_present": boolean, "unsubscribe_present": boolean, "clear_purpose": boolean, "no_deceptive_subject": boolean}}
 The body is plain text with real line breaks, no markdown fences. Variables like {{first_name}} may be used only when the user supplied them as variables.`;
 
-export async function generateAiEmail(input: {
+export type AiEmailInput = {
   organizationId: string;
   userId: string;
   mode: 'generate' | 'rewrite' | 'optimize' | 'subjects' | 'follow_up';
@@ -49,12 +49,13 @@ export async function generateAiEmail(input: {
   lead?: Record<string, string | undefined>;
   sender?: { name: string; company?: string };
   context?: string;
-}): Promise<AiEmailOutput & { generationId: string | null; model: string }> {
-  const service = createServiceClient();
+};
 
-  // Plan-level AI credit check (configurable per plan, not hardcoded).
+/** Plan-level AI credit check (configurable per plan, not hardcoded). */
+async function assertAiCredits(organizationId: string) {
+  const service = createServiceClient();
   const { data: allowed, error: limitError } = await service.rpc('check_org_limit', {
-    p_org: input.organizationId,
+    p_org: organizationId,
     p_metric: 'ai_credits',
     p_increment: 1,
   });
@@ -62,7 +63,9 @@ export async function generateAiEmail(input: {
   if (allowed === false) {
     throw new ApiError(402, 'You have used all AI credits on your current plan. Upgrade or wait for the next billing period.', 'ai_credit_limit');
   }
+}
 
+function buildPrompt(input: AiEmailInput): { user: string; temperature: number } {
   const leadFacts = Object.entries(input.lead ?? {})
     .filter(([, v]) => v && String(v).trim())
     .map(([k, v]) => `- ${k}: ${String(v).trim()}`)
@@ -98,14 +101,15 @@ export async function generateAiEmail(input: {
     .filter(Boolean)
     .join('\n\n');
 
-  const result = await callGroqJson({
-    system: SYSTEM,
-    user,
-    schema: aiEmailOutputSchema,
-    temperature: input.mode === 'optimize' ? 0.25 : 0.55,
-    maxTokens: 1400,
-  });
+  return { user, temperature: input.mode === 'optimize' ? 0.25 : 0.55 };
+}
 
+async function persistGeneration(
+  input: AiEmailInput,
+  output: AiEmailOutput,
+  usage: AiUsage,
+): Promise<string | null> {
+  const service = createServiceClient();
   let generationId: string | null = null;
   try {
     const { data } = await service
@@ -114,13 +118,13 @@ export async function generateAiEmail(input: {
         organization_id: input.organizationId,
         user_id: input.userId,
         kind: input.mode === 'subjects' ? 'subject' : input.mode === 'optimize' ? 'optimize' : input.mode === 'rewrite' ? 'rewrite' : 'email',
-        model: result.usage.model,
+        model: usage.model,
         prompt_version: 'email_writer:v1',
         input: { mode: input.mode, tone: input.tone, prompt: input.prompt, subject: input.subject, body: input.body, lead: input.lead },
-        output: result.data,
+        output,
         status: 'succeeded',
-        tokens_in: result.usage.tokensIn,
-        tokens_out: result.usage.tokensOut,
+        tokens_in: usage.tokensIn,
+        tokens_out: usage.tokensOut,
       })
       .select('id')
       .single();
@@ -129,7 +133,74 @@ export async function generateAiEmail(input: {
     console.warn('[ai] failed to persist generation', error);
   }
 
-  await recordAiUsage({ organizationId: input.organizationId, userId: input.userId, kind: 'email', usage: result.usage });
+  await recordAiUsage({ organizationId: input.organizationId, userId: input.userId, kind: 'email', usage });
+  return generationId;
+}
 
+export async function generateAiEmail(
+  input: AiEmailInput,
+): Promise<AiEmailOutput & { generationId: string | null; model: string }> {
+  await assertAiCredits(input.organizationId);
+  const { user, temperature } = buildPrompt(input);
+
+  const result = await callGroqJson({
+    system: SYSTEM,
+    user,
+    schema: aiEmailOutputSchema,
+    temperature,
+    maxTokens: 1400,
+  });
+
+  const generationId = await persistGeneration(input, result.data, result.usage);
   return { ...result.data, generationId, model: result.usage.model };
+}
+
+export type AiStreamEvent =
+  | { type: 'delta'; text: string }
+  | { type: 'done'; data: AiEmailOutput & { generationId: string | null; model: string } };
+
+/**
+ * Streaming variant. Yields raw text deltas as they arrive so the client can
+ * render the draft token by token, then a final `done` event with the parsed
+ * and validated result.
+ */
+export async function* generateAiEmailStream(
+  input: AiEmailInput,
+  signal?: AbortSignal,
+): AsyncGenerator<AiStreamEvent, void, void> {
+  await assertAiCredits(input.organizationId);
+  const { user, temperature } = buildPrompt(input);
+
+  const stream = callGroqStream({
+    system: SYSTEM,
+    user,
+    temperature,
+    maxTokens: 1400,
+    signal,
+  });
+
+  let raw = '';
+  let usage: AiUsage | undefined;
+  for await (const delta of stream) {
+    raw += delta;
+    yield { type: 'delta', text: delta };
+  }
+
+  const finalUsage = await stream.return(undefined as never).catch(() => undefined);
+  usage = (finalUsage as AiUsage | undefined) ?? { model: process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile', tokensIn: 0, tokensOut: 0 };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new ApiError(502, 'The AI returned an unreadable response. Please retry.', 'ai_bad_json');
+  }
+  const result = aiEmailOutputSchema.safeParse(parsed);
+  if (!result.success) {
+    const issue = result.error.issues[0];
+    throw new ApiError(502, `The AI response did not match the expected format (${issue?.path.join('.')}).`, 'ai_schema_mismatch');
+  }
+
+  const generationId = await persistGeneration(input, result.data, usage);
+  yield { type: 'done', data: { ...result.data, generationId, model: usage.model } };
 }

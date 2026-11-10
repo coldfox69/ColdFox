@@ -7,6 +7,8 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useToast } from '@/components/shared/ToastProvider';
+import { useDebouncedValue } from '@/hooks/use-debounce';
+
 
 export interface SupportData {
   tickets: Array<{
@@ -35,15 +37,16 @@ const statusVariant: Record<string, 'default' | 'success' | 'warning' | 'danger'
 export default function SupportPage({ data }: { data: SupportData }) {
   const toast = useToast();
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 250);
   const [newSubject, setNewSubject] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newCategory, setNewCategory] = useState('');
 
   const filtered = data.tickets.filter(
     (t) =>
-      !query ||
-      t.subject.toLowerCase().includes(query.toLowerCase()) ||
-      t.description.toLowerCase().includes(query.toLowerCase()),
+      !debouncedQuery ||
+      t.subject.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+      t.description.toLowerCase().includes(debouncedQuery.toLowerCase()),
   );
 
   const createTicket = async () => {
@@ -110,7 +113,7 @@ export default function SupportPage({ data }: { data: SupportData }) {
             <p className="text-sm text-muted-foreground">No help articles published yet.</p>
           ) : (
             <div className="space-y-3">
-              {data.articles.filter((a) => !query || a.title.toLowerCase().includes(query.toLowerCase())).map((a) => (
+              {data.articles.filter((a) => !debouncedQuery || a.title.toLowerCase().includes(debouncedQuery.toLowerCase())).map((a) => (
                 <div key={a.slug} className="p-4 rounded-[10px] neu-inset-sm">
                   <p className="font-medium text-foreground">{a.title}</p>
                   <p className="text-[12px] text-muted-foreground mb-2">{a.category}</p>

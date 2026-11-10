@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Search, Inbox, MailOpen, Archive, UserCheck, Send, StickyNote, ArrowLeft, ExternalLink, Reply } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -9,6 +9,8 @@ import { type ConversationThreadVM as ConversationThread, type MessageVM as Mess
 import { cn } from '@/lib/utils';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useRouter } from 'next/navigation';
+import { useDebouncedValue } from '@/hooks/use-debounce';
+
 
 type Folder = 'all' | 'unread' | 'replied' | 'archived' | 'assigned';
 
@@ -25,9 +27,15 @@ type Note = { id: string; threadId: string; text: string; at: string };
 export default function InboxPage({ initialThreads, currentUserId }: { initialThreads: ConversationThread[]; currentUserId: string }) {
   const toast = useToast();
   const router = useRouter();
+  const localIdRef = useRef(0);
+  const nextLocalId = () => {
+    localIdRef.current += 1;
+    return `${localIdRef.current}`;
+  };
   const [threads, setThreads] = useState<ConversationThread[]>(initialThreads);
   const [folder, setFolder] = useState<Folder>('all');
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 250);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [assigned, setAssigned] = useState<Set<string>>(new Set(initialThreads.filter(t => t.assignedTo === currentUserId).map(t => t.id)));
   const [reply, setReply] = useState('');
@@ -36,7 +44,7 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
   const [busy, setBusy] = useState(false);
 
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     return threads
       .filter(t => {
         if (folder === 'archived') return t.status === 'archived';
@@ -47,7 +55,7 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
         return true;
       })
       .filter(t => !q || [t.leadName, t.leadEmail, t.subject, t.campaign].join(' ').toLowerCase().includes(q));
-  }, [threads, folder, query, assigned]);
+  }, [threads, folder, debouncedQuery, assigned]);
 
   const selected = threads.find(t => t.id === selectedId) ?? null;
   const threadNotes = notes.filter(n => n.threadId === selectedId);
@@ -69,12 +77,12 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
       if (mode === 'note') {
         if (!selected.leadId) throw new Error('This conversation is not linked to a lead, so there is nowhere to save the note.');
         await apiFetch(`/api/leads/${selected.leadId}`, { method: 'PATCH', body: JSON.stringify({ notes: reply.trim() }) });
-        setNotes(n => [...n, { id: `n${Date.now()}`, threadId: selected.id, text: reply.trim(), at: 'Just now' }]);
+        setNotes(n => [...n, { id: `n${nextLocalId()}`, threadId: selected.id, text: reply.trim(), at: 'Just now' }]);
         toast.show('Internal note saved. Leads will not see it.', 'success');
       } else {
         await apiFetch(`/api/inbox/${selected.id}/reply`, { method: 'POST', body: JSON.stringify({ body: reply.trim() }) });
         const msg: Message = {
-          id: `msg${Date.now()}`,
+          id: `msg${nextLocalId()}`,
           from: '',
           to: selected.leadEmail,
           subject: `Re: ${selected.subject}`,

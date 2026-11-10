@@ -1,22 +1,23 @@
-import { withApi, ok, requireApiSession, ApiError } from '@/lib/http';
+import { withApi, ok, parseQuery, requireApiSession, ApiError } from '@/lib/http';
+import { countByValue } from '@/lib/data/app';
+import { EXECUTION_STATUSES, paginationSchema } from '@/lib/validation';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   return withApi(async () => {
     const session = await requireApiSession();
+    const { page, pageSize } = parseQuery(request, paginationSchema);
     const db = createServiceClient();
-    const [workflows, executions] = await Promise.all([
-      db.from('automation_workflows').select('*, steps:automation_steps(id, step_order, step_type, config)').eq('organization_id', session.organizationId).order('created_at', { ascending: false }).limit(100),
-      db.from('automation_executions').select('status').eq('organization_id', session.organizationId).limit(5000),
+    const from = (page - 1) * pageSize;
+    const [workflows, executionCounts] = await Promise.all([
+      db.from('automation_workflows').select('*, steps:automation_steps(id, step_order, step_type, config)', { count: 'exact' }).eq('organization_id', session.organizationId).order('created_at', { ascending: false }).range(from, from + pageSize - 1),
+      // Only the per status totals are needed, so count them with head requests
+      // instead of pulling thousands of execution rows into memory.
+      countByValue(db, 'automation_executions', 'status', EXECUTION_STATUSES, (query) => query.eq('organization_id', session.organizationId)),
     ]);
     if (workflows.error) throw new ApiError(500, 'Could not load automations.');
-    const executionCounts: Record<string, number> = {};
-    for (const row of executions.data ?? []) {
-      const key = String((row as Record<string, unknown>).status);
-      executionCounts[key] = (executionCounts[key] ?? 0) + 1;
-    }
     return ok({
       workflows: (workflows.data ?? []).map((row) => {
         const typed = row as Record<string, unknown>;
@@ -35,6 +36,9 @@ export async function GET() {
         };
       }),
       executionCounts,
+      page,
+      pageSize,
+      total: workflows.count ?? 0,
     });
   });
 }

@@ -63,11 +63,18 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
 
   const patchLead = async (payload: Record<string, unknown>, message: string) => {
     setBusy(true);
+    // Optimistic: apply the change locally first so the UI never waits on the
+    // server. The request is rolled back if it fails.
+    const previous = lead;
+    if (typeof payload.status === 'string') {
+      setLead((current) => (current ? { ...current, status: payload.status as LeadStatus } : current));
+    }
     try {
       await apiFetch(`/api/leads/${lead.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
       toast.show(message, 'success');
       router.refresh();
     } catch (error) {
+      setLead(previous);
       toast.show(errorMessage(error), 'danger');
     } finally {
       setBusy(false);
@@ -76,6 +83,10 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
 
   const saveLead = async (updated: Lead) => {
     setBusy(true);
+    // Optimistic: show the new values immediately, roll back on failure.
+    const previous = lead;
+    setLead(updated);
+    setEditing(false);
     try {
       await apiFetch(`/api/leads/${lead.id}`, {
         method: 'PATCH',
@@ -91,11 +102,11 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
           notes: updated.notes || null,
         }),
       });
-      setLead(updated);
-      setEditing(false);
       toast.show('Lead updated', 'success');
       router.refresh();
     } catch (error) {
+      setLead(previous);
+      setEditing(true);
       toast.show(errorMessage(error), 'danger');
     } finally {
       setBusy(false);
@@ -105,13 +116,18 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
   const addNote = async () => {
     if (!note.trim() || busy) return;
     setBusy(true);
+    const text = note.trim();
+    // Optimistic: the note appears immediately, and is removed again if the
+    // request fails.
+    setNotes((n) => [text, ...n]);
+    setNote('');
     try {
-      await apiFetch(`/api/leads/${lead.id}`, { method: 'PATCH', body: JSON.stringify({ notes: note.trim() }) });
-      setNotes(n => [note.trim(), ...n]);
-      setNote('');
+      await apiFetch(`/api/leads/${lead.id}`, { method: 'PATCH', body: JSON.stringify({ notes: text }) });
       toast.show('Note added', 'success');
       router.refresh();
     } catch (error) {
+      setNotes((n) => (n[0] === text ? n.slice(1) : n));
+      setNote(text);
       toast.show(errorMessage(error), 'danger');
     } finally {
       setBusy(false);

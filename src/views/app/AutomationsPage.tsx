@@ -7,6 +7,8 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useToast } from '@/components/shared/ToastProvider';
+import { useDebouncedValue } from '@/hooks/use-debounce';
+
 
 export interface AutomationsData {
   workflows: Array<{
@@ -25,12 +27,13 @@ export default function AutomationsPage({ data }: { data: AutomationsData }) {
   const toast = useToast();
   const [workflows, setWorkflows] = useState(data.workflows);
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 250);
 
   const filtered = workflows.filter(
     (w) =>
-      !query ||
-      w.name.toLowerCase().includes(query.toLowerCase()) ||
-      w.description.toLowerCase().includes(query.toLowerCase()),
+      !debouncedQuery ||
+      w.name.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+      w.description.toLowerCase().includes(debouncedQuery.toLowerCase()),
   );
 
   const toggleStatus = async (workflow: (typeof filtered)[number], next: string) => {

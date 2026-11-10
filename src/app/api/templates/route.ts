@@ -1,26 +1,37 @@
-import { withApi, ok, parseBody, requireApiSession, assertRole, ApiError, writeAudit } from '@/lib/http';
-import { templateInputSchema } from '@/lib/validation';
+import { withApi, ok, parseBody, parseQuery, requireApiSession, assertRole, ApiError, writeAudit } from '@/lib/http';
+import { templateInputSchema, paginationSchema } from '@/lib/validation';
 import { createServiceClient } from '@/lib/supabase/service';
 import { extractVariables, textToHtml } from '@/lib/email/template';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   return withApi(async () => {
     const session = await requireApiSession();
+    const { page, pageSize } = parseQuery(request, paginationSchema);
     const db = createServiceClient();
-    const { data, error } = await db
+    const from = (page - 1) * pageSize;
+    const { data, error, count } = await db
       .from('email_templates')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('organization_id', session.organizationId)
       .is('archived_at', null)
-      .order('updated_at', { ascending: false });
+      .order('updated_at', { ascending: false })
+      .range(from, from + pageSize - 1);
     if (error) throw new ApiError(500, 'Could not load templates.');
+    // The payload stays an array; the pagination metadata rides in the headers.
     return ok(
       (data ?? []).map((template) => ({
         ...template,
         variables: extractVariables(String(template.subject ?? ''), String(template.body_text ?? '')),
       })),
+      {
+        headers: {
+          'X-Total-Count': String(count ?? 0),
+          'X-Page': String(page),
+          'X-Page-Size': String(pageSize),
+        },
+      },
     );
   });
 }
