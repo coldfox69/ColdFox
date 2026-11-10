@@ -13,75 +13,71 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background">
       <PublicNavbar />
-      <div className="pt-32 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">Simple, transparent pricing</h1>
-            <p className="text-muted-foreground">Start free and scale as your outreach grows. No hidden fees.</p>
-            <div className="mt-6 inline-flex items-center gap-2 bg-muted rounded-xl p-1">
-              <button onClick={() => setAnnual(false)} className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-all', !annual ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground')}>Monthly</button>
-              <button onClick={() => setAnnual(true)} className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2', annual ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground')}>
-                Annual <span className="text-xs text-emerald-600 font-semibold">Save 20%</span>
+      <div className="px-6 pb-16 pt-28 sm:px-8 lg:pt-32">
+        <div className="mx-auto max-w-[1200px]">
+          <div className="max-w-2xl">
+            <h1 className="text-[36px] font-semibold text-foreground">Pricing</h1>
+            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">The free plan stays free. Paid plans add mailboxes, leads and higher sending limits.</p>
+            <div className="mt-6 inline-flex items-center gap-1 rounded-[10px] bg-input p-1 shadow-[var(--shadow-inset-sm)]">
+              <button onClick={() => setAnnual(false)} aria-pressed={!annual} className={cn('rounded-[8px] px-4 py-1.5 text-sm font-medium transition-[color,background-color,box-shadow] duration-[var(--dur)] ease-[var(--ease)]', !annual ? 'bg-card text-foreground shadow-[var(--shadow-raised-sm)]' : 'text-muted-foreground')}>Monthly</button>
+              <button onClick={() => setAnnual(true)} aria-pressed={annual} className={cn('flex items-center gap-2 rounded-[8px] px-4 py-1.5 text-sm font-medium transition-[color,background-color,box-shadow] duration-[var(--dur)] ease-[var(--ease)]', annual ? 'bg-card text-foreground shadow-[var(--shadow-raised-sm)]' : 'text-muted-foreground')}>
+                Annual <span className="text-[12px] text-[var(--cf-success)]">Save 20%</span>
               </button>
             </div>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map(plan => {
               const price = annual ? Math.round(plan.price * 0.8) : plan.price;
               const isPopular = plan.id === 'pro';
               return (
-                <div key={plan.id} className={cn('rounded-2xl p-6 flex flex-col relative', isPopular ? 'bg-slate-900 text-white' : 'border border-border bg-card')}>
-                  {isPopular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-lg">Most used</div>
-                  )}
-                  <div className="mb-6">
-                    <p className={cn('text-xs font-semibold uppercase tracking-wide mb-1', isPopular ? 'text-blue-300' : 'text-muted-foreground')}>{plan.name}</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className={cn('text-4xl font-black', isPopular ? 'text-white' : 'text-foreground')}>${price}</span>
-                      <span className={cn('text-sm', isPopular ? 'text-blue-300' : 'text-muted-foreground')}>/mo</span>
-                    </div>
-                    {annual && plan.price > 0 && (
-                      <p className={cn('text-xs mt-1', isPopular ? 'text-blue-300' : 'text-muted-foreground')}>Billed ${price * 12}/year</p>
-                    )}
+                <div key={plan.id} className={cn('flex flex-col rounded-[16px] p-6', isPopular ? 'neu-card-lg ring-1 ring-primary/40' : 'neu-card')}>
+                  <p className="mb-2 h-4 text-[12px] font-medium text-accent-foreground">{isPopular ? 'Most used' : ''}</p>
+                  <p className="text-[13px] font-medium text-muted-foreground">{plan.name}</p>
+                  <div className="mt-1 flex items-baseline gap-1">
+                    <span className="text-[32px] font-medium leading-none text-foreground tabular-nums">${price}</span>
+                    <span className="text-[13px] text-muted-foreground">/mo</span>
                   </div>
-                  <ul className="space-y-3 flex-1">
+                  {annual && plan.price > 0 && (
+                    <p className="mt-1 text-[12px] text-muted-foreground tabular-nums">Billed ${price * 12} a year</p>
+                  )}
+                  <ul className="mt-5 flex-1 space-y-2.5">
                     {plan.features.map(f => (
-                      <li key={f} className="flex items-start gap-2 text-sm">
-                        <CheckCircle className={cn('w-4 h-4 flex-shrink-0 mt-0.5', isPopular ? 'text-blue-300' : 'text-emerald-500')} />
-                        <span className={isPopular ? 'text-blue-100' : 'text-foreground'}>{f}</span>
+                      <li key={f} className="flex items-start gap-2 text-[13px] text-foreground">
+                        <CheckCircle className="mt-0.5 w-4 h-4 shrink-0 text-accent-foreground" />
+                        {f}
                       </li>
                     ))}
                   </ul>
                   <Link
                     href={plan.id === 'agency' ? '/contact' : '/signup'}
                     className={cn(
-                      'mt-6 block text-center py-3 rounded-xl text-sm font-semibold transition-all',
-                      isPopular ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-blue-700 text-white hover:bg-blue-800'
+                      'mt-6 block rounded-[10px] py-2.5 text-center text-sm font-medium transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)]',
+                      isPopular
+                        ? 'bg-primary text-primary-foreground shadow-[var(--shadow-raised-sm)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]'
+                        : 'bg-card text-foreground shadow-[var(--shadow-raised-sm)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]'
                     )}
                   >
-                    {plan.id === 'free' ? 'Get Started Free' : plan.id === 'enterprise' ? 'Contact Sales' : 'Start Free Trial'}
+                    {plan.id === 'free' ? 'Create account' : plan.id === 'enterprise' ? 'Contact us' : 'Start free trial'}
                   </Link>
                 </div>
               );
             })}
           </div>
-          <div className="mt-8 text-center">
-            <p className="text-xs text-muted-foreground">Limits are per workspace. Paid billing is enabled per account. Contact us before upgrading if you need custom limits.</p>
-          </div>
+          <p className="mt-6 text-[12px] text-muted-foreground">Limits apply per workspace. Paid billing is enabled per account. Contact us before upgrading if you need custom limits.</p>
 
-          {/* FAQ */}
-          <div className="mt-20 max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-foreground text-center mb-8">Pricing FAQ</h2>
-            <div className="space-y-4">
+          <div className="mx-auto mt-20 max-w-2xl">
+            <h2 className="text-[24px] font-semibold text-foreground">Pricing questions</h2>
+            <div className="mt-6 space-y-3">
               {[
-                { q: 'Can I switch plans?', a: 'Yes, you can upgrade or downgrade at any time. Changes take effect on your next billing cycle.' },
-                { q: 'What happens when I hit my limits?', a: 'You will receive a notification. Campaigns pause gracefully and no data is lost. You can upgrade to continue.' },
-                { q: 'Is there a free trial?', a: 'Starter and Pro plans include a 14-day free trial. No credit card required to start.' },
-                { q: 'What counts as a mailbox?', a: 'Each connected email account (Gmail, Outlook, or SMTP) counts as one mailbox.' },
-              ].map((item, i) => (
-                <div key={i} className="neu-card rounded-2xl p-5">
-                  <p className="font-semibold text-foreground text-sm mb-1">{item.q}</p>
-                  <p className="text-sm text-muted-foreground">{item.a}</p>
+                { q: 'Can I switch plans?', a: 'Yes. You can upgrade or downgrade at any time, and the change takes effect on your next billing cycle.' },
+                { q: 'What happens when I hit a limit?', a: 'You get a notification. Campaigns pause and no data is lost, so you can upgrade and continue.' },
+                { q: 'Is there a free trial?', a: 'Starter and Growth include a 14-day free trial. No credit card is needed to start.' },
+                { q: 'What counts as a mailbox?', a: 'Each connected email account, whether Gmail, Outlook or SMTP, counts as one mailbox.' },
+              ].map(item => (
+                <div key={item.q} className="neu-card rounded-[16px] p-5">
+                  <p className="text-[14px] font-medium text-foreground">{item.q}</p>
+                  <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{item.a}</p>
                 </div>
               ))}
             </div>

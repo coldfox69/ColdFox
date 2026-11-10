@@ -55,11 +55,11 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-4xl mx-auto space-y-6">
       <PageHeader title="Settings" description="Manage your profile and workspace settings." />
 
       <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 neu-card rounded-2xl p-6">
+        <div className="lg:col-span-2 neu-card rounded-[16px] p-6">
           <h2 className="font-semibold text-foreground mb-4">Profile</h2>
           <div className="space-y-4">
             <div>
@@ -69,7 +69,7 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Your name"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div>
@@ -79,7 +79,7 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="Your job title"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div>
@@ -89,16 +89,16 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
                 placeholder="UTC"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
-            <button onClick={() => void saveProfile()} className="px-4 py-2.5 rounded-xl gradient-blue text-white text-sm font-semibold hover:opacity-90">
+            <button onClick={() => void saveProfile()} className="px-4 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
               <User className="w-4 h-4" /> Save profile
             </button>
           </div>
         </div>
 
-        <div className="lg:col-span-1 neu-card rounded-2xl p-6">
+        <div className="lg:col-span-1 neu-card rounded-[16px] p-6">
           <h2 className="font-semibold text-foreground mb-4">Workspace</h2>
           <div className="space-y-4">
             <div>
@@ -108,7 +108,7 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
                 value={orgName}
                 onChange={(e) => setOrgName(e.target.value)}
                 placeholder="Company name"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div>
@@ -118,7 +118,7 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
                 placeholder="https://example.com"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div>
@@ -128,7 +128,7 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
                 placeholder="Industry"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div>
@@ -138,22 +138,22 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
                 value={companySize}
                 onChange={(e) => setCompanySize(e.target.value)}
                 placeholder="1-10 employees"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
-            <button onClick={() => void saveOrganization()} className="px-4 py-2.5 rounded-xl gradient-blue text-white text-sm font-semibold hover:opacity-90">
+            <button onClick={() => void saveOrganization()} className="px-4 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
               <Building2 className="w-4 h-4" /> Save workspace
             </button>
           </div>
         </div>
       </div>
 
-      <div className="neu-card rounded-2xl p-6">
+      <div className="neu-card rounded-[16px] p-6">
         <h2 className="font-semibold text-foreground mb-4">Team members</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border">
+              <tr className="text-left text-[12px] text-muted-foreground border-b border-border">
                 <th className="px-4 py-3 font-medium">Member</th>
                 <th className="px-4 py-3 font-medium">Role</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -170,18 +170,18 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
                   <tr key={m.userId} className="hover:bg-muted/40">
                     <td className="px-4 py-3 text-foreground">{m.userId.slice(0, 8)}…</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      <span className={`px-2 py-0.5 rounded text-[12px] font-medium ${
                         m.role === 'owner' || m.role === 'admin'
-                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          ? 'neu-inset-sm text-muted-foreground'
                           : 'bg-muted text-muted-foreground'
                       }`}>
                         {m.role}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      <span className={`px-2 py-0.5 rounded text-[12px] font-medium ${
                         m.status === 'active'
-                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          ? 'neu-inset-sm text-muted-foreground'
                           : 'bg-muted text-muted-foreground'
                       }`}>
                         {m.status}
@@ -196,14 +196,14 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
         </div>
       </div>
 
-      <div className="neu-card rounded-2xl p-6">
+      <div className="neu-card rounded-[16px] p-6">
         <h2 className="font-semibold text-foreground mb-4">Available plans</h2>
         <div className="space-y-3">
           {data.plans.map((p) => (
-            <div key={p.key} className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/50">
+            <div key={p.key} className="flex items-center justify-between p-3 rounded-[10px] neu-inset-sm">
               <div>
                 <p className="font-medium text-foreground">{p.name}</p>
-                <p className="text-xs text-muted-foreground">{p.description}</p>
+                <p className="text-[12px] text-muted-foreground">{p.description}</p>
               </div>
               <p className="text-sm text-muted-foreground font-mono">{p.key}</p>
             </div>

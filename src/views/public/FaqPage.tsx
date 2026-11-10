@@ -8,34 +8,34 @@ const faqCategories = [
   {
     category: 'General',
     items: [
-      { q: 'What is ColdFox?', a: 'ColdFox is an AI-powered cold email outreach and CRM platform. It helps sales teams, agencies, and recruiters manage leads, write personalized emails, run campaigns, and track results.' },
-      { q: 'Is ColdFox suitable for my business?', a: 'ColdFox is designed for anyone doing professional outreach: B2B sales teams, growth marketers, recruiters, business development professionals, and agencies managing outreach for clients.' },
-      { q: 'Can I try ColdFox before paying?', a: 'Yes. The Free plan is permanently free. Starter and Pro plans include a 14-day free trial with no credit card required.' },
-    ]
+      { q: 'What is ColdFox?', a: 'A cold email workspace with a CRM attached. It covers lead import, email templates, sequences, a unified inbox, suppression and deliverability checks.' },
+      { q: 'Who is it for?', a: 'Teams doing professional outbound: B2B sales, growth teams, recruiters, business development and agencies running outreach for clients.' },
+      { q: 'Can I try it before paying?', a: 'Yes. The free plan stays free. Starter and Growth include a 14-day trial with no credit card needed.' },
+    ],
   },
   {
-    category: 'Email Deliverability',
+    category: 'Deliverability',
     items: [
-      { q: 'Does ColdFox guarantee my emails will land in the inbox?', a: 'No, and no legitimate platform can make this guarantee. Email placement is determined by recipient email providers based on your domain reputation, content, sending history, and many other factors. ColdFox helps you maintain good sending practices, but cannot override provider spam filters.' },
-      { q: 'What is Template Rotation?', a: 'Template Rotation lets you alternate between multiple email variants in a sequence. This is for content testing and natural message variation. It is not a technique to bypass spam filters, and it does not guarantee improved inbox placement.' },
-      { q: 'How does ColdFox protect my domain?', a: 'ColdFox provides SPF, DKIM, and DMARC monitoring, sending health indicators, bounce tracking, and best-practice guidance. Following these recommendations helps protect your sender reputation over time.' },
-    ]
+      { q: 'Does ColdFox guarantee inbox delivery?', a: 'No, and no platform can. Placement is decided by the receiving provider, based on your domain reputation, content and sending history. ColdFox keeps the sending practices healthy and the records visible.' },
+      { q: 'What is template rotation?', a: 'Alternating between message variants across a sequence, for content testing and natural variation. It is not a way around spam filters and it does not promise placement.' },
+      { q: 'How does it protect my domain?', a: 'SPF, DKIM and DMARC checks, sending health per mailbox, bounce and complaint tracking, and a suppression list that is applied before every send.' },
+    ],
   },
   {
-    category: 'Privacy & Compliance',
+    category: 'Privacy and compliance',
     items: [
-      { q: 'Does ColdFox handle unsubscribes automatically?', a: 'Yes. ColdFox maintains a suppression list for unsubscribes, hard bounces, and complaints. Suppressed contacts are automatically excluded from all future campaigns.' },
-      { q: 'Can I export or delete my data?', a: 'Yes. You can export all lead data and campaign data from the Settings page. You can also request full account deletion, which permanently removes your data.' },
-      { q: 'Does ColdFox share my contact data?', a: 'No. Your lead data is private to your account and is never sold or shared with third parties.' },
-    ]
+      { q: 'Are unsubscribes handled?', a: 'Yes. ColdFox keeps a suppression list for unsubscribes, hard bounces and complaints, and excluded contacts are never picked up by a later campaign.' },
+      { q: 'Can I export or delete my data?', a: 'Yes. Export leads and campaign data from Settings, or request full account deletion.' },
+      { q: 'Is my contact data shared?', a: 'No. Your lead data stays in your workspace and is not sold or shared with third parties for advertising.' },
+    ],
   },
   {
     category: 'Technical',
     items: [
-      { q: 'Which email providers can I connect?', a: 'ColdFox supports Gmail (via OAuth), Microsoft Outlook (via OAuth), and any provider using standard SMTP/IMAP credentials.' },
-      { q: 'What file formats can I import for leads?', a: 'ColdFox supports CSV and XLSX (Excel) files for lead import. The column mapper handles most standard column naming conventions automatically.' },
-      { q: 'Is there an API?', a: 'Yes. API access is available on Pro and Enterprise plans. You can find your API keys and documentation in Settings > API Keys.' },
-    ]
+      { q: 'Which mail providers can I connect?', a: 'Gmail and Microsoft Outlook over OAuth, plus any provider that accepts standard SMTP or IMAP credentials.' },
+      { q: 'Which file formats can I import?', a: 'CSV and XLSX. The column mapper recognises the common naming conventions and flags anything it is unsure about.' },
+      { q: 'Is there an API?', a: 'API access is included with the higher plans. Keys and documentation live in Settings.' },
+    ],
   },
 ];
 
@@ -44,30 +44,28 @@ export default function FaqPage() {
   return (
     <div className="min-h-screen bg-background">
       <PublicNavbar />
-      <div className="pt-32 pb-16">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 pt-4">
-            <h1 className="text-4xl font-bold text-foreground mb-3">Frequently Asked Questions</h1>
-            <p className="text-muted-foreground">Find answers to common questions about ColdFox.</p>
-          </div>
-          <div className="space-y-10">
+      <div className="px-6 pb-16 pt-28 sm:px-8 lg:pt-32">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="text-[36px] font-semibold text-foreground">Frequently asked questions</h1>
+          <div className="mt-10 space-y-10">
             {faqCategories.map(cat => (
               <div key={cat.category}>
-                <h2 className="text-lg font-bold text-foreground mb-4">{cat.category}</h2>
+                <h2 className="mb-4 text-[16px] font-semibold text-foreground">{cat.category}</h2>
                 <div className="space-y-2">
                   {cat.items.map((item, i) => {
                     const key = `${cat.category}-${i}`;
                     return (
-                      <div key={key} className="neu-card rounded-2xl overflow-hidden">
+                      <div key={key} className="overflow-hidden rounded-[16px] neu-card">
                         <button
-                          className="w-full flex items-center justify-between px-6 py-4 text-left"
+                          className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
                           onClick={() => setOpen(open === key ? null : key)}
+                          aria-expanded={open === key}
                         >
-                          <span className="font-medium text-foreground text-sm pr-4">{item.q}</span>
-                          {open === key ? <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+                          <span className="pr-4 text-[14px] font-medium text-foreground">{item.q}</span>
+                          {open === key ? <ChevronUp className="w-4 h-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />}
                         </button>
                         {open === key && (
-                          <div className="px-6 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-border pt-3">{item.a}</div>
+                          <div className="border-t border-border px-5 pb-4 pt-3 text-[13px] leading-relaxed text-muted-foreground">{item.a}</div>
                         )}
                       </div>
                     );

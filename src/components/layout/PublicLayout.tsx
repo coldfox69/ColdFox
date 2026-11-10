@@ -23,7 +23,7 @@ export function PublicNavbar() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
+    const handler = () => setScrolled(window.scrollY > 16);
     handler();
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
@@ -41,39 +41,38 @@ export function PublicNavbar() {
 
   return (
     <header className={cn(
-      'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+      'fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow] duration-[var(--dur-slow)] ease-[var(--ease)]',
       scrolled ? 'neu-shell-header' : 'bg-transparent'
     )}>
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-10">
-        <div className="flex items-center h-[72px] gap-6">
+      <div className="mx-auto max-w-[1200px] px-6 sm:px-8">
+        <div className="flex h-16 items-center gap-8">
           <Link href="/" className="flex items-center" aria-label="ColdFox home">
-            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={256} height={64} className="h-14 w-auto shrink-0" priority />
+            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={220} height={55} style={{ height: '48px', width: 'auto' }} className="shrink-0" priority />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1.5" aria-label="Main navigation">
+          <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
             {navLinks.map(link => (
               <Link key={link.path} href={link.path}
                 aria-current={pathname === link.path ? 'page' : undefined}
-                className={cn('px-4 py-2.5 rounded-xl text-[14px] font-medium tracking-[-0.01em] transition-all',
-                  pathname === link.path ? 'text-foreground neu-inset-sm' : 'text-muted-foreground hover:text-foreground hover:shadow-[var(--neu-inset-sm)]')}>
+                className={cn('rounded-[10px] px-3 py-2 text-sm font-medium transition-colors duration-[var(--dur)] ease-[var(--ease)]',
+                  pathname === link.path ? 'neu-inset-sm text-foreground' : 'text-muted-foreground hover:text-foreground')}>
                 {link.label}
               </Link>
             ))}
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            <button onClick={cycleTheme} aria-label={`Theme: ${themeLabel}. Switch theme`}
-              title={`Theme: ${themeLabel}`}
-              className="neu-btn w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground">
-              {theme === 'light' ? <Sun className="w-[18px] h-[18px]" /> : theme === 'dark' ? <Moon className="w-[18px] h-[18px]" /> : <Monitor className="w-[18px] h-[18px]" />}
+            <button onClick={cycleTheme} aria-label={`Theme: ${themeLabel}. Switch theme`} title={`Theme: ${themeLabel}`}
+              className="neu-btn flex h-9 w-9 items-center justify-center rounded-[10px] text-muted-foreground hover:text-foreground">
+              {theme === 'light' ? <Sun className="w-4 h-4" /> : theme === 'dark' ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
             </button>
-            <Link href="/login" className="hidden sm:block text-[14px] font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2.5">
-              Sign In
+            <Link href="/login" className="hidden px-2 py-2 text-sm font-medium text-muted-foreground transition-colors duration-[var(--dur)] hover:text-foreground sm:block">
+              Sign in
             </Link>
-            <Link href="/signup" className="bg-primary text-primary-foreground text-[14px] font-semibold px-6 py-2.5 rounded-xl shadow-[var(--neu-elevated)] hover:brightness-[1.07] hover:-translate-y-px active:shadow-[var(--neu-inset-sm)] active:translate-y-0 transition-all">
-              Start Free
+            <Link href="/signup" className="inline-flex h-9 items-center rounded-[10px] bg-primary px-4 text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]">
+              Create account
             </Link>
-            <button className="md:hidden p-2 rounded-lg hover:bg-muted" aria-label="Toggle navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>
+            <button className="md:hidden rounded-[10px] p-2 text-muted-foreground transition-colors duration-[var(--dur)] hover:bg-muted" aria-label="Toggle navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
@@ -81,16 +80,16 @@ export function PublicNavbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-card border-t border-border px-4 py-3 space-y-1">
+        <div className="space-y-1 border-t border-border bg-card px-6 py-3 md:hidden">
           {navLinks.map(link => (
             <Link key={link.path} href={link.path} onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              className="block rounded-[10px] px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-[var(--dur)] hover:bg-muted hover:text-foreground">
               {link.label}
             </Link>
           ))}
-          <div className="pt-2 border-t border-border flex gap-2">
-            <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-medium text-foreground border border-border rounded-xl hover:bg-muted">Sign In</Link>
-            <Link href="/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-semibold text-white gradient-blue rounded-xl hover:opacity-90">Start Free</Link>
+          <div className="flex gap-2 border-t border-border pt-3">
+            <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 rounded-[10px] border border-border py-2 text-center text-sm font-medium text-foreground">Sign in</Link>
+            <Link href="/signup" onClick={() => setMobileOpen(false)} className="flex-1 rounded-[10px] bg-primary py-2 text-center text-sm font-medium text-primary-foreground">Create account</Link>
           </div>
         </div>
       )}
@@ -110,36 +109,35 @@ export function PublicFooter() {
       { label: 'Contact', path: '/contact' },
     ],
     Legal: [
-      { label: 'Privacy Policy', path: '/privacy' },
-      { label: 'Terms of Service', path: '/terms' },
-      { label: 'Acceptable Use', path: '/acceptable-use' },
+      { label: 'Privacy policy', path: '/privacy' },
+      { label: 'Terms of service', path: '/terms' },
+      { label: 'Acceptable use', path: '/acceptable-use' },
     ],
     Account: [
-      { label: 'Sign In', path: '/login' },
-      { label: 'Create Account', path: '/signup' },
+      { label: 'Sign in', path: '/login' },
+      { label: 'Create account', path: '/signup' },
     ],
   };
 
   return (
-    <footer className="mt-20 pt-4">
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-10 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+    <footer className="mt-20 border-t border-border bg-card">
+      <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center">
-              <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={240} height={60} className="h-14 w-auto shrink-0" />
+              <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={180} height={45} style={{ height: '44px', width: 'auto' }} />
             </Link>
-            <p className="mt-3 text-xs font-medium text-muted-foreground">Smarter Cold Email Outreach</p>
-            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              AI-powered cold email outreach platform for modern sales teams.
+            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
+              Cold email workspace. Import leads, connect your own mailbox, run sequences, handle replies.
             </p>
           </div>
           {Object.entries(footerLinks).map(([section, links]) => (
             <div key={section}>
-              <p className="font-semibold text-sm text-foreground mb-3">{section}</p>
+              <p className="mb-3 text-[13px] font-medium text-foreground">{section}</p>
               <ul className="space-y-2">
                 {links.map(link => (
                   <li key={link.path}>
-                    <Link href={link.path} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <Link href={link.path} className="text-[13px] text-muted-foreground transition-colors duration-[var(--dur)] hover:text-foreground">
                       {link.label}
                     </Link>
                   </li>
@@ -148,9 +146,9 @@ export function PublicFooter() {
             </div>
           ))}
         </div>
-        <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} ColdFox. All rights reserved.</p>
-          <Link href="/unsubscribe" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 sm:flex-row">
+          <p className="text-[12px] text-muted-foreground">© {new Date().getFullYear()} ColdFox</p>
+          <Link href="/unsubscribe" className="text-[12px] text-muted-foreground transition-colors duration-[var(--dur)] hover:text-foreground">
             Unsubscribe from emails
           </Link>
         </div>

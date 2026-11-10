@@ -53,7 +53,7 @@ export function EmailComposeStep({
           <div>
             <label htmlFor="template-start" className="text-sm font-medium mb-1.5 block">Start from a template</label>
             <select id="template-start" defaultValue="" onChange={(event) => chooseTemplate(event.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+              className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60">
               <option value="">Write a new message</option>
               {templates.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
             </select>
@@ -70,49 +70,49 @@ export function EmailComposeStep({
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label htmlFor="email-body" className="text-sm font-medium">Email body</label>
-            <span className="text-xs text-muted-foreground">{draft.body.length} characters</span>
+            <span className="text-[12px] text-muted-foreground">{draft.body.length} characters</span>
           </div>
           <textarea id="email-body" rows={9} value={draft.body} onChange={(event) => set('body')(event.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring" />
-          <p className="text-xs text-muted-foreground mt-1.5">
+            className="w-full px-4 py-3 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60 leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring" />
+          <p className="text-[12px] text-muted-foreground mt-1.5">
             Plain text. ColdFox appends a compliant unsubscribe footer automatically; do not add a fake opt-out.
           </p>
         </div>
 
         <div>
-          <p className="text-xs font-medium text-muted-foreground mb-2">Insert personalization</p>
+          <p className="text-[12px] font-medium text-muted-foreground mb-2">Insert personalization</p>
           <div className="flex flex-wrap gap-2">
             {variables.map((variable) => (
               <button key={variable} type="button" onClick={() => insert(variable)}
-                className={cn('px-2.5 py-1 rounded-lg text-xs font-mono border transition-colors',
-                  detected.includes(variable) ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'border-border bg-background text-foreground hover:bg-muted')}>
+                className={cn('px-2.5 py-1 rounded-lg text-[12px] font-mono border transition-colors',
+                  detected.includes(variable) ? 'border-[var(--cf-success)]/40 bg-[color-mix(in_srgb,var(--cf-success)_12%,transparent)] text-[var(--cf-success)]' : 'border-border bg-background text-foreground hover:bg-muted')}>
                 {`{{${variable}}}`}
               </button>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">Green chips match mapped columns in your imported lead file.</p>
+          <p className="text-[12px] text-muted-foreground mt-2">Green chips match mapped columns in your imported lead file.</p>
         </div>
       </div>
 
       <div className="lg:col-span-2">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Merge preview</p>
+          <p className="text-sm font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 text-accent-foreground" /> Merge preview</p>
           <div className="flex gap-1 p-1 bg-muted rounded-lg">
             <button aria-label="Desktop preview" aria-pressed={previewMode === 'desktop'} onClick={() => setPreviewMode('desktop')} className={cn('p-1.5 rounded-md', previewMode === 'desktop' && 'bg-card shadow-sm')}><Monitor className="w-3.5 h-3.5" /></button>
             <button aria-label="Mobile preview" aria-pressed={previewMode === 'mobile'} onClick={() => setPreviewMode('mobile')} className={cn('p-1.5 rounded-md', previewMode === 'mobile' && 'bg-card shadow-sm')}><Smartphone className="w-3.5 h-3.5" /></button>
           </div>
         </div>
-        <div className={cn('neu-card rounded-2xl p-4 mx-auto transition-all', previewMode === 'mobile' ? 'max-w-[300px]' : 'max-w-full')}>
-          <p className="text-xs text-muted-foreground">Sample lead: Sarah Chen &lt;sarah.chen@techflow.io&gt;</p>
+        <div className={cn('neu-card rounded-[16px] p-4 mx-auto transition-[color,background-color,box-shadow,transform,opacity] duration-[var(--dur)] ease-[var(--ease)]', previewMode === 'mobile' ? 'max-w-[300px]' : 'max-w-full')}>
+          <p className="text-[12px] text-muted-foreground">Sample lead: Sarah Chen &lt;sarah.chen@techflow.io&gt;</p>
           <p className="font-semibold text-sm text-foreground mt-1">{renderMerge(draft.subject) || 'Subject line'}</p>
-          <p className="text-xs text-muted-foreground mb-3">{renderMerge(draft.previewText)}</p>
+          <p className="text-[12px] text-muted-foreground mb-3">{renderMerge(draft.previewText)}</p>
           <div className="text-sm text-foreground whitespace-pre-line leading-relaxed border-t border-border pt-3">
             {renderMerge(draft.body) || 'Your email body will appear here.'}
           </div>
         </div>
         {onSaveTemplate && (
           <button type="button" onClick={() => void onSaveTemplate()} disabled={saving}
-            className="mt-4 w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted disabled:opacity-50">
+            className="mt-4 w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
             <Save className="w-4 h-4" /> {saving ? 'Saving…' : 'Save as template'}
           </button>
         )}
@@ -127,7 +127,7 @@ function Field({ label, value, onChange, placeholder }: { label: string; value: 
     <div>
       <label htmlFor={id} className="text-sm font-medium mb-1.5 block">{label}</label>
       <input id={id} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder}
-        className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+        className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60" />
     </div>
   );
 }

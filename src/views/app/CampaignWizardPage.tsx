@@ -25,7 +25,7 @@ const objectives = [
   'Partner outreach',
 ];
 
-const inputCls = 'w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring';
+const inputCls = 'w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60';
 
 export default function CampaignWizardPage({
   initialMailboxes,
@@ -124,11 +124,11 @@ export default function CampaignWizardPage({
   if (launched) {
     return (
       <div className="p-6 lg:p-10 max-w-xl mx-auto text-center">
-        <div className="neu-card rounded-3xl p-10 mt-10">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+        <div className="neu-card rounded-[20px] p-10 mt-10">
+          <div className="w-16 h-16 rounded-[16px] neu-inset-sm flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 className="w-8 h-8 text-[var(--cf-success)]" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">
+          <h1 className="text-[20px] font-semibold text-foreground mb-2">
             {launched === 'now' ? 'Campaign launched' : 'Campaign scheduled'}
           </h1>
           <p className="text-sm text-muted-foreground mb-8">
@@ -137,8 +137,8 @@ export default function CampaignWizardPage({
               : `"${details.name}" will start on ${sending.startDate} at ${sending.startTime}.`}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button onClick={() => router.push('/app/campaigns')} className="px-5 py-2.5 rounded-xl gradient-blue text-white text-sm font-semibold">View campaigns</button>
-            <button onClick={() => router.push('/app/inbox')} className="px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted">Open inbox</button>
+            <button onClick={() => router.push('/app/campaigns')} className="px-5 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">View campaigns</button>
+            <button onClick={() => router.push('/app/inbox')} className="px-5 py-2.5 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">Open inbox</button>
           </div>
         </div>
       </div>
@@ -146,7 +146,7 @@ export default function CampaignWizardPage({
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-[1440px] mx-auto">
       <Link href="/app/campaigns" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 block"><ArrowLeft className="w-4 h-4" /> Back to campaigns</Link>
       <PageHeader title="New campaign" description="Import leads, write your message, and schedule the send." />
 
@@ -154,8 +154,8 @@ export default function CampaignWizardPage({
         {steps.map((label, index) => (
           <li key={label} className="flex items-center gap-2 flex-shrink-0">
             <button type="button" disabled={index > step} onClick={() => setStep(index)} aria-current={index === step ? 'step' : undefined}
-              className={cn('flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:cursor-default',
-                index === step ? 'gradient-blue text-white' : index < step ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-muted text-muted-foreground')}>
+              className={cn('flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors disabled:cursor-default',
+                index === step ? 'rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50' : index < step ? 'neu-inset-sm text-muted-foreground' : 'bg-muted text-muted-foreground')}>
               {index < step ? <Check className="w-3.5 h-3.5" /> : <span>{index + 1}</span>} {label}
             </button>
             {index < steps.length - 1 && <span className="w-6 h-px bg-border" />}
@@ -163,7 +163,7 @@ export default function CampaignWizardPage({
         ))}
       </ol>
 
-      <div className="neu-card rounded-3xl p-6 sm:p-8">
+      <div className="neu-card rounded-[20px] p-6 sm:p-8">
         {step === 0 && (
           <div className="grid gap-5 max-w-2xl">
             <div>
@@ -179,7 +179,7 @@ export default function CampaignWizardPage({
               <div className="flex flex-wrap gap-2">
                 {objectives.map((objective) => (
                   <button key={objective} type="button" aria-pressed={details.objective === objective} onClick={() => setDetails({ ...details, objective })}
-                    className={cn('px-3.5 py-2 rounded-xl text-sm border transition-colors', details.objective === objective ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'border-border hover:bg-muted')}>{objective}</button>
+                    className={cn('px-3.5 py-2 rounded-xl text-sm border transition-colors', details.objective === objective ? 'neu-inset-sm text-accent-foreground' : 'border-border hover:bg-muted')}>{objective}</button>
                 ))}
               </div>
             </div>
@@ -220,10 +220,10 @@ export default function CampaignWizardPage({
               mailboxes={initialMailboxes}
             />
             {initialTemplates.length > 0 && (
-              <div className="neu-card rounded-xl p-4 border border-border">
-                <label className="text-xs font-medium text-muted-foreground mb-2 block">Choose a saved template instead</label>
+              <div className="neu-card rounded-[16px] p-4">
+                <label className="text-[12px] font-medium text-muted-foreground mb-2 block">Choose a saved template instead</label>
                 <select value={templateSelection} onChange={(event) => setTemplateSelection(event.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                  className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60">
                   <option value="">Use the message above</option>
                   {initialTemplates.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
                 </select>
@@ -231,11 +231,11 @@ export default function CampaignWizardPage({
             )}
             <div className="flex flex-col sm:flex-row gap-3">
               <button type="button" onClick={() => void createCampaign()} disabled={busy || issues.some((issue) => issue.level === 'error')}
-                className="px-6 py-2.5 rounded-xl gradient-blue text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                className="px-6 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed">
                 {busy ? 'Creating…' : sending.mode === 'now' ? 'Send now' : 'Schedule campaign'}
               </button>
               <button type="button" onClick={prev} disabled={busy}
-                className="px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted disabled:opacity-50">Back</button>
+                className="px-5 py-2.5 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">Back</button>
             </div>
           </div>
         )}
@@ -248,13 +248,13 @@ export default function CampaignWizardPage({
         </button>
         {step < steps.length - 1 && (
           <button type="button" onClick={next} disabled={busy}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl gradient-blue text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed">
             Continue <ArrowRight className="w-4 h-4" />
           </button>
         )}
       </div>
 
-      {error && <p role="alert" className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}
     </div>
   );
 }

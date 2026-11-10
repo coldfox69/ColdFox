@@ -58,14 +58,14 @@ export default function SuppressionPage({ data }: { data: SuppressionData }) {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-[1440px] mx-auto space-y-6">
       <PageHeader
         title="Suppression List"
         description="Unsubscribes, hard bounces, and complaints. Suppressed addresses are excluded from future sends."
       />
 
       <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 neu-card rounded-2xl p-5">
+        <div className="lg:col-span-2 neu-card rounded-[16px] p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex gap-2">
               <input
@@ -74,13 +74,13 @@ export default function SuppressionPage({ data }: { data: SuppressionData }) {
                 onChange={(e) => setNewEmail(e.target.value)}
                 placeholder="email@example.com"
                 aria-label="Email address"
-                className="flex-1 px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="flex-1 px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               />
               <select
                 value={newReason}
                 onChange={(e) => setNewReason(e.target.value)}
                 aria-label="Reason"
-                className="px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {data.reasons.map((r) => (
                   <option key={r.key} value={r.key}>
@@ -94,13 +94,13 @@ export default function SuppressionPage({ data }: { data: SuppressionData }) {
                 onChange={(e) => setNewNotes(e.target.value)}
                 placeholder="Notes (optional)"
                 aria-label="Notes"
-                className="flex-1 px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="flex-1 px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <button
               onClick={() => void addSuppression()}
               disabled={!newEmail}
-              className="px-4 py-2.5 rounded-xl gradient-blue text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+              className="px-4 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"
             >
               <Plus className="w-4 h-4" /> Add
             </button>
@@ -111,18 +111,18 @@ export default function SuppressionPage({ data }: { data: SuppressionData }) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search suppression entries"
               aria-label="Search suppression"
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-muted text-sm border border-transparent focus:outline-none focus:border-ring focus:bg-card"
+              className="w-full pl-9 pr-3 py-2 rounded-[10px] bg-input py-2 pl-9 pr-3 text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] focus:border-ring focus:ring-[3px] focus:ring-ring/50"
             />
             <AlertCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           </div>
         </div>
-        <div className="neu-card rounded-2xl p-5">
+        <div className="neu-card rounded-[16px] p-5">
           <h3 className="text-sm font-semibold text-foreground mb-3">Suppression reasons</h3>
           <ul className="space-y-2 text-sm">
             {data.reasons.map((r) => (
               <li key={r.key} className="flex justify-between">
                 <span className="text-foreground">{r.label}</span>
-                <span className="text-xs text-muted-foreground">{r.description}</span>
+                <span className="text-[12px] text-muted-foreground">{r.description}</span>
               </li>
             ))}
           </ul>
@@ -136,10 +136,10 @@ export default function SuppressionPage({ data }: { data: SuppressionData }) {
           description="Addresses that unsubscribe or hard-bounce appear here automatically."
         />
       ) : (
-        <div className="neu-card rounded-2xl mt-4 overflow-x-auto">
+        <div className="neu-card rounded-[16px] mt-4 overflow-x-auto">
           <table className="w-full text-sm min-w-[720px]">
             <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border">
+              <tr className="text-left text-[12px] text-muted-foreground border-b border-border">
                 <th className="px-4 py-3 font-medium">Email</th>
                 <th className="px-4 py-3 font-medium">Reason</th>
                 <th className="px-4 py-3 font-medium">Source</th>
@@ -152,7 +152,7 @@ export default function SuppressionPage({ data }: { data: SuppressionData }) {
                 <tr key={e.id} className="hover:bg-muted/40 transition-colors">
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground truncate">{e.email}</p>
-                    {e.notes && <p className="text-xs text-muted-foreground">{e.notes}</p>}
+                    {e.notes && <p className="text-[12px] text-muted-foreground">{e.notes}</p>}
                   </td>
                   <td className="px-4 py-3 text-foreground">{e.reason}</td>
                   <td className="px-4 py-3 text-muted-foreground">{e.source}</td>
@@ -160,7 +160,7 @@ export default function SuppressionPage({ data }: { data: SuppressionData }) {
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => void remove(e.id)}
-                      className="p-1.5 rounded-lg hover:bg-muted text-red-600"
+                      className="p-1.5 rounded-lg hover:bg-muted text-destructive"
                       aria-label={`Remove ${e.email}`}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -173,7 +173,7 @@ export default function SuppressionPage({ data }: { data: SuppressionData }) {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground mt-4">
+      <p className="text-[12px] text-muted-foreground mt-4">
         Hard bounces and spam complaints are added automatically. Manual entries require owner or admin role.
       </p>
     </div>

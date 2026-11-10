@@ -145,10 +145,10 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
   if (result) {
     return (
       <div className="space-y-6">
-        <div className="neu-card rounded-2xl p-6">
+        <div className="neu-card rounded-[16px] p-6">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 rounded-xl neu-inset-sm flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-5 h-5 text-[var(--cf-success)]" />
             </div>
             <div>
               <h3 className="font-semibold text-foreground">Import finished</h3>
@@ -161,31 +161,31 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Imported', value: result.created, tone: 'text-emerald-600 dark:text-emerald-400' },
-            { label: 'Duplicates skipped', value: result.duplicates, tone: 'text-amber-600 dark:text-amber-400' },
-            { label: 'Invalid emails', value: result.invalid, tone: 'text-red-600 dark:text-red-400' },
+            { label: 'Imported', value: result.created, tone: 'text-[var(--cf-success)]' },
+            { label: 'Duplicates skipped', value: result.duplicates, tone: 'text-[var(--cf-warning)]' },
+            { label: 'Invalid emails', value: result.invalid, tone: 'text-destructive' },
             { label: 'Rows in file', value: result.totalRows, tone: 'text-foreground' },
           ].map((stat) => (
             <div key={stat.label} className="neu-card rounded-xl p-3">
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
-              <p className={cn('text-xl font-bold', stat.tone)}>{stat.value.toLocaleString()}</p>
+              <p className="text-[12px] text-muted-foreground">{stat.label}</p>
+              <p className={cn('text-[17px] font-semibold', stat.tone)}>{stat.value.toLocaleString()}</p>
             </div>
           ))}
         </div>
 
         {result.limited && (
-          <p className="text-sm text-amber-700 dark:text-amber-400 flex gap-2">
+          <p className="text-sm text-[var(--cf-warning)] flex gap-2">
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /> Your plan&apos;s lead limit was reached partway through. The remaining rows were not imported.
           </p>
         )}
         {result.sampleInvalid.length > 0 && (
-          <div className="neu-card rounded-2xl p-4">
+          <div className="neu-card rounded-[16px] p-4">
             <p className="text-sm font-medium text-foreground mb-2">Invalid addresses that were skipped</p>
-            <p className="text-xs text-muted-foreground font-mono break-all">{result.sampleInvalid.join(', ')}</p>
+            <p className="text-[12px] text-muted-foreground font-mono break-all">{result.sampleInvalid.join(', ')}</p>
           </div>
         )}
 
-        <button type="button" onClick={reset} className="px-4 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted">
+        <button type="button" onClick={reset} className="px-4 py-2.5 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
           Import another file
         </button>
       </div>
@@ -205,11 +205,11 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
           tabIndex={0}
           aria-label="Upload a lead file"
           className={cn(
-            'rounded-2xl border-2 border-dashed p-10 text-center cursor-pointer transition-colors',
-            dragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-border hover:border-blue-400 hover:bg-muted/40',
+            'rounded-[16px] border-2 border-dashed p-10 text-center cursor-pointer transition-colors',
+            dragging ? 'border-primary bg-accent' : 'border-border hover:border-blue-400 hover:bg-muted/40',
           )}
         >
-          <UploadCloud className="w-10 h-10 text-blue-500 mx-auto mb-3" />
+          <UploadCloud className="w-10 h-10 text-accent-foreground mx-auto mb-3" />
           <p className="font-semibold text-foreground">Drag and drop your lead file here</p>
           <p className="text-sm text-muted-foreground mt-1">or click to browse. CSV, TSV, or XLSX up to 5 MB and 10,000 rows.</p>
           <input
@@ -224,18 +224,18 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
       )}
 
       {analyzing && (
-        <div className="neu-card rounded-2xl p-6 flex items-center gap-3 text-sm text-muted-foreground">
+        <div className="neu-card rounded-[16px] p-6 flex items-center gap-3 text-sm text-muted-foreground">
           <Loader2 className="w-4 h-4 animate-spin" /> Analysing columns and checking email syntax…
         </div>
       )}
 
       {!analyzing && analysis && file && (
         <>
-          <div className="neu-card rounded-2xl p-4 flex items-center gap-3">
-            <FileSpreadsheet className="w-8 h-8 text-emerald-600" />
+          <div className="neu-card rounded-[16px] p-4 flex items-center gap-3">
+            <FileSpreadsheet className="w-8 h-8 text-[var(--cf-success)]" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground truncate">{analysis.filename}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[12px] text-muted-foreground">
                 {(file.size / 1024).toFixed(0)} KB · {analysis.totalRows.toLocaleString()} rows · {analysis.headers.length} columns
                 {analysis.sheetName ? ` · ${analysis.sheetName}` : ''}
               </p>
@@ -248,20 +248,20 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'Rows detected', value: analysis.totalRows, tone: 'text-foreground' },
-              { label: 'Invalid emails', value: analysis.analysis.detected.invalidEmailRows, tone: 'text-red-600 dark:text-red-400' },
-              { label: 'Duplicates in file', value: analysis.analysis.detected.duplicateRows, tone: 'text-amber-600 dark:text-amber-400' },
+              { label: 'Invalid emails', value: analysis.analysis.detected.invalidEmailRows, tone: 'text-destructive' },
+              { label: 'Duplicates in file', value: analysis.analysis.detected.duplicateRows, tone: 'text-[var(--cf-warning)]' },
               { label: 'Empty rows', value: analysis.analysis.detected.emptyRows, tone: 'text-muted-foreground' },
             ].map((stat) => (
               <div key={stat.label} className="neu-card rounded-xl p-3">
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <p className={cn('text-xl font-bold', stat.tone)}>{stat.value.toLocaleString()}</p>
+                <p className="text-[12px] text-muted-foreground">{stat.label}</p>
+                <p className={cn('text-[17px] font-semibold', stat.tone)}>{stat.value.toLocaleString()}</p>
               </div>
             ))}
           </div>
 
-          <div className="rounded-2xl p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50">
+          <div className="rounded-[16px] p-5 neu-inset-sm">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <Sparkles className="w-4 h-4 text-accent-foreground" />
               <h3 className="font-semibold text-sm text-foreground">
                 {analysis.analysis.source === 'ai' ? 'AI column analysis' : 'Column analysis'}
               </h3>
@@ -272,13 +272,13 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
                 : 'AI was unavailable, so deterministic header matching was used. Verify every field before importing.'}
             </p>
             {analysis.analysis.notes.length > 0 && (
-              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+              <ul className="mt-2 space-y-1 text-[12px] text-muted-foreground">
                 {analysis.analysis.notes.map((note) => <li key={note}>{note}</li>)}
               </ul>
             )}
           </div>
 
-          <div className="neu-card rounded-2xl p-5">
+          <div className="neu-card rounded-[16px] p-5">
             <h3 className="font-semibold text-sm text-foreground mb-3">Column mapping</h3>
             <div className="space-y-2">
               {analysis.analysis.columns.map((column) => {
@@ -287,7 +287,7 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
                   <div key={column.name} className="grid sm:grid-cols-[minmax(0,1fr)_220px] gap-2 sm:gap-4 sm:items-center rounded-xl border border-border p-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{column.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[12px] text-muted-foreground">
                         {column.sample ? `e.g. ${column.sample}` : 'No sample value'}
                         {column.ambiguous ? ' · needs review' : ''}
                       </p>
@@ -308,21 +308,21 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
               })}
             </div>
             {!Object.values(mapping).includes('email') && (
-              <p className="mt-3 text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+              <p className="mt-3 text-sm text-destructive flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" /> Map one column to Email to continue.
               </p>
             )}
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <p className="text-[12px] text-muted-foreground flex items-center gap-1.5">
               <Copy className="w-3.5 h-3.5" /> Duplicate addresses already in your CRM are skipped automatically.
             </p>
             <button
               type="button"
               onClick={() => void importLeads()}
               disabled={importing || !Object.values(mapping).includes('email')}
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl gradient-blue text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {importing && <Loader2 className="w-4 h-4 animate-spin" />}
               {importing ? 'Importing…' : 'Import leads'}
@@ -331,7 +331,7 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
         </>
       )}
 
-      {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }

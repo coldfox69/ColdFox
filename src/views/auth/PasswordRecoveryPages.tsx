@@ -34,11 +34,11 @@ export function ForgotPasswordPage() {
     return (
       <AuthShell title="Check your inbox" subtitle="If an account exists for that address, a reset link is on its way.">
         <div className="flex flex-col items-center text-center py-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-4">
-            <MailCheck className="w-6 h-6 text-blue-600" />
+          <div className="w-14 h-14 rounded-[16px] neu-inset-sm flex items-center justify-center mb-4">
+            <MailCheck className="w-6 h-6 text-accent-foreground" />
           </div>
-          <p className="text-xs text-muted-foreground mb-6">The link expires shortly. Check your spam folder if it does not arrive.</p>
-          <Link href="/login" className="w-full text-center gradient-blue text-white font-semibold py-2.5 rounded-xl hover:opacity-90">Back to sign in</Link>
+          <p className="text-[12px] text-muted-foreground mb-6">The link expires shortly. Check your spam folder if it does not arrive.</p>
+          <Link href="/login" className="w-full text-center rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 py-2.5 rounded-xl hover:opacity-90">Back to sign in</Link>
         </div>
       </AuthShell>
     );
@@ -48,12 +48,12 @@ export function ForgotPasswordPage() {
     <AuthShell
       title="Forgot your password?"
       subtitle="Enter your email and we'll send you a reset link."
-      footer={<Link href="/login" className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400 hover:underline"><ArrowLeft className="w-3.5 h-3.5" /> Back to sign in</Link>}
+      footer={<Link href="/login" className="inline-flex items-center gap-1.5 font-medium text-accent-foreground hover:underline"><ArrowLeft className="w-3.5 h-3.5" /> Back to sign in</Link>}
     >
       <form onSubmit={submit} className="space-y-4" noValidate>
         <FormError message={error} />
         <TextField id="email" label="Work email" type="email" value={email} onChange={setEmail} placeholder="you@company.com" icon={Mail} />
-        <button type="submit" disabled={loading} className="w-full gradient-blue text-white font-semibold py-2.5 rounded-xl hover:opacity-90 disabled:opacity-60">{loading ? 'Sending...' : 'Send reset link'}</button>
+        <button type="submit" disabled={loading} className="w-full rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 py-2.5 rounded-xl hover:opacity-90 disabled:opacity-60">{loading ? 'Sending...' : 'Send reset link'}</button>
       </form>
     </AuthShell>
   );
@@ -90,7 +90,7 @@ export function ResetPasswordPage() {
   if (done) {
     return (
       <AuthShell title="Password updated" subtitle="You can now sign in with your new password.">
-        <Link href="/login" className="block text-center w-full gradient-blue text-white font-semibold py-2.5 rounded-xl hover:opacity-90">Go to sign in</Link>
+        <Link href="/login" className="block text-center w-full rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 py-2.5 rounded-xl hover:opacity-90">Go to sign in</Link>
       </AuthShell>
     );
   }
@@ -101,7 +101,7 @@ export function ResetPasswordPage() {
         <FormError message={error} />
         <PasswordField id="pw" label="New password" value={pw} onChange={setPw} placeholder="At least 8 characters" autoComplete="new-password" />
         <PasswordField id="pw2" label="Confirm new password" value={confirm} onChange={setConfirm} placeholder="Repeat your password" autoComplete="new-password" />
-        <button type="submit" disabled={loading} className="w-full gradient-blue text-white font-semibold py-2.5 rounded-xl hover:opacity-90 disabled:opacity-60">{loading ? 'Updating...' : 'Update password'}</button>
+        <button type="submit" disabled={loading} className="w-full rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 py-2.5 rounded-xl hover:opacity-90 disabled:opacity-60">{loading ? 'Updating...' : 'Update password'}</button>
       </form>
     </AuthShell>
   );

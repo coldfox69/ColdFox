@@ -38,16 +38,16 @@ export function CampaignReview({
 
   return (
     <div className="grid lg:grid-cols-5 gap-6">
-      <div className="lg:col-span-3 neu-card rounded-2xl p-6">
-        <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">Campaign summary</p>
-        <h2 className="text-xl font-bold text-foreground mb-1">{summary.name || 'Untitled campaign'}</h2>
+      <div className="lg:col-span-3 neu-card rounded-[16px] p-6">
+        <p className="text-[12px] font-semibold text-accent-foreground mb-1">Campaign summary</p>
+        <h2 className="text-[17px] font-semibold text-foreground mb-1">{summary.name || 'Untitled campaign'}</h2>
         <p className="text-sm text-muted-foreground mb-6">{summary.objective || 'No objective set'}</p>
         <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
           {items.map((item) => (
             <div key={item.label} className="flex gap-3">
               <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 text-muted-foreground"><item.icon className="w-4 h-4" /></div>
               <div className="min-w-0">
-                <dt className="text-xs text-muted-foreground">{item.label}</dt>
+                <dt className="text-[12px] text-muted-foreground">{item.label}</dt>
                 <dd className="text-sm font-medium text-foreground break-words">{item.value}</dd>
               </div>
             </div>
@@ -55,14 +55,14 @@ export function CampaignReview({
         </dl>
       </div>
       <div className="lg:col-span-2 space-y-4">
-        <div className="neu-card rounded-2xl p-5">
+        <div className="neu-card rounded-[16px] p-5">
           <h3 className="text-sm font-semibold mb-3">Pre-launch checks</h3>
           <ValidationList issues={issues} />
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed px-1">
+        <p className="text-[12px] text-muted-foreground leading-relaxed px-1">
           ColdFox helps you send with good practices, but it cannot guarantee inbox placement. Only contact people with a legitimate reason to reach out, and honor every unsubscribe request.
         </p>
-        <p className={blocked ? 'text-xs text-red-600 dark:text-red-400' : 'hidden'}>Resolve the errors above before launching.</p>
+        <p className={blocked ? 'text-[12px] text-destructive' : 'hidden'}>Resolve the errors above before launching.</p>
       </div>
     </div>
   );

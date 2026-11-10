@@ -349,7 +349,7 @@ export async function getOverview(orgId: string): Promise<OverviewVM> {
     chartData,
     campaigns: campaignRows.slice(0, 8).map(mapCampaign),
     mailboxes: mailboxRows.map(mapMailbox),
-    activity: activity.length ? activity : [{ text: 'No campaign activity yet.', time: ' - ', dot: 'bg-slate-400' }],
+    activity: activity.length ? activity : [{ text: 'No campaign activity yet.', time: '', dot: 'bg-muted-foreground' }],
     recommendations,
   };
 }

@@ -18,7 +18,7 @@ const steps = [
   { label: 'Volume', icon: Gauge },
 ];
 
-const selectClass = 'w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring';
+const selectClass = 'w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60';
 const inputClass = selectClass;
 
 const usageOptions = ['Sales', 'Marketing', 'Recruiting', 'Agency', 'Business development', 'Other'];
@@ -35,8 +35,8 @@ function Choice({ options, value, onChange }: { options: string[]; value: string
           onClick={() => onChange(opt)}
           aria-pressed={value === opt}
           className={cn(
-            'px-3.5 py-3 rounded-xl border text-sm text-left transition-all',
-            value === opt ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'border-border bg-background text-foreground hover:bg-muted'
+            'px-3.5 py-3 rounded-xl border text-sm text-left transition-[color,background-color,box-shadow,transform,opacity] duration-[var(--dur)] ease-[var(--ease)]',
+            value === opt ? 'border-blue-500 neu-inset-sm text-blue-700 dark:text-blue-300 font-medium' : 'border-border bg-background text-foreground hover:bg-muted'
           )}
         >
           {opt}
@@ -108,13 +108,13 @@ export default function OnboardingPage() {
   if (finished) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="neu-card rounded-3xl p-10 max-w-md w-full text-center">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-5">
-            <Check className="w-7 h-7 text-emerald-600" />
+        <div className="neu-card rounded-[20px] p-10 max-w-md w-full text-center">
+          <div className="w-16 h-16 rounded-[16px] neu-inset-sm flex items-center justify-center mx-auto mb-5">
+            <Check className="w-7 h-7 text-[var(--cf-success)]" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">You're all set, {data.fullName.split(' ')[0]}</h1>
+          <h1 className="text-[20px] font-semibold text-foreground mb-2">You're all set, {data.fullName.split(' ')[0]}</h1>
           <p className="text-sm text-muted-foreground mb-8">Your workspace for {data.company} is ready. Connect a mailbox and import your first leads to get started.</p>
-          <button onClick={() => router.push('/app')} className="w-full gradient-blue text-white font-semibold py-2.5 rounded-xl hover:opacity-90 inline-flex items-center justify-center gap-2">
+          <button onClick={() => router.push('/app')} className="w-full rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 py-2.5 rounded-xl hover:opacity-90 inline-flex items-center justify-center gap-2">
             Go to dashboard <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -133,8 +133,8 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-xl gradient-blue flex items-center justify-center"><Megaphone className="w-4 h-4 text-white" /></div>
-          <span className="font-bold text-lg text-foreground">ColdFox setup</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-primary-foreground"><Megaphone className="w-4 h-4" /></div>
+          <span className="font-medium text-lg text-foreground">ColdFox setup</span>
         </div>
 
         <ol className="flex items-center justify-between mb-8" aria-label="Onboarding progress">
@@ -150,27 +150,27 @@ export default function OnboardingPage() {
                   className="flex flex-col items-center gap-1.5 disabled:cursor-default"
                 >
                   <span className={cn(
-                    'w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all',
-                    done && 'bg-emerald-500 text-white',
-                    active && 'gradient-blue text-white shadow-md shadow-blue-500/30',
+                    'w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-semibold transition-[color,background-color,box-shadow,transform,opacity] duration-[var(--dur)] ease-[var(--ease)]',
+                    done && 'bg-[var(--cf-success)] text-white',
+                    active && 'rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 shadow-md shadow-blue-500/30',
                     !done && !active && 'bg-muted text-muted-foreground'
                   )}>
                     {done ? <Check className="w-4 h-4" /> : i + 1}
                   </span>
-                  <span className={cn('text-[11px] font-medium', active ? 'text-foreground' : 'text-muted-foreground')}>{s.label}</span>
+                  <span className={cn('text-[12px] font-medium', active ? 'text-foreground' : 'text-muted-foreground')}>{s.label}</span>
                 </button>
-                {i < steps.length - 1 && <div className={cn('flex-1 h-0.5 mx-2 mb-5 rounded-full', i < step ? 'bg-emerald-500' : 'bg-border')} />}
+                {i < steps.length - 1 && <div className={cn('flex-1 h-0.5 mx-2 mb-5 rounded-full', i < step ? 'bg-[var(--cf-success)]' : 'bg-border')} />}
               </li>
             );
           })}
         </ol>
 
-        <div className="neu-card rounded-3xl p-8">
-          <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">Step {step + 1} of {steps.length}</p>
-          <h1 className="text-xl font-bold text-foreground">{stepTitles[step].title}</h1>
+        <div className="neu-card rounded-[20px] p-8">
+          <p className="text-[12px] font-semibold text-accent-foreground mb-1">Step {step + 1} of {steps.length}</p>
+          <h1 className="text-[17px] font-semibold text-foreground">{stepTitles[step].title}</h1>
           <p className="text-sm text-muted-foreground mb-6">{stepTitles[step].desc}</p>
 
-          {error && <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p role="alert" className="mb-4 text-sm text-destructive">{error}</p>}
 
           {step === 0 && (
             <div className="space-y-4">
@@ -233,12 +233,12 @@ export default function OnboardingPage() {
             >
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
-            <button type="button" onClick={() => void next()} disabled={submitting} className="gradient-blue text-white font-semibold px-6 py-2.5 rounded-xl hover:opacity-90 disabled:opacity-60 inline-flex items-center gap-2">
+            <button type="button" onClick={() => void next()} disabled={submitting} className="rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 px-6 py-2.5 rounded-xl hover:opacity-90 disabled:opacity-60 inline-flex items-center gap-2">
               {submitting ? 'Creating workspace...' : step === steps.length - 1 ? 'Finish setup' : 'Continue'} <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-6">You can change any of these answers later in Settings.</p>
+        <p className="text-center text-[12px] text-muted-foreground mt-6">You can change any of these answers later in Settings.</p>
       </div>
     </div>
   );

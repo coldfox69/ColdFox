@@ -100,19 +100,19 @@ export function AdminModulePage({
   );
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-6 px-6 py-6 lg:px-8 lg:py-8">
       <PageHeader title={title} description={description} />
 
-      <div className="neu-card rounded-2xl p-4 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
-        <div className="relative flex-1 max-w-md">
+      <div className="neu-card flex flex-col gap-3 rounded-[16px] p-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative max-w-md flex-1">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Search ${title.toLowerCase()}…`}
+            placeholder={`Search ${title.toLowerCase()}`}
             aria-label={`Search ${title.toLowerCase()}`}
-            className="w-full pl-9 pr-3 py-2 rounded-xl neu-inset-sm text-sm focus:outline-none focus:border-ring"
+            className="w-full rounded-[10px] bg-input py-2 pl-9 pr-3 text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] focus:border-ring focus:ring-[3px] focus:ring-ring/50"
           />
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground flex items-center justify-center">
+          <div className="absolute left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-muted-foreground">
             <Search className="w-4 h-4" />
           </div>
         </div>
@@ -125,12 +125,12 @@ export function AdminModulePage({
           description={emptyState?.description ?? 'No records found.'}
         />
       ) : filtered.length === 0 ? (
-        <div className="neu-card rounded-2xl p-8 text-center text-sm text-muted-foreground">No matching records.</div>
+        <div className="neu-card rounded-[16px] p-8 text-center text-[13px] text-muted-foreground">No matching records</div>
       ) : (
-        <div className="neu-card rounded-2xl mt-4 overflow-x-auto">
-          <table className="w-full text-sm min-w-[720px]">
+        <div className="neu-card mt-4 overflow-x-auto rounded-[16px]">
+          <table className="w-full min-w-[720px] text-[13px]">
             <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border">
+              <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
                 {columns.map((col) => (
                   <th key={col.key} className="px-4 py-3 font-medium">
                     {col.label}
@@ -140,7 +140,7 @@ export function AdminModulePage({
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((item, index) => (
-                <tr key={String(item.id ?? index)} className="hover:bg-muted/40 transition-colors">
+                <tr key={String(item.id ?? index)} className="transition-colors duration-[var(--dur)] hover:bg-muted/40">
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-3 text-foreground truncate max-w-xs">
                       {formatValue(item[col.key])}

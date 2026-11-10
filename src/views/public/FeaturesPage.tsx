@@ -4,70 +4,64 @@ import { Brain, Zap, Shield, Users, BarChart2, Inbox, Check } from 'lucide-react
 
 const features = [
   {
-    category: 'Lead Management',
+    category: 'Lead management',
     icon: Users,
-    color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
     items: [
-      { title: 'CSV & XLSX Import', desc: 'Upload lead spreadsheets with drag-and-drop. Automatic column detection and mapping.' },
-      { title: 'AI Lead Analysis', desc: 'Automatic data quality checks: invalid emails, missing fields, duplicates, and enrichment suggestions.' },
-      { title: 'CRM Pipeline', desc: 'Track leads through custom stages. Add notes, tags, and next follow-up reminders.' },
-      { title: 'Lead Profile View', desc: 'Full contact history, campaign participation, conversation threads, and activity timeline.' },
-    ]
+      { title: 'CSV and XLSX import', desc: 'Upload a lead spreadsheet. Column detection and mapping run as you upload.' },
+      { title: 'Import analysis', desc: 'Data quality checks for invalid emails, missing fields, duplicates and enrichment gaps.' },
+      { title: 'CRM pipeline', desc: 'Track leads through stages, with notes, tags and next follow-up dates.' },
+      { title: 'Lead profile', desc: 'Contact history, campaign participation, conversation threads and an activity timeline.' },
+    ],
   },
   {
-    category: 'Email & AI Writing',
+    category: 'Email and AI writing',
     icon: Brain,
-    color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
     items: [
-      { title: 'AI Email Writer', desc: 'Generate personalized cold emails using lead data. One-click tone and length adjustments.' },
-      { title: 'Template Library', desc: 'Personal and shared template libraries with categories, search, and version history.' },
-      { title: 'Subject Line Generator', desc: 'AI-generated subject line variants optimized for relevance and deliverability.' },
-      { title: 'AI Optimizer', desc: 'Side-by-side before/after comparison with clarity scores and spam-risk warnings.' },
-    ]
+      { title: 'AI email writer', desc: 'Draft from lead fields with tone and length controls, then save the result as a template.' },
+      { title: 'Template library', desc: 'Personal and shared templates with categories, search and version history.' },
+      { title: 'Subject line drafts', desc: 'Several subject variants generated from the message you wrote.' },
+      { title: 'Optimizer', desc: 'Before and after comparison with clarity notes and risk flags on the wording.' },
+    ],
   },
   {
-    category: 'Campaign Automation',
+    category: 'Campaign automation',
     icon: Zap,
-    color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
     items: [
-      { title: 'Multi-step Sequences', desc: 'Build follow-up sequences with smart delays. Auto-stop on reply or unsubscribe.' },
-      { title: 'Template Rotation', desc: 'Rotate multiple email variants across a sequence for content testing and natural variation.' },
-      { title: 'Sending Schedules', desc: 'Set sending windows, timezone awareness, weekday selection, and daily caps.' },
-      { title: 'Visual Workflow Builder', desc: 'Build automation flows with triggers, delays, branches, and conditions visually.' },
-    ]
+      { title: 'Multi-step sequences', desc: 'Follow-up steps with delays that stop on reply, unsubscribe or hard bounce.' },
+      { title: 'Template rotation', desc: 'Alternate message variants across a sequence for content testing and natural variation.' },
+      { title: 'Sending schedules', desc: 'Sending windows, timezone, weekday selection and a daily cap per mailbox.' },
+      { title: 'Workflow builder', desc: 'Automation flows with triggers, delays, branches and conditions.' },
+    ],
   },
   {
-    category: 'Mailbox & Deliverability',
+    category: 'Mailbox and deliverability',
     icon: Shield,
-    color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
     items: [
-      { title: 'Gmail & Outlook Integration', desc: 'Connect your real mailboxes via OAuth. Emails sent from your own domain, not shared IPs.' },
-      { title: 'SMTP/IMAP Support', desc: 'Connect any email provider using standard SMTP/IMAP credentials.' },
-      { title: 'Deliverability Center', desc: 'SPF, DKIM, DMARC status monitoring with step-by-step DNS setup guides.' },
-      { title: 'Bounce & Complaint Monitoring', desc: 'Track hard bounces and complaints. Auto-suppress problematic contacts.' },
-    ]
+      { title: 'Gmail and Outlook', desc: 'Connect your own mailboxes over OAuth. Mail leaves from your domain, not shared servers.' },
+      { title: 'SMTP and IMAP', desc: 'Connect any provider with standard SMTP or IMAP credentials.' },
+      { title: 'Deliverability checks', desc: 'Read SPF, DKIM and DMARC records with step-by-step DNS guidance.' },
+      { title: 'Bounce and complaint tracking', desc: 'Hard bounces and complaints are recorded and the contact is suppressed.' },
+    ],
   },
   {
-    category: 'Inbox & Conversations',
+    category: 'Inbox and conversations',
     icon: Inbox,
-    color: 'bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400',
     items: [
-      { title: 'Unified Inbox', desc: 'All replies from all campaigns in one place. Three-panel layout for efficient management.' },
-      { title: 'Conversation Threading', desc: 'Full email thread history with lead context panel and campaign reference.' },
-      { title: 'Internal Notes', desc: 'Add private notes to conversations for team collaboration.' },
-      { title: 'Reply Actions', desc: 'Archive, assign, and update lead status directly from the inbox.' },
-    ]
+      { title: 'Unified inbox', desc: 'Replies from every campaign in one list, with a thread view beside the lead context.' },
+      { title: 'Conversation threading', desc: 'Full thread history with the lead panel and the campaign that started it.' },
+      { title: 'Internal notes', desc: 'Private notes on a conversation so the team can hand over context.' },
+      { title: 'Reply actions', desc: 'Archive, assign or update the lead status without leaving the thread.' },
+    ],
   },
   {
-    category: 'Analytics & Reporting',
+    category: 'Analytics and reporting',
     icon: BarChart2,
-    color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400',
     items: [
-      { title: 'Campaign Analytics', desc: 'Track delivery, reply rates, and bounce rates per campaign. Date range filtering.' },
-      { title: 'Mailbox Performance', desc: 'Per-mailbox sending stats and health indicators.' },
-      { title: 'Report Export', desc: 'Download analytics reports in CSV for external analysis and team sharing.' },
-      { title: 'Suppression Reports', desc: 'Full visibility into unsubscribes, bounces, and complaints.' },
-    ]
+      { title: 'Campaign analytics', desc: 'Delivery, reply and bounce rates per campaign, with a date range filter.' },
+      { title: 'Mailbox performance', desc: 'Sending stats and health per mailbox.' },
+      { title: 'Report export', desc: 'Download the analytics report as CSV for your own analysis.' },
+      { title: 'Suppression reports', desc: 'Full visibility into unsubscribes, bounces and complaints.' },
+    ],
   },
 ];
 
@@ -75,40 +69,42 @@ export default function FeaturesPage() {
   return (
     <div className="min-h-screen bg-background">
       <PublicNavbar />
-      <div className="pt-24 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16 pt-8">
-            <h1 className="text-4xl font-bold text-foreground mb-4">A complete outreach platform</h1>
-            <p className="text-muted-foreground text-lg">Import, templates, sequences, inbox, and deliverability checks in one workspace.</p>
+      <div className="px-6 pb-16 pt-28 sm:px-8 lg:pt-32">
+        <div className="mx-auto max-w-[1200px]">
+          <div className="max-w-2xl">
+            <h1 className="text-[36px] font-semibold text-foreground">What the workspace covers</h1>
+            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">Import, templates, sequences, inbox, and deliverability checks, all in one place.</p>
           </div>
-          <div className="space-y-16">
+
+          <div className="mt-12 space-y-14">
             {features.map(section => (
               <div key={section.category}>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${section.color}`}>
-                    <section.icon className="w-5 h-5" />
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-[10px] neu-inset-sm">
+                    <section.icon className="w-[18px] h-[18px] text-accent-foreground" />
                   </div>
-                  <h2 className="text-xl font-bold text-foreground">{section.category}</h2>
+                  <h2 className="text-[18px] font-semibold text-foreground">{section.category}</h2>
                 </div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {section.items.map(item => (
-                    <div key={item.title} className="neu-card rounded-2xl p-5">
-                      <div className="flex items-start gap-2 mb-2">
-                        <Check className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                        <h3 className="font-semibold text-foreground text-sm">{item.title}</h3>
+                    <div key={item.title} className="neu-card rounded-[16px] p-5">
+                      <div className="mb-2 flex items-start gap-2">
+                        <Check className="mt-0.5 w-4 h-4 shrink-0 text-accent-foreground" />
+                        <h3 className="text-[14px] font-medium text-foreground">{item.title}</h3>
                       </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed pl-6">{item.desc}</p>
+                      <p className="pl-6 text-[13px] leading-relaxed text-muted-foreground">{item.desc}</p>
                     </div>
                   ))}
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-16 bg-slate-900 rounded-2xl p-10 text-center text-white">
-            <h2 className="text-2xl font-bold mb-3">Ready to see it in action?</h2>
-            <p className="text-blue-200 mb-6 text-sm">Start with the free plan. No credit card required.</p>
-            <Link href="/signup" className="inline-block bg-white text-blue-900 font-semibold px-8 py-3 rounded-2xl hover:bg-blue-50 transition-colors">
-              Create Free Account
+
+          <div className="neu-card-lg mt-16 rounded-[20px] p-10 text-center">
+            <h2 className="text-[24px] font-semibold text-foreground">Start with the free plan</h2>
+            <p className="mx-auto mt-2 max-w-md text-[14px] text-muted-foreground">No credit card needed to create an account.</p>
+            <Link href="/signup" className="mt-6 inline-flex h-11 items-center justify-center rounded-[10px] bg-primary px-6 text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-0.5 hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]">
+              Create a free account
             </Link>
           </div>
         </div>

@@ -23,8 +23,8 @@ const tabs: { id: Tab; label: string }[] = [
 
 const statusOptions: LeadStatus[] = ['new', 'contacted', 'replied', 'interested', 'not-interested', 'bounced', 'unsubscribed'];
 
-const cardCls = 'neu-card rounded-2xl p-5';
-const labelCls = 'text-xs font-medium uppercase tracking-wide text-muted-foreground';
+const cardCls = 'neu-card rounded-[16px] p-5';
+const labelCls = 'text-[12px] font-medium font-medium text-muted-foreground';
 
 export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDetailVM; coworkers: Lead[] }) {
   const router = useRouter();
@@ -44,7 +44,7 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
           icon={<Mail className="w-8 h-8" />}
           title="Lead not found"
           description="This contact may have been deleted or the link is out of date."
-          action={<Link href="/app/leads" className="px-4 py-2 rounded-xl gradient-blue text-white text-sm font-semibold">Back to Leads</Link>}
+          action={<Link href="/app/leads" className="px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">Back to Leads</Link>}
         />
       </div>
     );
@@ -119,7 +119,7 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-[1440px] mx-auto space-y-6">
       <Link href="/app/leads" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="w-4 h-4" /> Back to Leads & CRM
       </Link>
@@ -128,7 +128,7 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
         title={fullName}
         description={`${lead.jobTitle} at ${lead.company}`}
         actions={
-          <button onClick={() => setEditing(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
+          <button onClick={() => setEditing(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
             <Pencil className="w-4 h-4" /> Edit lead
           </button>
         }
@@ -137,7 +137,7 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
       <div className="flex flex-wrap items-center gap-3">
         <LeadStatusBadge status={lead.status} />
         {lead.tags.map(t => (
-          <span key={t} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg neu-inset-sm text-xs text-muted-foreground">
+          <span key={t} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg neu-inset-sm text-[12px] text-muted-foreground">
             <Tag className="w-3 h-3" /> {t}
           </span>
         ))}
@@ -145,7 +145,7 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6 min-w-0">
-          <div role="tablist" className="flex gap-1 p-1 rounded-xl bg-muted w-full sm:w-fit overflow-x-auto">
+          <div role="tablist" className="inline-flex w-full gap-1 overflow-x-auto rounded-[10px] bg-input p-1 shadow-[var(--shadow-inset-sm)] sm:w-fit">
             {tabs.map(t => (
               <button
                 key={t.id}
@@ -153,8 +153,8 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
                 aria-selected={tab === t.id}
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all',
-                  tab === t.id ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                  'rounded-[8px] px-4 py-2 text-sm font-medium whitespace-nowrap transition-[color,background-color,box-shadow] duration-[var(--dur)] ease-[var(--ease)]',
+                  tab === t.id ? 'bg-card text-foreground shadow-[var(--shadow-raised-sm)]' : 'text-muted-foreground hover:text-foreground',
                 )}
               >
                 {t.label}
@@ -202,7 +202,7 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
                     <select
                       value={lead.status}
                       onChange={e => { const next = e.target.value as LeadStatus; setLead({ ...lead, status: next }); void patchLead({ status: fromLeadStatus(next) }, 'Status updated'); }}
-                      className="mt-1.5 w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="mt-1.5 w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {statusOptions.map(s => <option key={s} value={s}>{s.replace('-', ' ')}</option>)}
                     </select>
@@ -222,12 +222,12 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
                       type="date"
                       value={followUp}
                       onChange={e => setFollowUp(e.target.value)}
-                      className="px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
                     />
                     <button
                       disabled={!followUp}
                       onClick={() => { setLead({ ...lead, nextFollowUp: followUp }); void patchLead({ next_follow_up_at: new Date(`${followUp}T09:00:00Z`).toISOString() }, `Reminder set for ${followUp}`); }}
-                      className="px-4 py-2.5 rounded-xl gradient-blue text-white text-sm font-semibold disabled:opacity-50"
+                      className="px-4 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"
                     >
                       Save reminder
                     </button>
@@ -243,16 +243,16 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
                     onChange={e => setNote(e.target.value)}
                     rows={2}
                     placeholder="Add a note about this contact..."
-                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1 px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  <button onClick={() => void addNote()} disabled={!note.trim() || busy} className="px-4 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted disabled:opacity-50 self-start">Add note</button>
+                  <button onClick={() => void addNote()} disabled={!note.trim() || busy} className="px-4 py-2.5 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 self-start">Add note</button>
                 </div>
                 {notes.length === 0 ? (
                   <p className="text-sm text-muted-foreground mt-4">No notes yet.</p>
                 ) : (
                   <ul className="mt-4 space-y-3">
                     {notes.map((n, i) => (
-                      <li key={i} className="text-sm text-foreground p-3 rounded-xl bg-muted/60 whitespace-pre-wrap">{n}</li>
+                      <li key={i} className="text-sm text-foreground p-3 rounded-[10px] neu-inset-sm whitespace-pre-wrap">{n}</li>
                     ))}
                   </ul>
                 )}
@@ -270,10 +270,10 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
                     <div key={t.id} className="rounded-xl border border-border p-4">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="font-medium text-foreground text-sm">{t.subject}</p>
-                        <span className="text-xs text-muted-foreground">{t.campaign}</span>
+                        <span className="text-[12px] text-muted-foreground">{t.campaign}</span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{t.lastMessage}</p>
-                      <p className="text-xs text-muted-foreground mt-2">{t.messages.length} messages, last activity {t.lastMessageAt}</p>
+                      <p className="text-[12px] text-muted-foreground mt-2">{t.messages.length} messages, last activity {t.lastMessageAt}</p>
                     </div>
                   ))}
                 </div>
@@ -288,7 +288,7 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
                   <li key={i} className="ml-5">
                     <span className="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 rounded-full bg-primary" />
                     <p className="text-sm text-foreground">{e.text}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1"><Clock className="w-3 h-3" /> {e.at}</p>
+                    <p className="text-[12px] text-muted-foreground mt-0.5 flex items-center gap-1"><Clock className="w-3 h-3" /> {e.at}</p>
                   </li>
                 ))}
               </ol>

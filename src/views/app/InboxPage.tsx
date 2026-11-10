@@ -152,7 +152,7 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
             >
               <f.icon className="w-4 h-4 shrink-0" />
               <span className="flex-1 text-left truncate">{f.label}</span>
-              <span className="text-xs tabular-nums">{count}</span>
+              <span className="text-[12px] tabular-nums">{count}</span>
             </button>
           );
         })}
@@ -187,13 +187,13 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className={cn('text-sm truncate', t.unread ? 'font-semibold text-foreground' : 'text-foreground')}>{t.leadName}</span>
-                  <span className="text-[11px] text-muted-foreground shrink-0">{t.lastMessageAt}</span>
+                  <span className="text-[12px] text-muted-foreground shrink-0">{t.lastMessageAt}</span>
                 </div>
-                <p className="text-xs text-foreground/80 truncate mt-0.5">{t.subject}</p>
-                <p className="text-xs text-muted-foreground truncate mt-1">{t.lastMessage}</p>
+                <p className="text-[12px] text-foreground/80 truncate mt-0.5">{t.subject}</p>
+                <p className="text-[12px] text-muted-foreground truncate mt-1">{t.lastMessage}</p>
                 <div className="flex items-center gap-2 mt-2">
-                  {t.unread && <span className="w-2 h-2 rounded-full bg-blue-500" aria-label="Unread" />}
-                  <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground truncate">{t.campaign}</span>
+                  {t.unread && <span className="w-2 h-2 rounded-full bg-primary" aria-label="Unread" />}
+                  <span className="text-[12px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground truncate">{t.campaign}</span>
                 </div>
               </button>
             </li>
@@ -216,17 +216,17 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="font-semibold text-foreground truncate">{selected.leadName}</h2>
-                  <p className="text-xs text-muted-foreground truncate">{selected.leadEmail} · {selected.campaign}</p>
+                  <p className="text-[12px] text-muted-foreground truncate">{selected.leadEmail} · {selected.campaign}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => void toggleAssigned(selected.id)} aria-pressed={assigned.has(selected.id)} className={cn('px-3 py-1.5 rounded-lg border text-xs font-medium', assigned.has(selected.id) ? 'border-primary bg-accent' : 'border-border hover:bg-muted')}>
+                  <button onClick={() => void toggleAssigned(selected.id)} aria-pressed={assigned.has(selected.id)} className={cn('px-3 py-1.5 rounded-lg border text-[12px] font-medium', assigned.has(selected.id) ? 'border-primary bg-accent' : 'border-border hover:bg-muted')}>
                     {assigned.has(selected.id) ? 'Assigned to you' : 'Assign to me'}
                   </button>
-                  <button onClick={() => void toggleArchive(selected)} className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-muted">
+                  <button onClick={() => void toggleArchive(selected)} className="px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
                     {selected.status === 'archived' ? 'Restore' : 'Archive'}
                   </button>
                   {selected.leadId && (
-                    <Link href={`/app/leads/${selected.leadId}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-muted">
+                    <Link href={`/app/leads/${selected.leadId}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
                       Contact profile <ExternalLink className="w-3 h-3" />
                     </Link>
                   )}
@@ -236,13 +236,13 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {selected.messages.map(m => (
-                <div key={m.id} className={cn('max-w-[85%] sm:max-w-[70%] rounded-2xl p-4 text-sm whitespace-pre-wrap', m.isOutbound ? 'ml-auto bg-accent text-accent-foreground' : 'bg-muted text-foreground')}>
-                  <p className="text-[11px] opacity-70 mb-1.5">{m.isOutbound ? 'You' : selected.leadName} · {m.sentAt}</p>
+                <div key={m.id} className={cn('max-w-[85%] sm:max-w-[70%] rounded-[16px] p-4 text-sm whitespace-pre-wrap', m.isOutbound ? 'ml-auto bg-accent text-accent-foreground' : 'bg-muted text-foreground')}>
+                  <p className="text-[12px] opacity-70 mb-1.5">{m.isOutbound ? 'You' : selected.leadName} · {m.sentAt}</p>
                   {m.body}
                 </div>
               ))}
               {threadNotes.map(n => (
-                <div key={n.id} className="flex gap-2 text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
+                <div key={n.id} className="flex gap-2 text-[12px] text-[var(--cf-warning)] neu-inset-sm rounded-[10px] p-3">
                   <StickyNote className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                   <span><strong>Internal note</strong> (not sent): {n.text}</span>
                 </div>
@@ -250,9 +250,9 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
             </div>
 
             <div className="p-4 border-t border-border space-y-3">
-              <div role="tablist" className="inline-flex p-1 rounded-lg bg-muted text-xs">
+              <div role="tablist" className="inline-flex gap-1 rounded-[10px] bg-input p-1 shadow-[var(--shadow-inset-sm)]">
                 {(['reply', 'note'] as const).map(m => (
-                  <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={cn('px-3 py-1.5 rounded-md font-medium capitalize', mode === m ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground')}>
+                  <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={cn('rounded-[8px] px-3 py-1.5 text-[12px] font-medium capitalize transition-[color,background-color,box-shadow] duration-[var(--dur)] ease-[var(--ease)]', mode === m ? 'bg-card text-foreground shadow-[var(--shadow-raised-sm)]' : 'text-muted-foreground hover:text-foreground')}>
                     {m === 'reply' ? 'Reply' : 'Internal note'}
                   </button>
                 ))}
@@ -263,10 +263,10 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
                 rows={3}
                 placeholder={mode === 'reply' ? `Reply to ${selected.leadName}...` : 'Write a note only your team can see...'}
                 aria-label={mode === 'reply' ? 'Reply' : 'Internal note'}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
               />
               <div className="flex justify-end">
-                <button onClick={() => void send()} disabled={!reply.trim() || busy} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl gradient-blue text-white text-sm font-semibold disabled:opacity-50">
+                <button onClick={() => void send()} disabled={!reply.trim() || busy} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
                   <Send className="w-4 h-4" /> {busy ? 'Sending…' : mode === 'reply' ? 'Send reply' : 'Save note'}
                 </button>
               </div>

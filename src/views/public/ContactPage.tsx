@@ -8,33 +8,33 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       <PublicNavbar />
-      <div className="pt-32 pb-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 pt-4">
-            <h1 className="text-4xl font-bold text-foreground mb-3">Get in touch</h1>
-            <p className="text-muted-foreground">Email the address that matches your request.</p>
+      <div className="px-6 pb-16 pt-28 sm:px-8 lg:pt-32">
+        <div className="mx-auto max-w-[1200px]">
+          <div className="max-w-2xl">
+            <h1 className="text-[36px] font-semibold text-foreground">Get in touch</h1>
+            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">Email the address that matches your request.</p>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
             {[
-              { icon: Mail, title: 'General', desc: 'hello@coldfox.io', sub: 'Product questions', mailto: 'hello@coldfox.io' },
-              { icon: MessageSquare, title: 'Support', desc: 'support@coldfox.io', sub: 'Account and workspace help', mailto: 'support@coldfox.io' },
-              { icon: LifeBuoy, title: 'Sales', desc: 'sales@coldfox.io', sub: 'Plans and partnerships', mailto: 'sales@coldfox.io' },
+              { icon: Mail, title: 'General', desc: 'hello@coldfox.io', sub: 'Product questions' },
+              { icon: MessageSquare, title: 'Support', desc: 'support@coldfox.io', sub: 'Account and workspace help' },
+              { icon: LifeBuoy, title: 'Sales', desc: 'sales@coldfox.io', sub: 'Plans and partnerships' },
             ].map(item => (
-              <a key={item.title} href={`mailto:${item.mailto}`} className="border border-border bg-card rounded-2xl p-5 block hover:bg-muted/50 transition-colors">
-                <div className="w-9 h-9 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center mb-3">
-                  <item.icon className="w-4 h-4" />
+              <a key={item.title} href={`mailto:${item.desc}`} className="neu-card block rounded-[16px] p-6 transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-raised-lg)]">
+                <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-[10px] neu-inset-sm">
+                  <item.icon className="w-[18px] h-[18px] text-accent-foreground" />
                 </div>
-                <p className="font-semibold text-foreground text-sm">{item.title}</p>
-                <p className="text-sm text-blue-600 dark:text-blue-400">{item.desc}</p>
-                <p className="text-xs text-muted-foreground">{item.sub}</p>
+                <p className="text-[14px] font-medium text-foreground">{item.title}</p>
+                <p className="mt-1 text-[13px] text-accent-foreground">{item.desc}</p>
+                <p className="mt-1 text-[12px] text-muted-foreground">{item.sub}</p>
               </a>
             ))}
           </div>
 
-          <div className="text-center mt-10">
-            <Link href="/signup" className="inline-block bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-800 transition-colors">
-              Create free account
+          <div className="mt-12">
+            <Link href="/signup" className="inline-flex h-11 items-center justify-center rounded-[10px] bg-primary px-6 text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-0.5 hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]">
+              Create a free account
             </Link>
           </div>
         </div>

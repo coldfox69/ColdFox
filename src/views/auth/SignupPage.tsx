@@ -18,7 +18,7 @@ function passwordStrength(pw: string) {
 }
 
 const strengthLabels = ['Too weak', 'Weak', 'Fair', 'Good', 'Strong'];
-const strengthColors = ['bg-red-500', 'bg-red-400', 'bg-amber-400', 'bg-emerald-400', 'bg-emerald-600'];
+const strengthColors = ['bg-destructive', 'bg-destructive', 'bg-[var(--cf-warning)]', 'bg-primary', 'bg-[var(--cf-success)]'];
 
 export default function SignupPage() {
   const router = useRouter();
@@ -39,11 +39,11 @@ export default function SignupPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.name.trim().length < 2) return setError('Please enter your full name.');
+    if (form.name.trim().length < 2) return setError('Enter your full name.');
     if (!/^\S+@\S+\.\S+$/.test(form.email.trim().toLowerCase())) return setError('Enter a valid work email address.');
     if (strength < 2) return setError('Choose a stronger password: at least 8 characters with letters and numbers.');
-    if (form.password !== form.confirm) return setError('Passwords do not match.');
-    if (!terms) return setError('You must accept the Terms and Privacy Policy to continue.');
+    if (form.password !== form.confirm) return setError('The two passwords do not match.');
+    if (!terms) return setError('Accept the Terms and Privacy Policy to continue.');
     setError('');
     setNeedsConfirmation(false);
     setLoading(true);
@@ -59,7 +59,6 @@ export default function SignupPage() {
       });
       if (signUpError) throw signUpError;
       if (data.session) {
-        // Email confirmation is disabled in Supabase - straight to onboarding.
         router.replace('/onboarding');
         router.refresh();
         return;
@@ -84,14 +83,14 @@ export default function SignupPage() {
     return (
       <AuthShell
         title="Check your email"
-        subtitle="Confirm your address to activate your workspace."
-        footer={<>Already confirmed? <Link href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">Sign in</Link></>}
+        subtitle="Confirm your address to activate your workspace"
+        footer={<>Already confirmed? <Link href="/login" className="font-medium text-accent-foreground hover:underline">Sign in</Link></>}
       >
-        <div className="flex flex-col items-center text-center py-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
-            <MailCheck className="w-6 h-6 text-emerald-600" />
+        <div className="flex flex-col items-center py-4 text-center">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full neu-inset-sm">
+            <MailCheck className="w-6 h-6 text-accent-foreground" />
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
             We sent a confirmation link to <span className="font-medium text-foreground">{form.email.trim().toLowerCase()}</span>. Open it to finish signing up.
           </p>
         </div>
@@ -102,8 +101,8 @@ export default function SignupPage() {
   return (
     <AuthShell
       title="Create your account"
-      subtitle="Start free. No credit card required."
-      footer={<>Already have an account? <Link href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">Sign in</Link></>}
+      subtitle="Free to start, no credit card needed"
+      footer={<>Already have an account? <Link href="/login" className="font-medium text-accent-foreground hover:underline">Sign in</Link></>}
     >
       <form onSubmit={submit} className="space-y-4" noValidate>
         <FormError message={error} />
@@ -115,13 +114,13 @@ export default function SignupPage() {
             <div className="mt-2 space-y-2">
               <div className="flex gap-1">
                 {[0, 1, 2, 3].map(i => (
-                  <div key={i} className={cn('h-1 flex-1 rounded-full transition-colors', i < strength ? strengthColors[strength] : 'bg-muted')} />
+                  <div key={i} className={cn('h-1 flex-1 rounded-full transition-colors duration-[var(--dur)]', i < strength ? strengthColors[strength] : 'bg-muted')} />
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">Strength: <span className="font-medium text-foreground">{strengthLabels[strength]}</span></p>
+              <p className="text-[12px] text-muted-foreground">Strength: <span className="font-medium text-foreground">{strengthLabels[strength]}</span></p>
               <ul className="grid grid-cols-1 gap-1">
                 {rules.map(r => (
-                  <li key={r.label} className={cn('flex items-center gap-1.5 text-xs', r.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground')}>
+                  <li key={r.label} className={cn('flex items-center gap-1.5 text-[12px]', r.ok ? 'text-[var(--cf-success)]' : 'text-muted-foreground')}>
                     {r.ok ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />} {r.label}
                   </li>
                 ))}
@@ -132,17 +131,17 @@ export default function SignupPage() {
         <div>
           <PasswordField id="confirm" label="Confirm password" value={form.confirm} onChange={update('confirm')} placeholder="Repeat your password" autoComplete="new-password" />
           {form.confirm && (
-            <p className={cn('text-xs mt-1.5', form.confirm === form.password ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500')}>
-              {form.confirm === form.password ? 'Passwords match' : 'Passwords do not match'}
+            <p className={cn('mt-1.5 text-[12px]', form.confirm === form.password ? 'text-[var(--cf-success)]' : 'text-destructive')}>
+              {form.confirm === form.password ? 'The passwords match' : 'The passwords do not match'}
             </p>
           )}
         </div>
-        <label className="flex items-start gap-2.5 text-sm text-muted-foreground cursor-pointer">
-          <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} className="mt-0.5 h-4 w-4 accent-blue-600" />
-          <span>I agree to the <Link href="/terms" className="text-blue-600 dark:text-blue-400 hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline">Privacy Policy</Link>.</span>
+        <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-muted-foreground">
+          <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--primary)]" />
+          <span>I agree to the <Link href="/terms" className="text-accent-foreground hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-accent-foreground hover:underline">Privacy Policy</Link>.</span>
         </label>
-        <button type="submit" disabled={loading} className="w-full gradient-blue text-white font-semibold py-2.5 rounded-xl hover:opacity-90 disabled:opacity-60 transition-opacity inline-flex items-center justify-center gap-2">
-          {loading ? 'Creating account...' : <>Create Account <ArrowRight className="w-4 h-4" /></>}
+        <button type="submit" disabled={loading} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-0.5 hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:opacity-60">
+          {loading ? 'Creating account' : <>Create account <ArrowRight className="w-4 h-4" /></>}
         </button>
       </form>
     </AuthShell>

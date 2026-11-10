@@ -112,12 +112,12 @@ export default function MailboxesPage({
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-[1440px] mx-auto space-y-6">
       <PageHeader
         title="Mailboxes"
         description="Sending accounts used for your campaigns. Keep daily limits conservative and watch their health."
         actions={
-          <button onClick={() => setWizardOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl gradient-blue text-white text-sm font-semibold hover:opacity-90">
+          <button onClick={() => setWizardOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
             <Plus className="w-4 h-4" /> Connect mailbox
           </button>
         }
@@ -128,34 +128,34 @@ export default function MailboxesPage({
           icon={<Mail className="w-8 h-8" />}
           title="No mailboxes connected"
           description="Connect a Gmail, Outlook, or SMTP account to start sending."
-          action={<button onClick={() => setWizardOpen(true)} className="px-4 py-2 rounded-xl gradient-blue text-white text-sm font-semibold">Connect mailbox</button>}
+          action={<button onClick={() => setWizardOpen(true)} className="px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">Connect mailbox</button>}
         />
       ) : (
         <div className="grid md:grid-cols-2 gap-5">
           {items.map(m => {
             const pct = Math.min(100, Math.round((m.sentToday / m.dailyLimit) * 100));
             return (
-              <article key={m.id} className="neu-card rounded-2xl p-5 flex flex-col gap-4">
+              <article key={m.id} className="neu-card rounded-[16px] p-5 flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[10px] neu-inset-sm flex items-center justify-center shrink-0">
                       <Mail className="w-5 h-5 text-primary" />
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-foreground truncate">{m.email}</p>
-                      <p className="text-xs text-muted-foreground">{providerLabel[m.provider]} · Last sync {m.lastSync}</p>
+                      <p className="text-[12px] text-muted-foreground">{providerLabel[m.provider]} · Last sync {m.lastSync}</p>
                     </div>
                   </div>
                   <StatusBadge variant={statusVariant[m.status]}>{m.status}</StatusBadge>
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                  <div className="flex justify-between text-[12px] text-muted-foreground mb-1.5">
                     <span>Sent today</span>
                     <span>{m.sentToday} / {m.dailyLimit}</span>
                   </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={m.dailyLimit} aria-valuenow={m.sentToday}>
-                    <div className="h-full rounded-full gradient-blue transition-all duration-500" style={{ width: `${pct}%` }} />
+                  <div className="h-2 overflow-hidden rounded-full bg-input shadow-[var(--shadow-inset-sm)]" role="progressbar" aria-valuemin={0} aria-valuemax={m.dailyLimit} aria-valuenow={m.sentToday}>
+                    <div className="h-full rounded-full bg-primary transition-[width] duration-[var(--dur-slow)] ease-[var(--ease)]" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
 
@@ -168,7 +168,7 @@ export default function MailboxesPage({
                       role="switch"
                       aria-checked={m.warmupEnabled}
                       onClick={() => void toggleWarmup(m)}
-                      className={cn('relative w-9 h-5 rounded-full transition-colors', m.warmupEnabled ? 'bg-emerald-500' : 'bg-muted-foreground/30')}
+                      className={cn('relative w-9 h-5 rounded-full transition-colors', m.warmupEnabled ? 'bg-[var(--cf-success)]' : 'bg-muted-foreground/30')}
                     >
                       <span className={cn('absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform', m.warmupEnabled && 'translate-x-4')} />
                     </button>
@@ -176,22 +176,22 @@ export default function MailboxesPage({
                 </div>
 
                 <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
-                  <button onClick={() => void test(m)} disabled={busy === m.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-muted disabled:opacity-50">
+                  <button onClick={() => void test(m)} disabled={busy === m.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted disabled:opacity-50">
                     <Zap className="w-3.5 h-3.5" /> {busy === m.id ? 'Testing…' : 'Test connection'}
                   </button>
                   {m.status === 'error' && (
-                    <button onClick={() => void test(m)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-muted">
+                    <button onClick={() => void test(m)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
                       <RefreshCw className="w-3.5 h-3.5" /> Reconnect
                     </button>
                   )}
                   {confirmId === m.id ? (
-                    <div className="flex items-center gap-2 ml-auto text-xs">
+                    <div className="flex items-center gap-2 ml-auto text-[12px]">
                       <span className="text-muted-foreground">Disconnect this mailbox?</span>
-                      <button onClick={() => void disconnect(m)} disabled={busy === m.id} className="px-2.5 py-1 rounded-lg bg-red-600 text-white font-medium disabled:opacity-50">Yes, disconnect</button>
+                      <button onClick={() => void disconnect(m)} disabled={busy === m.id} className="px-2.5 py-1 rounded-lg bg-destructive text-destructive-foreground font-medium disabled:opacity-50">Yes, disconnect</button>
                       <button onClick={() => setConfirmId(null)} className="px-2.5 py-1 rounded-lg border border-border font-medium">Keep</button>
                     </div>
                   ) : (
-                    <button onClick={() => setConfirmId(m.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 ml-auto">
+                    <button onClick={() => setConfirmId(m.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-destructive hover:bg-muted ml-auto">
                       <Trash2 className="w-3.5 h-3.5" /> Disconnect
                     </button>
                   )}
@@ -202,7 +202,7 @@ export default function MailboxesPage({
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+      <p className="text-[12px] text-muted-foreground flex items-center gap-1.5">
         <Plug className="w-3.5 h-3.5" /> Gmail and Outlook connections use OAuth when configured. SMTP credentials are encrypted at rest and never returned to the browser.
       </p>
 

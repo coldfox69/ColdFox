@@ -25,12 +25,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div aria-live="polite" className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
         {toasts.map(t => (
-          <div key={t.id} className="neu-card rounded-xl px-4 py-3 flex items-start gap-3 animate-in slide-in-from-bottom-2 fade-in duration-200">
+          <div key={t.id} className="neu-card rounded-[12px] px-4 py-3 flex items-start gap-3 animate-in slide-in-from-bottom-2 fade-in duration-[var(--dur-slow)] ease-[var(--ease)]">
             {t.tone === 'danger'
-              ? <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-              : <CheckCircle2 className={cn('w-4 h-4 mt-0.5 flex-shrink-0', t.tone === 'success' ? 'text-emerald-500' : 'text-blue-500')} />}
-            <p className="text-sm text-foreground flex-1">{t.message}</p>
-            <button aria-label="Dismiss notification" onClick={() => setToasts(list => list.filter(x => x.id !== t.id))} className="text-muted-foreground hover:text-foreground">
+              ? <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+              : <CheckCircle2 className={cn('w-4 h-4 mt-0.5 flex-shrink-0', t.tone === 'success' ? 'text-[var(--cf-success)]' : 'text-muted-foreground')} />}
+            <p className="text-[13px] text-foreground flex-1">{t.message}</p>
+            <button aria-label="Dismiss notification" onClick={() => setToasts(list => list.filter(x => x.id !== t.id))} className="text-muted-foreground hover:text-foreground transition-colors">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>

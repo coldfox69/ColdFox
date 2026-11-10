@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Download, Send, CheckCheck, MessageSquare, Ban, Info } from 'lucide-react';
+import { Download, Info } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatCard } from '@/components/shared/StatCard';
@@ -65,115 +65,112 @@ export default function AnalyticsPage({ data }: { data: AnalyticsVM }) {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-6 px-6 py-6 lg:px-8 lg:py-8">
       <PageHeader
         title="Analytics"
-        description="Delivery and reply results across your campaigns and mailboxes."
+        description="Delivery and reply results across your campaigns and mailboxes"
         actions={
-          <div className="flex flex-wrap gap-2">
-            <select value={range} onChange={e => setRange(e.target.value as Range)} aria-label="Date range" className="px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+          <div className="flex flex-wrap items-center gap-2">
+            <select value={range} onChange={e => setRange(e.target.value as Range)} aria-label="Date range" className="h-9 rounded-[10px] border border-transparent bg-input px-3 text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] focus:border-ring focus:ring-[3px] focus:ring-ring/50">
               {ranges.map(r => <option key={r}>{r}</option>)}
             </select>
-            <button onClick={exportReport} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-blue text-white text-sm font-semibold hover:opacity-90">
+            <button onClick={exportReport} className="inline-flex h-9 items-center gap-2 rounded-[10px] bg-primary px-4 text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]">
               <Download className="w-4 h-4" /> Export report
             </button>
           </div>
         }
       />
 
-      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-        <Info className="w-3.5 h-3.5 shrink-0" /> Sent, delivered, reply, and bounce counts come from your mail provider. Opens are not tracked as reads, so no open rate is shown.
+      <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
+        <Info className="w-4 h-4 shrink-0" /> Sent, delivered, reply and bounce counts come from your mail provider. Opens are not tracked as reads, so no open rate is shown.
       </p>
 
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard title="Emails sent" value={overview.emailsSent.toLocaleString()} icon={<Send className="w-5 h-5" />} change="Provider-confirmed" changeType="neutral" />
-        <StatCard title="Delivered" value={`${pct(overview.delivered, overview.emailsSent)}%`} icon={<CheckCheck className="w-5 h-5" />} change={`${overview.delivered.toLocaleString()} accepted by providers`} changeType="neutral" iconColor="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" />
-        <StatCard title="Reply rate" value={`${rates.reply}%`} icon={<MessageSquare className="w-5 h-5" />} change={`${overview.replies.toLocaleString()} replies`} changeType="positive" />
-        <StatCard title="Unsubscribes" value={`${rates.unsub}%`} icon={<Ban className="w-5 h-5" />} change={`${overview.unsubscribes.toLocaleString()} suppressed`} changeType="negative" iconColor="bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" />
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <StatCard title="Emails sent" value={overview.emailsSent.toLocaleString()} change="Provider-confirmed" />
+        <StatCard title="Delivered" value={`${pct(overview.delivered, overview.emailsSent)}%`} change={`${overview.delivered.toLocaleString()} accepted by providers`} />
+        <StatCard title="Reply rate" value={`${rates.reply}%`} change={`${overview.replies.toLocaleString()} replies`} changeType="positive" />
+        <StatCard title="Unsubscribes" value={`${rates.unsub}%`} change={`${overview.unsubscribes.toLocaleString()} suppressed`} changeType="negative" />
       </div>
 
-      <section className="neu-card rounded-2xl p-5">
-        <h2 className="font-semibold text-foreground mb-4">Sent vs replies</h2>
-        <div className="h-64" role="img" aria-label="Area chart of emails sent and replies over time">
+      <section className="neu-card rounded-[16px] p-5">
+        <h2 className="font-semibold text-foreground">Sent against replies</h2>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">{range.toLowerCase()}</p>
+        <div className="mt-4 h-80" role="img" aria-label="Area chart of emails sent and replies over time">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={visibleChart} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-              <defs>
-                <linearGradient id="sentFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--card-foreground)' }} />
-              <Area type="monotone" dataKey="sent" name="Sent" stroke="var(--chart-1)" fill="url(#sentFill)" strokeWidth={2} />
+              <YAxis tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} width={44} />
+              <Tooltip cursor={{ stroke: 'var(--border)' }} contentStyle={{ fontSize: 12, borderRadius: 10, border: 'none', background: 'var(--popover)', color: 'var(--foreground)', boxShadow: 'var(--shadow-raised)' }} />
+              <Area type="monotone" dataKey="sent" name="Sent" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.1} strokeWidth={2} />
               <Area type="monotone" dataKey="replied" name="Replies" stroke="var(--chart-2)" fill="none" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </section>
 
-      <section className="neu-card rounded-2xl p-5">
-        <h2 className="font-semibold text-foreground mb-1">Mailbox capacity</h2>
-        <p className="text-xs text-muted-foreground mb-4">Today&apos;s sends against each mailbox limit and reputation.</p>
-        <div className="space-y-4">
-          {mailboxes.length === 0 && <p className="text-sm text-muted-foreground">Connect a mailbox to see sending capacity here.</p>}
-          {mailboxes.map(m => (
-            <div key={m.id}>
-              <div className="flex justify-between text-sm mb-1.5">
-                <span className="text-foreground truncate">{m.email}</span>
-                <span className="text-muted-foreground text-xs">{m.sentToday.toLocaleString()} / {m.dailyLimit.toLocaleString()} today · {m.reputation}</span>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="neu-card rounded-[16px] p-5">
+          <h2 className="font-semibold text-foreground">Mailbox capacity</h2>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">Today&apos;s sends against each mailbox limit</p>
+          <div className="mt-4 space-y-4">
+            {mailboxes.length === 0 && <p className="text-[13px] text-muted-foreground">Connect a mailbox to see sending capacity here.</p>}
+            {mailboxes.map(m => (
+              <div key={m.id}>
+                <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                  <span className="truncate text-[13px] text-foreground">{m.email}</span>
+                  <span className="shrink-0 text-[12px] text-muted-foreground tabular-nums">{m.sentToday.toLocaleString()} / {m.dailyLimit.toLocaleString()}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-input shadow-[var(--shadow-inset-sm)]">
+                  <div className="h-full rounded-full bg-primary transition-[width] duration-[var(--dur-slow)] ease-[var(--ease)]" style={{ width: `${pct(m.sentToday, m.dailyLimit)}%` }} />
+                </div>
               </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full gradient-blue" style={{ width: `${pct(m.sentToday, m.dailyLimit)}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="neu-card rounded-2xl p-5 space-y-4">
-        <div>
-          <h2 className="font-semibold text-foreground">Campaign comparison</h2>
-          <p className="text-xs text-muted-foreground">Select up to 4 campaigns to compare.</p>
-        </div>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Campaigns to compare">
-          {campaigns.map(c => (
-            <button key={c.id} onClick={() => toggleCompare(c.id)} aria-pressed={compareIds.includes(c.id)} className={cn('px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors', compareIds.includes(c.id) ? 'border-primary bg-accent text-accent-foreground' : 'border-border text-muted-foreground hover:bg-muted')}>
-              {c.name}
-            </button>
-          ))}
-        </div>
-        {compared.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Select a campaign to see its results.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 font-medium">Campaign</th>
-                  <th className="py-2 pr-4 font-medium text-right">Sent</th>
-                  <th className="py-2 pr-4 font-medium text-right">Replies</th>
-                  <th className="py-2 pr-4 font-medium text-right">Reply rate</th>
-                  <th className="py-2 font-medium text-right">Bounce rate</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {compared.map(c => (
-                  <tr key={c.id}>
-                    <td className="py-3 pr-4 text-foreground">{c.name}</td>
-                    <td className="py-3 pr-4 text-right tabular-nums">{c.emailsSent.toLocaleString()}</td>
-                    <td className="py-3 pr-4 text-right tabular-nums">{c.replies.toLocaleString()}</td>
-                    <td className="py-3 pr-4 text-right tabular-nums">{c.replyRate}%</td>
-                    <td className="py-3 text-right tabular-nums">{c.bounceRate}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            ))}
           </div>
-        )}
-      </section>
+        </section>
+
+        <section className="neu-card rounded-[16px] p-5">
+          <div>
+            <h2 className="font-semibold text-foreground">Campaign comparison</h2>
+            <p className="mt-0.5 text-[13px] text-muted-foreground">Select up to 4 campaigns to compare</p>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Campaigns to compare">
+            {campaigns.map(c => (
+              <button key={c.id} onClick={() => toggleCompare(c.id)} aria-pressed={compareIds.includes(c.id)} className={cn('rounded-[8px] border px-3 py-1.5 text-[12px] font-medium transition-colors duration-[var(--dur)]', compareIds.includes(c.id) ? 'border-primary bg-accent text-accent-foreground' : 'border-border text-muted-foreground hover:bg-muted')}>
+                {c.name}
+              </button>
+            ))}
+          </div>
+          {compared.length === 0 ? (
+            <p className="mt-4 text-[13px] text-muted-foreground">Select a campaign to see its results.</p>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
+                    <th className="py-2 pr-4 font-medium">Campaign</th>
+                    <th className="py-2 pr-4 text-right font-medium">Sent</th>
+                    <th className="py-2 pr-4 text-right font-medium">Replies</th>
+                    <th className="py-2 pr-4 text-right font-medium">Reply rate</th>
+                    <th className="py-2 text-right font-medium">Bounce rate</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {compared.map(c => (
+                    <tr key={c.id}>
+                      <td className="py-3 pr-4 text-foreground">{c.name}</td>
+                      <td className="py-3 pr-4 text-right tabular-nums">{c.emailsSent.toLocaleString()}</td>
+                      <td className="py-3 pr-4 text-right tabular-nums">{c.replies.toLocaleString()}</td>
+                      <td className="py-3 pr-4 text-right tabular-nums">{c.replyRate}%</td>
+                      <td className="py-3 text-right tabular-nums">{c.bounceRate}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

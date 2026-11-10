@@ -113,14 +113,14 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-[1440px] mx-auto">
       <PageHeader
         title="Campaigns"
         description="Create, schedule, and monitor your outreach campaigns."
-        actions={<Link href="/app/campaigns/new" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl gradient-blue text-white text-sm font-semibold hover:opacity-90"><Plus className="w-4 h-4" /> Create campaign</Link>}
+        actions={<Link href="/app/campaigns/new" className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Plus className="w-4 h-4" /> Create campaign</Link>}
       />
 
-      <div className="neu-card rounded-2xl p-3 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+      <div className="neu-card rounded-[16px] p-3 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
@@ -128,17 +128,17 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
             onChange={e => { setQuery(e.target.value); setPage(1); }}
             placeholder="Search campaigns"
             aria-label="Search campaigns"
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-muted text-sm border border-transparent focus:outline-none focus:border-ring focus:bg-card"
+            className="w-full pl-9 pr-3 py-2 rounded-[10px] bg-input py-2 pl-9 pr-3 text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] focus:border-ring focus:ring-[3px] focus:ring-ring/50"
           />
         </div>
-        <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Filter by status">
+        <div className="inline-flex gap-1 overflow-x-auto rounded-[10px] bg-input p-1 shadow-[var(--shadow-inset-sm)]" role="tablist" aria-label="Filter by status">
           {filters.map(f => (
             <button
               key={f.value}
               role="tab"
               aria-selected={status === f.value}
               onClick={() => { setStatus(f.value); setPage(1); }}
-              className={cn('px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors', status === f.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}
+              className={cn('rounded-[8px] px-3 py-1.5 text-[12px] font-medium whitespace-nowrap transition-[color,background-color,box-shadow] duration-[var(--dur)] ease-[var(--ease)]', status === f.value ? 'bg-card text-foreground shadow-[var(--shadow-raised-sm)]' : 'text-muted-foreground hover:text-foreground')}
             >
               {f.label}
             </button>
@@ -147,14 +147,14 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
       </div>
 
       {visible.length === 0 ? (
-        <div className="neu-card rounded-2xl mt-4">
+        <div className="neu-card rounded-[16px] mt-4">
           <EmptyState icon={<Megaphone className="w-6 h-6" />} title="No campaigns match" description="Try a different search or status filter." />
         </div>
       ) : (
-        <div className="neu-card rounded-2xl mt-4 overflow-x-auto">
+        <div className="neu-card rounded-[16px] mt-4 overflow-x-auto">
           <table className="w-full text-sm min-w-[720px]">
             <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border">
+              <tr className="text-left text-[12px] text-muted-foreground border-b border-border">
                 {([['name', 'Campaign'], ['emailsSent', 'Sent'], ['replyRate', 'Reply rate'], ['createdAt', 'Created']] as [SortKey, string][]).map(([key, label]) => (
                   <th key={key} className="px-4 py-3 font-medium">
                     <button onClick={() => changeSort(key)} className="inline-flex items-center gap-1 hover:text-foreground">
@@ -171,7 +171,7 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
                 <tr key={c.id} className="hover:bg-muted/40 transition-colors">
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">{c.name}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-1 max-w-xs">{c.description}</p>
+                    <p className="text-[12px] text-muted-foreground line-clamp-1 max-w-xs">{c.description}</p>
                   </td>
                   <td className="px-4 py-3 text-foreground">{c.emailsSent.toLocaleString()}</td>
                   <td className="px-4 py-3 text-foreground">{c.emailsSent ? `${c.replyRate}%` : '-'}</td>
@@ -211,7 +211,7 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
 
 function MenuItem({ icon: Icon, label, onClick, danger }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void; danger?: boolean }) {
   return (
-    <button onClick={onClick} className={cn('w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted', danger ? 'text-red-600' : 'text-foreground')}>
+    <button onClick={onClick} className={cn('w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted', danger ? 'text-destructive' : 'text-foreground')}>
       <Icon className="w-4 h-4" /> {label}
     </button>
   );

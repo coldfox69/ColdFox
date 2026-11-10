@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 type Mode = 'edit' | 'preview' | 'history';
 
-const inputCls = 'w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring';
+const inputCls = 'w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60';
 
 const sampleLead = { first_name: 'Sarah', company: 'TechFlow', industry: 'SaaS', sender_name: 'Alex' };
 
@@ -52,8 +52,8 @@ export function TemplateEditorModal({ template, onClose, onSave }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-      <div role="dialog" aria-modal="true" aria-labelledby="template-title" className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto neu-card rounded-2xl p-6">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
+      <div role="dialog" aria-modal="true" aria-labelledby="template-title" className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto neu-card rounded-[16px] p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 id="template-title" className="text-lg font-semibold text-foreground">{template ? 'Edit template' : 'New template'}</h2>
           <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X className="w-4 h-4" /></button>
@@ -61,7 +61,7 @@ export function TemplateEditorModal({ template, onClose, onSave }: Props) {
 
         <div role="tablist" className="flex gap-1 p-1 rounded-xl bg-muted w-fit mb-5">
           {tabs.map(t => (
-            <button key={t.id} role="tab" aria-selected={mode === t.id} onClick={() => setMode(t.id)} className={cn('inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium', mode === t.id ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground')}>
+            <button key={t.id} role="tab" aria-selected={mode === t.id} onClick={() => setMode(t.id)} className={cn('inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium', mode === t.id ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground')}>
               <t.icon className="w-3.5 h-3.5" /> {t.label}
             </button>
           ))}
@@ -74,7 +74,7 @@ export function TemplateEditorModal({ template, onClose, onSave }: Props) {
             <label className="block text-sm font-medium">Body
               <textarea rows={8} value={body} onChange={e => setBody(e.target.value)} className={cn(inputCls, 'mt-1.5')} />
             </label>
-            <p className="text-xs text-muted-foreground">Use variables such as {'{{first_name}}'}, {'{{company}}'}, and {'{{industry}}'}.</p>
+            <p className="text-[12px] text-muted-foreground">Use variables such as {'{{first_name}}'}, {'{{company}}'}, and {'{{industry}}'}.</p>
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="text-sm font-medium">Category
                 <select value={category} onChange={e => setCategory(e.target.value)} className={cn(inputCls, 'mt-1.5')}>
@@ -86,17 +86,17 @@ export function TemplateEditorModal({ template, onClose, onSave }: Props) {
                 Share with my team
               </label>
             </div>
-            {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <div className="flex justify-end gap-2 pt-2">
-              <button onClick={onClose} className="px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted">Cancel</button>
-              <button onClick={() => void save()} className="px-4 py-2 rounded-xl gradient-blue text-white text-sm font-semibold">Save template</button>
+              <button onClick={onClose} className="px-4 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">Cancel</button>
+              <button onClick={() => void save()} className="px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">Save template</button>
             </div>
           </div>
         )}
 
         {mode === 'preview' && (
           <div className="rounded-xl border border-border p-5">
-            <p className="text-xs text-muted-foreground mb-2">Sample lead: Sarah at TechFlow</p>
+            <p className="text-[12px] text-muted-foreground mb-2">Sample lead: Sarah at TechFlow</p>
             <p className="font-semibold text-sm text-foreground">{renderSample(subject) || 'No subject'}</p>
             <p className="mt-3 text-sm text-foreground whitespace-pre-wrap">{renderSample(body)}</p>
           </div>
@@ -107,9 +107,9 @@ export function TemplateEditorModal({ template, onClose, onSave }: Props) {
             <li className="flex items-center justify-between rounded-xl border border-border p-3 text-sm">
               <div>
                 <p className="font-medium text-foreground">Current version</p>
-                <p className="text-xs text-muted-foreground">Updated {template?.updatedAt ?? ' - '}</p>
+                <p className="text-[12px] text-muted-foreground">Updated {template?.updatedAt ?? ' - '}</p>
               </div>
-              <span className="text-xs text-muted-foreground">Current</span>
+              <span className="text-[12px] text-muted-foreground">Current</span>
             </li>
             <li className="rounded-xl border border-border p-3 text-sm text-muted-foreground">
               Every save creates a new version on the server. Open the template after saving to keep working from the latest copy.

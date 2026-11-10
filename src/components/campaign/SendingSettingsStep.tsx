@@ -44,7 +44,7 @@ const timezones = [
   'Asia/Bangkok', 'Asia/Shanghai', 'Asia/Singapore', 'Asia/Tokyo', 'Australia/Sydney',
 ];
 
-const inputCls = 'w-full px-3.5 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring';
+const inputCls = 'w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60';
 
 export function validateSending(
   settings: SendingSettings,
@@ -104,7 +104,7 @@ export function SendingSettingsStep({
                 ))}
               </select>
               {selected && (
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-[12px] text-muted-foreground mt-2">
                   {selected.sentToday.toLocaleString()} sent today · reputation {selected.reputation} · {selected.status}
                 </p>
               )}
@@ -115,7 +115,7 @@ export function SendingSettingsStep({
         <Section title={`Daily sending cap: ${value.dailyCap} emails`}>
           <input type="range" min={10} max={Math.max(300, selected?.dailyLimit ?? 300)} step={5} value={value.dailyCap}
             onChange={(event) => set('dailyCap', Number(event.target.value))} aria-label="Daily sending cap" className="w-full accent-blue-600" />
-          <div className="flex justify-between text-xs text-muted-foreground"><span>10</span><span>150 recommended max</span><span>{Math.max(300, selected?.dailyLimit ?? 300)}</span></div>
+          <div className="flex justify-between text-[12px] text-muted-foreground"><span>10</span><span>150 recommended max</span><span>{Math.max(300, selected?.dailyLimit ?? 300)}</span></div>
         </Section>
 
         <Section title="Sending time window">
@@ -123,7 +123,7 @@ export function SendingSettingsStep({
             <input type="time" aria-label="Window start" className={inputCls} value={value.windowStart} onChange={(event) => set('windowStart', event.target.value)} />
             <input type="time" aria-label="Window end" className={inputCls} value={value.windowEnd} onChange={(event) => set('windowEnd', event.target.value)} />
           </div>
-          <label className="block text-xs text-muted-foreground mt-3">
+          <label className="block text-[12px] text-muted-foreground mt-3">
             Timezone
             <select aria-label="Sending timezone" className={cn(inputCls, 'mt-1')} value={value.timezone} onChange={(event) => set('timezone', event.target.value)}>
               {timezones.map((zone) => <option key={zone} value={zone}>{zone}</option>)}
@@ -133,14 +133,14 @@ export function SendingSettingsStep({
 
         <Section title={`Sending interval: ${value.intervalMinutes} min between emails`}>
           <input type="range" min={1} max={30} value={value.intervalMinutes} onChange={(event) => set('intervalMinutes', Number(event.target.value))} aria-label="Sending interval" className="w-full accent-blue-600" />
-          <p className="text-xs text-muted-foreground mt-2">Stored with the campaign for reference; the worker spaces sends conservatively.</p>
+          <p className="text-[12px] text-muted-foreground mt-2">Stored with the campaign for reference; the worker spaces sends conservatively.</p>
         </Section>
 
         <Section title="Sending days">
           <div className="flex flex-wrap gap-2">
             {days.map((day) => (
               <button key={day.value} type="button" aria-pressed={value.weekdays.includes(day.value)} onClick={() => toggleDay(day.value)}
-                className={cn('w-12 py-2 rounded-lg text-xs font-medium border transition-colors',
+                className={cn('w-12 py-2 rounded-lg text-[12px] font-medium border transition-colors',
                   value.weekdays.includes(day.value) ? 'bg-primary text-primary-foreground border-transparent' : 'border-border text-muted-foreground hover:bg-muted')}>
                 {day.label}
               </button>
@@ -151,12 +151,12 @@ export function SendingSettingsStep({
 
       <div className="space-y-5">
         <Section title="Follow-up">
-          <label className="text-xs text-muted-foreground">
+          <label className="text-[12px] text-muted-foreground">
             Send a follow-up after (days, 0 disables)
             <input type="number" min={0} max={30} className={cn(inputCls, 'mt-1')} value={value.followUpDays}
               onChange={(event) => set('followUpDays', Number(event.target.value))} />
           </label>
-          <p className="text-xs text-muted-foreground mt-2">Follow-ups stop automatically on reply, unsubscribe, or hard bounce.</p>
+          <p className="text-[12px] text-muted-foreground mt-2">Follow-ups stop automatically on reply, unsubscribe, or hard bounce.</p>
         </Section>
 
         <Section title="Pause conditions">
@@ -164,7 +164,7 @@ export function SendingSettingsStep({
             <span className="text-foreground">Stop the sequence when the contact replies</span>
             <input type="checkbox" className="h-4 w-4 accent-blue-600" checked={value.pauseOnReply} onChange={(event) => set('pauseOnReply', event.target.checked)} />
           </label>
-          <p className="text-xs text-muted-foreground">Hard bounces and complaints are always suppressed and never retried.</p>
+          <p className="text-[12px] text-muted-foreground">Hard bounces and complaints are always suppressed and never retried.</p>
         </Section>
 
         <Section title="When to send">
@@ -180,7 +180,7 @@ export function SendingSettingsStep({
               <input type="time" aria-label="Start time" className={inputCls} value={value.startTime} onChange={(event) => set('startTime', event.target.value)} />
             </div>
           )}
-          <p className="text-xs text-muted-foreground mt-2">Scheduling uses your browser&apos;s local timezone.</p>
+          <p className="text-[12px] text-muted-foreground mt-2">Scheduling uses your browser&apos;s local timezone.</p>
         </Section>
       </div>
     </div>
@@ -190,7 +190,7 @@ export function SendingSettingsStep({
 export function ValidationList({ issues }: { issues: { level: 'error' | 'warning'; message: string }[] }) {
   if (issues.length === 0) {
     return (
-      <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+      <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm text-[var(--cf-success)]">
         <CheckCircle2 className="w-4 h-4" /> Everything looks good. You can launch this campaign.
       </div>
     );
@@ -199,7 +199,7 @@ export function ValidationList({ issues }: { issues: { level: 'error' | 'warning
     <ul className="space-y-2">
       {issues.map((issue, index) => (
         <li key={index} className={cn('flex items-start gap-2 rounded-xl px-3.5 py-2.5 text-sm',
-          issue.level === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400' : 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400')}>
+          issue.level === 'error' ? 'neu-inset-sm text-muted-foreground' : 'neu-inset-sm text-muted-foreground')}>
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" /> {issue.message}
         </li>
       ))}
@@ -209,7 +209,7 @@ export function ValidationList({ issues }: { issues: { level: 'error' | 'warning
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="neu-card rounded-2xl p-5">
+    <div className="neu-card rounded-[16px] p-5">
       <h3 className="text-sm font-semibold text-foreground mb-3">{title}</h3>
       {children}
     </div>
