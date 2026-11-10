@@ -131,7 +131,7 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center">
-              <Logo height={44} />
+              <Logo height={44} lazy />
             </Link>
             <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
               Cold email workspace. Import leads, connect your own mailbox, run sequences, handle replies.

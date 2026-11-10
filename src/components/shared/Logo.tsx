@@ -1,5 +1,7 @@
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import logoLight from '@/assets/logo.png';
+import logoDark from '@/assets/logo-dark.png';
 
 /**
  * Source art is 790x316 for both themes; the box keeps that ratio so the
@@ -19,10 +21,12 @@ export function Logo({
   height = 48,
   className,
   priority = false,
+  lazy = false,
 }: {
   height?: number;
   className?: string;
   priority?: boolean;
+  lazy?: boolean;
 }) {
   const width = Math.round((height * LOGO_WIDTH) / LOGO_HEIGHT);
 
@@ -32,19 +36,21 @@ export function Logo({
       style={{ height, width }}
     >
       <Image
-        src="/logo.png"
+        src={logoLight}
         alt="ColdFox - Smarter Cold Email Outreach"
         fill
         sizes={`${width}px`}
         priority={priority}
+        loading={lazy ? 'lazy' : undefined}
         className="object-contain opacity-100 dark:opacity-0"
       />
       <Image
-        src="/logo-dark.png"
+        src={logoDark}
         alt=""
         fill
         sizes={`${width}px`}
         priority={priority}
+        loading={lazy ? 'lazy' : undefined}
         className="object-contain opacity-0 dark:opacity-100"
       />
     </span>
