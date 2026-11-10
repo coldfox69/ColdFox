@@ -49,10 +49,10 @@ export function PublicNavbar() {
       'fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow] duration-[var(--dur-slow)] ease-[var(--ease)]',
       scrolled ? 'neu-shell-header' : 'bg-transparent'
     )}>
-      <div className="mx-auto max-w-[1320px] px-6 sm:px-8">
+      <div className="mx-auto max-w-[1600px] px-6 sm:px-8">
         <div className="flex h-16 items-center gap-8">
           <Link href="/" className="flex items-center" aria-label="ColdFox home">
-            <Logo height={48} priority />
+            <Logo height={56} priority />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
@@ -126,12 +126,12 @@ export function PublicFooter() {
 
   return (
     <footer className="band-recessed mt-20">
-      <div className="rule-h mx-auto max-w-[1320px]" aria-hidden="true" />
-      <div className="mx-auto max-w-[1320px] px-6 py-12 sm:px-8">
+      <div className="rule-h mx-auto max-w-[1600px]" aria-hidden="true" />
+      <div className="mx-auto max-w-[1600px] px-6 py-12 sm:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center">
-              <Logo height={44} lazy />
+              <Logo height={52} lazy />
             </Link>
             <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
               Cold email workspace. Import leads, connect your own mailbox, run sequences, handle replies.

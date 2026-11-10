@@ -92,7 +92,7 @@ function SidebarContent({
           <Image src="/favicon.png" alt="ColdFox fox logo" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full" sizes="36px" />
         ) : (
           <span className="flex min-w-0 flex-1 items-center">
-            <Logo height={48} priority />
+            <Logo height={56} priority />
           </span>
         )}
       </div>

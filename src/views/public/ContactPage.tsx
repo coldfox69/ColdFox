@@ -9,16 +9,16 @@ export default function ContactPage() {
     <div className="min-h-screen bg-background">
       <PublicNavbar />
       <section className="band-raised">
-        <div className="mx-auto max-w-[1320px] px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
+        <div className="mx-auto max-w-[1600px] px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
           <div className="accent-rule-top max-w-2xl pt-7">
             <h1 className="text-[36px] font-semibold text-foreground">Get in touch</h1>
             <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">Email the address that matches your request.</p>
           </div>
         </div>
       </section>
-      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1520px]" aria-hidden="true" />
       <section className="px-6 py-14 sm:px-8 lg:py-16">
-        <div className="mx-auto max-w-[1240px]">
+        <div className="mx-auto max-w-[1520px]">
           <div className="grid gap-6 sm:grid-cols-3">
             {[
               { icon: Mail, title: 'General', desc: 'hello@coldfox.io', sub: 'Product questions' },

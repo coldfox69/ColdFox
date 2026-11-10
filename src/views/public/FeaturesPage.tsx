@@ -70,16 +70,16 @@ export default function FeaturesPage() {
     <div className="min-h-screen bg-background">
       <PublicNavbar />
       <section className="band-raised">
-        <div className="mx-auto max-w-[1320px] px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
+        <div className="mx-auto max-w-[1600px] px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
           <div className="accent-rule-top max-w-2xl pt-7">
             <h1 className="text-[36px] font-semibold text-foreground">What the workspace covers</h1>
             <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">Import, templates, sequences, inbox, and deliverability checks, all in one place.</p>
           </div>
         </div>
       </section>
-      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1520px]" aria-hidden="true" />
       <section className="px-6 py-14 sm:px-8 lg:py-16">
-        <div className="mx-auto max-w-[1240px]">
+        <div className="mx-auto max-w-[1520px]">
           <div className="space-y-14">
             {features.map(section => (
               <div key={section.category}>

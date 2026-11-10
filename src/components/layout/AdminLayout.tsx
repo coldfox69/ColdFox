@@ -87,7 +87,7 @@ export function AdminLayout({
           ) : (
             <div className="min-w-0 flex-1">
               <span className="flex items-center">
-                <Logo height={48} priority />
+                <Logo height={56} priority />
               </span>
               <p className="mt-1 text-[12px] text-muted-foreground">Admin panel</p>
             </div>

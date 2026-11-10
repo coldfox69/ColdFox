@@ -13,7 +13,7 @@ export function AuthShell({ title, subtitle, children, footer }: { title: string
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
         <Link href="/" className="mb-8 flex items-center justify-center">
-          <Logo height={64} priority />
+          <Logo height={72} priority />
         </Link>
         <div className="neu-card rounded-[20px] p-7 sm:p-8">
           <h1 className="text-[22px] font-semibold text-foreground">{title}</h1>
