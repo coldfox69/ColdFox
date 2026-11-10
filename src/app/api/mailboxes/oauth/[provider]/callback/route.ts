@@ -19,6 +19,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
     const { provider: rawProvider } = await params;
     const provider = rawProvider === 'gmail' ? 'google' : rawProvider === 'outlook' ? 'microsoft' : rawProvider;
     const code = url.searchParams.get('code');
+    // Use the original provider name in the redirect URI to match what was
+    // sent in the authorization request.
+    const redirectProvider = rawProvider;
     const error = url.searchParams.get('error');
     if (error) return failure('The provider cancelled or rejected the connection.');
     if (!code) return failure('No authorization code was returned.');
@@ -26,7 +29,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
     const state = verifyState<OAuthState>(url.searchParams.get('state') ?? '');
     if (!state || state.provider !== provider) return failure('The OAuth state was invalid or expired. Start again.');
 
-    const redirectUri = `${base}/api/mailboxes/oauth/${provider}/callback`;
+    const redirectUri = `${base}/api/mailboxes/oauth/${redirectProvider}/callback`;
     const db = createServiceClient();
 
     let email = '';
