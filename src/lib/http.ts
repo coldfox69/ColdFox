@@ -41,12 +41,21 @@ export async function withApi(
   target: { route: string; method: string },
   handler: () => Promise<Response>,
 ): Promise<Response> {
+  const startedAt = Date.now();
   try {
-    return await withTrace(
+    const response = await withTrace(
       `api ${target.method} ${target.route}`,
       { 'http.route': target.route, 'http.method': target.method },
       handler,
     );
+    // The time the server spent on the route, so a slow request can be
+    // identified from the browser or the logs without any extra tooling.
+    try {
+      response.headers.set('Server-Timing', `app;dur=${Date.now() - startedAt}`);
+    } catch {
+      // Some responses have immutable headers.
+    }
+    return response;
   } catch (error) {
     if (error instanceof ApiError) {
       return fail(error.status, error.message, error.code);
