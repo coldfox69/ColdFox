@@ -8,12 +8,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin']);
     const { provider } = await params;
-    if (!['google', 'microsoft'].includes(provider)) throw new ApiError(404, 'Unknown mailbox provider.');
+    // Accept both the UI labels (gmail/outlook) and the OAuth provider names (google/microsoft).
+    const normalized = provider === 'gmail' ? 'google' : provider === 'outlook' ? 'microsoft' : provider;
+    if (!['google', 'microsoft'].includes(normalized)) throw new ApiError(404, 'Unknown mailbox provider.');
 
-    const state = signState({ userId: session.userId, organizationId: session.organizationId, provider });
+    const state = signState({ userId: session.userId, organizationId: session.organizationId, provider: normalized });
+    // Use the original provider name in the redirect URI so it matches what
+    // the user registered in Google Cloud Console / Entra.
     const redirectUri = `${appUrl()}/api/mailboxes/oauth/${provider}/callback`;
 
-    if (provider === 'google') {
+    if (normalized === 'google') {
       if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
         throw new ApiError(503, 'Gmail OAuth is not configured on this deployment. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or connect a mailbox over SMTP.', 'oauth_not_configured');
       }

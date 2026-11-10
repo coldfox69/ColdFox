@@ -16,7 +16,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
   const failure = (reason: string) => NextResponse.redirect(`${base}/app/mailboxes?error=${encodeURIComponent(reason)}`);
 
   try {
-    const { provider } = await params;
+    const { provider: rawProvider } = await params;
+    const provider = rawProvider === 'gmail' ? 'google' : rawProvider === 'outlook' ? 'microsoft' : rawProvider;
     const code = url.searchParams.get('code');
     const error = url.searchParams.get('error');
     if (error) return failure('The provider cancelled or rejected the connection.');
