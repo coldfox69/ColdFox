@@ -47,7 +47,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
         }),
         signal: AbortSignal.timeout(20_000),
       });
-      if (!tokenRes.ok) return failure('Google rejected the token exchange.');
+      if (!tokenRes.ok) {
+        const body = await tokenRes.text();
+        console.error('[oauth] google token exchange failed', tokenRes.status, body.slice(0, 500));
+        return failure(`Google rejected the token exchange (${tokenRes.status}).`);
+      }
       tokenPayload = (await tokenRes.json()) as Record<string, unknown>;
       const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: { Authorization: `Bearer ${String(tokenPayload.access_token)}` },
@@ -74,7 +78,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
         }),
         signal: AbortSignal.timeout(20_000),
       });
-      if (!tokenRes.ok) return failure('Microsoft rejected the token exchange.');
+      if (!tokenRes.ok) {
+        const body = await tokenRes.text();
+        console.error('[oauth] microsoft token exchange failed', tokenRes.status, body.slice(0, 500));
+        return failure(`Microsoft rejected the token exchange (${tokenRes.status}).`);
+      }
       tokenPayload = (await tokenRes.json()) as Record<string, unknown>;
       const profileRes = await fetch('https://graph.microsoft.com/v1.0/me', {
         headers: { Authorization: `Bearer ${String(tokenPayload.access_token)}` },
@@ -133,6 +141,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
     return NextResponse.redirect(`${base}/app/mailboxes?connected=${encodeURIComponent(email)}`);
   } catch (error) {
     console.error('[oauth] callback failed', error instanceof Error ? error.message : error);
-    return failure('The mailbox connection could not be completed. Please try again.');
+    const reason = error instanceof Error ? error.message.slice(0, 200) : 'Unknown error';
+    return failure(`The mailbox connection could not be completed: ${reason}`);
   }
 }
