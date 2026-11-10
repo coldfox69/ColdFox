@@ -13,8 +13,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
     if (!['google', 'microsoft'].includes(normalized)) throw new ApiError(404, 'Unknown mailbox provider.');
 
     const state = signState({ userId: session.userId, organizationId: session.organizationId, provider: normalized });
-    // Use the normalized provider name in the redirect URI.
-    const redirectUri = `${appUrl()}/api/mailboxes/oauth/${normalized}/callback`;
+    // Use the original provider name in the redirect URI so it matches what
+    // the user registered in Google Cloud Console / Entra.
+    const redirectUri = `${appUrl()}/api/mailboxes/oauth/${provider}/callback`;
 
     if (normalized === 'google') {
       if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
