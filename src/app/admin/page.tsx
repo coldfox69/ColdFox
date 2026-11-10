@@ -11,6 +11,7 @@ export default function OverviewPage() {
       module="overview"
       title="Platform Overview"
       description="Organization, user, campaign, and support metrics."
+      rowsKey="totals"
       columns={[
         { key: 'organizations', label: 'Organizations' },
         { key: 'users', label: 'Users' },

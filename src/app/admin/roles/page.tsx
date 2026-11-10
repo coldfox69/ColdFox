@@ -11,6 +11,7 @@ export default function RolesPage() {
       module="roles"
       title="Admin Roles"
       description="Platform admin role assignments."
+      rowsKey="admins"
       columns={[
         { key: 'key', label: 'Role Key' },
         { key: 'user_id', label: 'User ID' },
