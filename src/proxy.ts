@@ -3,6 +3,7 @@ import { updateSession } from '@/lib/supabase/session';
 
 export async function proxy(request: NextRequest) {
   const started = Date.now();
+  console.log(`[render] proxy arrived at=${started}`);
   const response = await updateSession(request);
   try {
     response.headers.set('Server-Timing', `proxy;dur=${Date.now() - started}`);
