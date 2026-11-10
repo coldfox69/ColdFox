@@ -98,9 +98,9 @@ export default function HomePage() {
       <PublicNavbar />
 
       <section className="relative overflow-hidden px-6 pb-16 pt-28 sm:px-8 lg:pb-20 lg:pt-32">
-        <div className="relative mx-auto max-w-[1200px]">
+        <div className="relative mx-auto max-w-[1320px]">
           <div className="grid-lines" aria-hidden="true" />
-          <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14">
+          <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16">
           <div>
             <div className="mb-5 flex items-start gap-3">
               <span className="accent-tick" aria-hidden="true" />
@@ -138,10 +138,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
 
       <section className="px-6 py-16 sm:px-8 lg:py-20">
-        <div className="mx-auto max-w-[1200px]">
+        <div className="mx-auto max-w-[1240px]">
           <div className="max-w-2xl">
             <h2 className="text-[32px] font-semibold text-foreground">What ColdFox does</h2>
             <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">From import to reply handling. Each tool has a clear input and output so you can check your work.</p>
@@ -160,10 +160,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
 
       <section className="band-raised px-6 py-16 sm:px-8 lg:py-20">
-        <div className="mx-auto grid max-w-[1200px] items-center gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="mx-auto grid max-w-[1240px] items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
             <p className="mb-4 inline-flex items-center gap-2 rounded-md neu-inset-sm px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
               <Brain className="w-3.5 h-3.5" /> Import checks
@@ -200,10 +200,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
 
       <section className="band-raised px-6 py-16 sm:px-8 lg:py-20">
-        <div className="mx-auto grid max-w-[1200px] items-center gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="mx-auto grid max-w-[1240px] items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="neu-card rounded-[16px] p-6">
             <div className="mb-4 flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-accent">
@@ -244,10 +244,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
 
       <section className="band-raised px-6 py-16 sm:px-8 lg:py-20">
-        <div className="mx-auto max-w-[1200px]">
+        <div className="mx-auto max-w-[1240px]">
           <h2 className="text-[32px] font-semibold text-foreground">How ColdFox works</h2>
           <p className="mt-3 text-[15px] text-muted-foreground">Four steps from list to inbox.</p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -262,10 +262,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
 
       <section className="px-6 py-16 sm:px-8 lg:py-20" id="pricing">
-        <div className="mx-auto max-w-[1200px]">
+        <div className="mx-auto max-w-[1240px]">
           <h2 className="text-[32px] font-semibold text-foreground">Pricing</h2>
           <p className="mt-3 max-w-xl text-[15px] text-muted-foreground">The free plan stays free. Paid plans add mailboxes, leads and higher sending limits.</p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -305,7 +305,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
 
       <section className="band-raised px-6 py-16 sm:px-8 lg:py-20">
         <div className="mx-auto max-w-3xl">
@@ -332,10 +332,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
 
       <section className="px-6 pb-24 sm:px-8">
-        <div className="mx-auto max-w-[1200px]">
+        <div className="mx-auto max-w-[1240px]">
           <div className="neu-card-lg rounded-[20px] p-10 text-center sm:p-12">
             <h2 className="text-[28px] font-semibold text-foreground">Create your workspace</h2>
             <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-muted-foreground">Import a CSV, connect a mailbox and send a first campaign. Export your data at any time.</p>

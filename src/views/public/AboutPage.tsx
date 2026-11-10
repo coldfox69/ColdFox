@@ -13,7 +13,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-background">
       <PublicNavbar />
       <section className="band-raised">
-        <div className="mx-auto max-w-[1200px] px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
+        <div className="mx-auto max-w-[1320px] px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
           <div className="accent-rule-top max-w-2xl pt-7">
             <h1 className="text-[36px] font-semibold text-foreground">Built for careful outreach</h1>
             <p className="mt-4 text-[16px] leading-[1.7] text-muted-foreground">
@@ -22,9 +22,9 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
       <section className="px-6 py-14 sm:px-8 lg:py-16">
-        <div className="mx-auto max-w-[1200px]">
+        <div className="mx-auto max-w-[1240px]">
           <div className="grid gap-12 lg:grid-cols-2">
             <div>
               <h2 className="text-[22px] font-semibold text-foreground">What the product is</h2>

@@ -14,7 +14,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-background">
       <PublicNavbar />
       <section className="band-raised">
-        <div className="mx-auto max-w-[1200px] px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
+        <div className="mx-auto max-w-[1320px] px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
           <div className="accent-rule-top max-w-2xl pt-7">
             <h1 className="text-[36px] font-semibold text-foreground">Pricing</h1>
             <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">The free plan stays free. Paid plans add mailboxes, leads and higher sending limits.</p>
@@ -27,9 +27,9 @@ export default function PricingPage() {
           </div>
         </div>
       </section>
-      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <div className="rule-h mx-auto max-w-[1240px]" aria-hidden="true" />
       <section className="px-6 py-14 sm:px-8 lg:py-16">
-        <div className="mx-auto max-w-[1200px]">
+        <div className="mx-auto max-w-[1240px]">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map(plan => {
               const price = annual ? Math.round(plan.price * 0.8) : plan.price;
