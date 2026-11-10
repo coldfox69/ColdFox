@@ -13,9 +13,8 @@ export default function RolesPage() {
       description="Platform admin role assignments."
       rowsKey="admins"
       columns={[
-        { key: 'key', label: 'Role Key' },
-        { key: 'user_id', label: 'User ID' },
         { key: 'role', label: 'Role' },
+        { key: 'user_id', label: 'User ID' },
         { key: 'granted_at', label: 'Granted At' },
       ]}
       emptyState={{
