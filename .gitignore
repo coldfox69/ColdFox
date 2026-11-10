@@ -50,3 +50,6 @@ legacy-vite/node_modules
 
 .vercel
 vercel-deploy.txt
+
+# temporary scratch files
+.tmp-*
