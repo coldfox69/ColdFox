@@ -77,17 +77,21 @@ try {
   record('image optimization (AVIF/WebP)', false, error.message);
 }
 
-// ── 6. static asset caching ─────────────────────────────────────
+// ── 6. hashed build output is cached indefinitely ──────────────
 try {
-  const res = await fetch(`${BASE}/logo.png`, { method: 'GET', headers: { 'accept-encoding': 'br' } });
+  const page = await fetch(`${BASE}/`);
+  const html = await page.text();
+  const match = html.match(/src="(\/_next\/static\/[^"]+\.js)"/);
+  if (!match) throw new Error('no static script reference found in the page');
+  const res = await fetch(BASE + match[1]);
   const cache = res.headers.get('cache-control') ?? '';
   record(
-    'static asset browser caching',
-    res.status === 200 && /max-age=3600/.test(cache),
+    'static assets cached immutably',
+    res.status === 200 && /max-age=31536000/.test(cache) && /immutable/.test(cache),
     `cache-control=${cache}`,
   );
 } catch (error) {
-  record('static asset browser caching', false, error.message);
+  record('static assets cached immutably', false, error.message);
 }
 
 // ── 7. api responses are not cached ─────────────────────────────
@@ -155,6 +159,24 @@ try {
   record('job queue route exists', res.status === 401, `status=${res.status}`);
 } catch (error) {
   record('job queue route exists', false, error.message);
+}
+
+// ── 13. real user metrics are being stored ─────────────────────
+try {
+  const env = loadEnv();
+  const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
+  const { data } = await db
+    .from('web_vitals')
+    .select('metric, value, path, created_at')
+    .gte('created_at', new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString())
+    .order('created_at', { ascending: false })
+    .limit(5);
+  const metrics = Array.from(new Set((data ?? []).map((row) => row.metric)));
+  record('real user metrics stored', (data ?? []).length > 0, `last 36h: ${metrics.join(', ') || 'none'}`);
+} catch (error) {
+  record('real user metrics stored', false, error.message);
 }
 
 const failed = results.filter((r) => !r.ok);
