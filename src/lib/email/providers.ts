@@ -1,8 +1,9 @@
 import 'server-only';
-import nodemailer from 'nodemailer';
 import { randomUUID } from 'node:crypto';
-import { ImapFlow } from 'imapflow';
-import { simpleParser } from 'mailparser';
+
+// nodemailer, imapflow and mailparser are only needed when a message is
+// actually sent or fetched. They are loaded on demand so they do not weigh
+// down the start-up of every serverless function in the deployment.
 
 export interface OutboundEmail {
   fromName: string;
@@ -132,7 +133,8 @@ export async function getAccessToken(creds: MailboxCredentials): Promise<string>
   throw new Error('SMTP does not use OAuth access tokens.');
 }
 
-export function createSmtpTransport(creds: Extract<MailboxCredentials, { kind: 'smtp' }>) {
+export async function createSmtpTransport(creds: Extract<MailboxCredentials, { kind: 'smtp' }>) {
+  const { default: nodemailer } = await import('nodemailer');
   return nodemailer.createTransport({
     host: creds.host,
     port: creds.port,
@@ -188,7 +190,7 @@ export async function sendEmail(creds: MailboxCredentials, email: OutboundEmail)
     return { providerMessageId: `graph-${randomUUID()}`, provider: 'outlook', acceptedAt: new Date().toISOString() };
   }
 
-  const transport = createSmtpTransport(creds);
+  const transport = await createSmtpTransport(creds);
   try {
     const info = await transport.sendMail({
       from: { name: email.fromName, address: email.fromEmail },
@@ -207,7 +209,7 @@ export async function sendEmail(creds: MailboxCredentials, email: OutboundEmail)
 
 export async function testMailboxConnection(creds: MailboxCredentials): Promise<{ ok: true; detail: string }> {
   if (creds.kind === 'smtp') {
-    const transport = createSmtpTransport(creds);
+    const transport = await createSmtpTransport(creds);
     try {
       await transport.verify();
       return { ok: true, detail: 'SMTP connection and authentication succeeded.' };
@@ -239,6 +241,8 @@ export async function fetchImapMessages(
   options: { sinceDays?: number; limit?: number } = {},
 ): Promise<InboundEmail[]> {
   if (!creds.imapHost) return [];
+  const { ImapFlow } = await import('imapflow');
+  const { simpleParser } = await import('mailparser');
   const client = new ImapFlow({
     host: creds.imapHost,
     port: creds.imapPort || 993,

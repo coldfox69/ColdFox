@@ -1,6 +1,5 @@
 import 'server-only';
 import { parse } from 'csv-parse/sync';
-import ExcelJS from 'exceljs';
 import { ApiError } from '@/lib/http';
 
 export interface ParsedSpreadsheet {
@@ -50,9 +49,12 @@ export async function parseSpreadsheet(file: File): Promise<ParsedSpreadsheet> {
   }
 
   if (ext === 'xlsx' || ext === 'xlsm' || file.type.includes('spreadsheet')) {
+    // Loaded on demand: the spreadsheet reader is a large dependency and most
+    // imports are plain CSV files.
+    const { default: ExcelJS } = await import('exceljs');
     const workbook = new ExcelJS.Workbook();
     try {
-      await workbook.xlsx.load(buffer as unknown as ExcelJS.Buffer);
+      await workbook.xlsx.load(buffer as unknown as Parameters<typeof workbook.xlsx.load>[0]);
     } catch {
       throw new ApiError(422, 'That spreadsheet could not be read. Save it as .xlsx or CSV and retry.');
     }
