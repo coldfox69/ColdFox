@@ -3,7 +3,12 @@ import { getSessionContext } from '@/lib/auth/context';
 import { getOverview } from '@/lib/data/app';
 import dynamic from 'next/dynamic';
 
-const OverviewPage = dynamic(() => import('@/views/app/OverviewPage').then((mod) => mod.default));
+const OverviewPage = dynamic(async () => {
+  const t = Date.now();
+  const mod = await import('@/views/app/OverviewPage');
+  console.log(`[render] dynamic import of OverviewPage took ${Date.now() - t}ms`);
+  return mod.default;
+});
 
 export const metadata: Metadata = {
   title: 'Overview - ColdFox',
