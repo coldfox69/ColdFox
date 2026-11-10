@@ -14,6 +14,18 @@ export async function updateSession(request: NextRequest) {
   // Cookies that the auth server refreshed during this request.
   const cookieUpdates: { name: string; value: string; options?: Parameters<NextResponse['cookies']['set']>[2] }[] = [];
 
+  const { pathname } = request.nextUrl;
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const isAuthPage = AUTH_PAGES.includes(pathname);
+
+  // A visitor only needs their session checked when there is something to
+  // check: a protected page, an auth page, or a request that carries a
+  // session cookie. Everyone else skips the round trip to the auth server
+  // entirely, which is the common case for a first-time visitor.
+  const hasSessionCookie = request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.startsWith('sb-') && cookie.value.length > 0);
+
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll() {
@@ -34,9 +46,9 @@ export async function updateSession(request: NextRequest) {
 
   // Do not await getUser between client creation and this call in a way that
   // drops refreshed cookies; @supabase/ssr writes them through setAll above.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = isProtected || isAuthPage || hasSessionCookie
+    ? await supabase.auth.getUser()
+    : { data: { user: null } };
 
   // The identity is verified here, once. It is forwarded to the page and API
   // handlers so they do not have to validate the same token a second time.
@@ -56,9 +68,6 @@ export async function updateSession(request: NextRequest) {
     return next;
   };
 
-  const { pathname } = request.nextUrl;
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-
   if (!user && isProtected) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = '/login';
@@ -68,7 +77,7 @@ export async function updateSession(request: NextRequest) {
     return res;
   }
 
-  if (user && AUTH_PAGES.includes(pathname)) {
+  if (user && isAuthPage) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = '/login';
     const next = redirect.searchParams.get('next');

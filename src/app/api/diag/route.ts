@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getNotifications } from '@/lib/data/app';
+import { getOverview } from '@/lib/data/app';
 import { getSessionContext } from '@/lib/auth/context';
 
 export const runtime = 'nodejs';
@@ -58,6 +59,10 @@ export async function GET() {
 
   await getNotifications(user.id);
   mark('getNotifications');
+
+  const overview = await getOverview(ctx.organization!.id);
+  mark('getOverview');
+  void overview;
 
   return NextResponse.json({ marks, bootMs, handlerMs: Math.round(Object.values(marks).reduce((a, b) => a + b, 0)) });
 }
