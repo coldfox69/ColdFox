@@ -89,6 +89,13 @@
   --popover-foreground: #1b1f27;
   --raised: #f2f5f9;
   --recessed: #dee3ea;
+  /* Structural tones - Swiss editorial composition */
+  --band-raised: #e7ebf0;
+  --band-recessed: #dde2e9;
+  --grid-line: rgba(27, 31, 39, 0.045);
+  --rule: rgba(27, 31, 39, 0.1);
+  --rule-strong: rgba(27, 31, 39, 0.18);
+  --accent-rule: #1b5fd9;
   --primary: #1b5fd9;
   --primary-foreground: #ffffff;
   --secondary: #dbe1e9;
@@ -133,6 +140,13 @@
   --popover-foreground: #e7eaef;
   --raised: #262b33;
   --recessed: #121419;
+  /* Structural tones - Swiss editorial composition */
+  --band-raised: #191d23;
+  --band-recessed: #101216;
+  --grid-line: rgba(255, 255, 255, 0.032);
+  --rule: rgba(255, 255, 255, 0.085);
+  --rule-strong: rgba(255, 255, 255, 0.16);
+  --accent-rule: #7fb0ff;
   --primary: #7fb0ff;
   --primary-foreground: #0d1420;
   --secondary: #23272e;
@@ -255,6 +269,68 @@
     background: var(--card);
     border: 1px solid transparent;
     box-shadow: var(--shadow-raised);
+  }
+
+  /* ── Swiss editorial structure ─────────────────────────────── */
+  /* Ruled column grid, aligned to the content container and faded
+     so it reads as architecture rather than decoration. */
+  .grid-lines {
+    position: absolute;
+    inset-block: 0;
+    left: 1.5rem;
+    right: 1.5rem;
+    pointer-events: none;
+    border-right: 1px solid var(--grid-line);
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--grid-line) 0 1px,
+      transparent 1px calc(100% / 12)
+    );
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 100%);
+  }
+  @media (min-width: 640px) {
+    .grid-lines {
+      left: 2rem;
+      right: 2rem;
+    }
+  }
+  /* Tonal section bands */
+  .band-raised {
+    background: var(--band-raised);
+  }
+  .band-recessed {
+    background: var(--band-recessed);
+  }
+  /* Hairline rules */
+  .rule-h {
+    height: 1px;
+    background: var(--rule);
+  }
+  .rule-h-strong {
+    height: 1px;
+    background: var(--rule-strong);
+  }
+  /* The single brand accent, used sparingly */
+  .accent-tick {
+    width: 2px;
+    align-self: stretch;
+    min-height: 1.25rem;
+    background: var(--accent-rule);
+    border-radius: 1px;
+  }
+  .accent-rule-top {
+    position: relative;
+  }
+  .accent-rule-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 2px;
+    background: var(--accent-rule);
+    border-radius: 1px;
   }
   /* Icy blue fill, never a gradient */
   .gradient-navy {

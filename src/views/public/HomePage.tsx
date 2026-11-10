@@ -97,12 +97,17 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <PublicNavbar />
 
-      <section className="px-6 pb-16 pt-28 sm:px-8 lg:pb-20 lg:pt-32">
-        <div className="mx-auto grid max-w-[1200px] items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14">
+      <section className="relative overflow-hidden px-6 pb-16 pt-28 sm:px-8 lg:pb-20 lg:pt-32">
+        <div className="relative mx-auto max-w-[1200px]">
+          <div className="grid-lines" aria-hidden="true" />
+          <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14">
           <div>
-            <p className="mb-5 inline-flex items-center gap-2 rounded-md neu-inset-sm px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
-              Cold email workspace
-            </p>
+            <div className="mb-5 flex items-start gap-3">
+              <span className="accent-tick" aria-hidden="true" />
+              <p className="rounded-md neu-inset-sm px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
+                Cold email workspace
+              </p>
+            </div>
             <h1 className="text-[38px] font-semibold leading-[1.08] text-foreground sm:text-[44px] lg:text-[50px]">
               Cold email, CRM and inbox for teams that send from their own mailbox
             </h1>
@@ -129,8 +134,11 @@ export default function HomePage() {
           </div>
 
           <ProductPreview />
+          </div>
         </div>
       </section>
+
+      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
 
       <section className="px-6 py-16 sm:px-8 lg:py-20">
         <div className="mx-auto max-w-[1200px]">
@@ -152,10 +160,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-6 py-16 sm:px-8 lg:py-20">
+      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+
+      <section className="band-raised px-6 py-16 sm:px-8 lg:py-20">
         <div className="mx-auto grid max-w-[1200px] items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
-            <p className="mb-4 inline-flex items-center gap-2 rounded-md bg-accent px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
+            <p className="mb-4 inline-flex items-center gap-2 rounded-md neu-inset-sm px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
               <Brain className="w-3.5 h-3.5" /> Import checks
             </p>
             <h2 className="text-[28px] font-semibold text-foreground">Check the list before you send</h2>
@@ -190,7 +200,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-6 py-16 sm:px-8 lg:py-20">
+      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+
+      <section className="band-raised px-6 py-16 sm:px-8 lg:py-20">
         <div className="mx-auto grid max-w-[1200px] items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="neu-card rounded-[16px] p-6">
             <div className="mb-4 flex items-center gap-2">
@@ -215,7 +227,7 @@ export default function HomePage() {
             </div>
           </div>
           <div>
-            <p className="mb-4 inline-flex items-center gap-2 rounded-md bg-accent px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
+            <p className="mb-4 inline-flex items-center gap-2 rounded-md neu-inset-sm px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
               <Mail className="w-3.5 h-3.5" /> Email templates
             </p>
             <h2 className="text-[28px] font-semibold text-foreground">Templates you can edit</h2>
@@ -232,7 +244,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-6 py-16 sm:px-8 lg:py-20">
+      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+
+      <section className="band-raised px-6 py-16 sm:px-8 lg:py-20">
         <div className="mx-auto max-w-[1200px]">
           <h2 className="text-[32px] font-semibold text-foreground">How ColdFox works</h2>
           <p className="mt-3 text-[15px] text-muted-foreground">Four steps from list to inbox.</p>
@@ -247,6 +261,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
 
       <section className="px-6 py-16 sm:px-8 lg:py-20" id="pricing">
         <div className="mx-auto max-w-[1200px]">
@@ -289,7 +305,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-6 py-16 sm:px-8 lg:py-20">
+      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+
+      <section className="band-raised px-6 py-16 sm:px-8 lg:py-20">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-[28px] font-semibold text-foreground">Frequently asked questions</h2>
           <div className="mt-8 space-y-3">
@@ -313,6 +331,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
 
       <section className="px-6 pb-24 sm:px-8">
         <div className="mx-auto max-w-[1200px]">

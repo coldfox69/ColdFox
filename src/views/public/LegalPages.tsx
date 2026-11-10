@@ -14,15 +14,22 @@ function LegalShell({ title, updated, children }: { title: string; updated: stri
   return (
     <div className="min-h-screen bg-background">
       <PublicNavbar />
-      <div className="px-6 pb-16 pt-28 sm:px-8 lg:pt-32">
+      <section className="band-raised">
+        <div className="mx-auto max-w-3xl px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
+          <div className="accent-rule-top pt-7">
+            <p className="text-[12px] text-muted-foreground">Last updated: {updated}</p>
+            <h1 className="mt-1 text-[32px] font-semibold text-foreground">{title}</h1>
+          </div>
+        </div>
+      </section>
+      <div className="rule-h mx-auto max-w-3xl" aria-hidden="true" />
+      <section className="px-6 py-14 sm:px-8 lg:py-16">
         <div className="mx-auto max-w-3xl">
-          <p className="text-[12px] text-muted-foreground">Last updated: {updated}</p>
-          <h1 className="mt-1 text-[32px] font-semibold text-foreground">{title}</h1>
-          <div className="neu-card mt-8 rounded-[16px] p-7 sm:p-8">
+          <div className="neu-card rounded-[16px] p-7 sm:p-8">
             {children}
           </div>
         </div>
-      </div>
+      </section>
       <PublicFooter />
     </div>
   );

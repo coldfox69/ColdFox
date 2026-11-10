@@ -44,10 +44,17 @@ export default function FaqPage() {
   return (
     <div className="min-h-screen bg-background">
       <PublicNavbar />
-      <div className="px-6 pb-16 pt-28 sm:px-8 lg:pt-32">
+      <section className="band-raised">
+        <div className="mx-auto max-w-3xl px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
+          <div className="accent-rule-top pt-7">
+            <h1 className="text-[36px] font-semibold text-foreground">Frequently asked questions</h1>
+          </div>
+        </div>
+      </section>
+      <div className="rule-h mx-auto max-w-3xl" aria-hidden="true" />
+      <section className="px-6 py-14 sm:px-8 lg:py-16">
         <div className="mx-auto max-w-3xl">
-          <h1 className="text-[36px] font-semibold text-foreground">Frequently asked questions</h1>
-          <div className="mt-10 space-y-10">
+          <div className="space-y-10">
             {faqCategories.map(cat => (
               <div key={cat.category}>
                 <h2 className="mb-4 text-[16px] font-semibold text-foreground">{cat.category}</h2>
@@ -75,7 +82,7 @@ export default function FaqPage() {
             ))}
           </div>
         </div>
-      </div>
+      </section>
       <PublicFooter />
     </div>
   );

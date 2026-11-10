@@ -120,7 +120,8 @@ export function PublicFooter() {
   };
 
   return (
-    <footer className="mt-20 border-t border-border bg-card">
+    <footer className="band-recessed mt-20">
+      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
       <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">

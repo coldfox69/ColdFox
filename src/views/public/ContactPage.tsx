@@ -8,14 +8,18 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       <PublicNavbar />
-      <div className="px-6 pb-16 pt-28 sm:px-8 lg:pt-32">
-        <div className="mx-auto max-w-[1200px]">
-          <div className="max-w-2xl">
+      <section className="band-raised">
+        <div className="mx-auto max-w-[1200px] px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
+          <div className="accent-rule-top max-w-2xl pt-7">
             <h1 className="text-[36px] font-semibold text-foreground">Get in touch</h1>
             <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">Email the address that matches your request.</p>
           </div>
-
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+        </div>
+      </section>
+      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <section className="px-6 py-14 sm:px-8 lg:py-16">
+        <div className="mx-auto max-w-[1200px]">
+          <div className="grid gap-6 sm:grid-cols-3">
             {[
               { icon: Mail, title: 'General', desc: 'hello@coldfox.io', sub: 'Product questions' },
               { icon: MessageSquare, title: 'Support', desc: 'support@coldfox.io', sub: 'Account and workspace help' },
@@ -38,7 +42,7 @@ export default function ContactPage() {
             </Link>
           </div>
         </div>
-      </div>
+      </section>
       <PublicFooter />
     </div>
   );

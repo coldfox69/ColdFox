@@ -69,14 +69,18 @@ export default function FeaturesPage() {
   return (
     <div className="min-h-screen bg-background">
       <PublicNavbar />
-      <div className="px-6 pb-16 pt-28 sm:px-8 lg:pt-32">
-        <div className="mx-auto max-w-[1200px]">
-          <div className="max-w-2xl">
+      <section className="band-raised">
+        <div className="mx-auto max-w-[1200px] px-6 pb-12 pt-28 sm:px-8 lg:pt-32">
+          <div className="accent-rule-top max-w-2xl pt-7">
             <h1 className="text-[36px] font-semibold text-foreground">What the workspace covers</h1>
             <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">Import, templates, sequences, inbox, and deliverability checks, all in one place.</p>
           </div>
-
-          <div className="mt-12 space-y-14">
+        </div>
+      </section>
+      <div className="rule-h mx-auto max-w-[1200px]" aria-hidden="true" />
+      <section className="px-6 py-14 sm:px-8 lg:py-16">
+        <div className="mx-auto max-w-[1200px]">
+          <div className="space-y-14">
             {features.map(section => (
               <div key={section.category}>
                 <div className="mb-5 flex items-center gap-3">
@@ -108,7 +112,7 @@ export default function FeaturesPage() {
             </Link>
           </div>
         </div>
-      </div>
+      </section>
       <PublicFooter />
     </div>
   );
