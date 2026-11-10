@@ -33,7 +33,7 @@ const PERMISSIONS: Record<string, string> = {
 };
 
 export async function GET(_request: Request, { params }: { params: Promise<{ module: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/admin/[module]', method: 'GET' }, async () => {
     const { module } = await params;
     const permission = PERMISSIONS[module];
     if (!permission) throw new ApiError(404, 'Unknown admin module.');
@@ -181,7 +181,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ mod
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ module: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/admin/[module]', method: 'PATCH' }, async () => {
     const { module } = await params;
     const permission = PERMISSIONS[module];
     if (!permission) throw new ApiError(404, 'Unknown admin module.');
@@ -212,7 +212,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ mo
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ module: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/admin/[module]', method: 'POST' }, async () => {
     const { module } = await params;
     const permission = PERMISSIONS[module];
     if (!permission) throw new ApiError(404, 'Unknown admin module.');

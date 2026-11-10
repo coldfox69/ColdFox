@@ -4,7 +4,7 @@ import { loadMailboxCredentials } from '@/lib/email/engine';
 import { testMailboxConnection } from '@/lib/email/providers';
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/mailboxes/[id]/test', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin']);
     const { id } = await params;

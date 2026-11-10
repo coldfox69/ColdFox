@@ -4,7 +4,7 @@ import { signState } from '@/lib/crypto';
 import { appUrl } from '@/lib/email/engine';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ provider: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/mailboxes/oauth/[provider]/start', method: 'GET' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin']);
     const { provider } = await params;

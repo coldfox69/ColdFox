@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/ai/columns', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     await enforceRateLimit(request, 'ai-columns', 20, 3600, session.userId);

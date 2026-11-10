@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/ai/support', method: 'POST' }, async () => {
     const session = await requireApiSession();
     await enforceRateLimit(request, 'ai-support', 30, 3600, session.userId);
     const input = await parseBody(request, supportAskSchema);

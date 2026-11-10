@@ -16,7 +16,7 @@ function dayKey(iso: string) {
 }
 
 export async function GET() {
-  return withApi(async () => {
+  return withApi({ route: '/api/analytics', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const db = createServiceClient();
     const org = session.organizationId;

@@ -6,7 +6,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return withApi(async () => {
+  return withApi({ route: '/api/admin/overview', method: 'GET' }, async () => {
     await requirePlatformAdmin('orgs.view');
     const db = createServiceClient();
     const since = new Date(Date.now() - 30 * 86_400_000).toISOString();

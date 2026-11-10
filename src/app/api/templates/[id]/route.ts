@@ -4,7 +4,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { extractVariables, textToHtml } from '@/lib/email/template';
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/templates/[id]', method: 'PATCH' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     const { id } = await params;
@@ -57,7 +57,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/templates/[id]', method: 'DELETE' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     const { id } = await params;

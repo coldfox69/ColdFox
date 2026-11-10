@@ -6,7 +6,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/automations', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const { page, pageSize } = parseQuery(request, paginationSchema);
     const db = createServiceClient();

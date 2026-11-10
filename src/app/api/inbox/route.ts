@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 const MESSAGE_LIMIT = 500;
 
 export async function GET(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/inbox', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const url = new URL(request.url);
     const threadId = url.searchParams.get('threadId');

@@ -5,7 +5,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return withApi(async () => {
+  return withApi({ route: '/api/suppression', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const db = createServiceClient();
     const [entries, reasons] = await Promise.all([
@@ -18,7 +18,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/suppression', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     const input = await parseBody(request, suppressionInputSchema);
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/suppression', method: 'DELETE' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin']);
     const url = new URL(request.url);

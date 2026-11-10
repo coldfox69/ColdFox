@@ -1,12 +1,12 @@
 import { withApi, ok, requireApiSession, enforceRateLimit, ApiError } from '@/lib/http';
 import { createServiceClient } from '@/lib/supabase/service';
-import { syncMailbox } from '@/lib/email/engine';
+import { enqueueJob } from '@/lib/jobs';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/inbox/sync', method: 'POST' }, async () => {
     const session = await requireApiSession();
     await enforceRateLimit(request, 'inbox-sync', 12, 300, session.userId);
     const db = createServiceClient();
@@ -19,18 +19,16 @@ export async function POST(request: Request) {
 
     if (!mailboxes?.length) throw new ApiError(422, 'Connect a mailbox before syncing the inbox.', 'no_mailbox');
 
-    let synced = 0;
-    let replies = 0;
-    const errors: string[] = [];
-    for (const mailbox of mailboxes) {
-      try {
-        const result = await syncMailbox(mailbox.id as string);
-        synced += result.synced;
-        replies += result.replies;
-      } catch (error) {
-        errors.push(error instanceof Error ? error.message.slice(0, 200) : 'Sync failed');
-      }
-    }
-    return ok({ synced, replies, errors, mailboxes: mailboxes.length });
+    // The sync runs in the background so a slow provider connection cannot
+    // hold the request open.
+    const jobId = await enqueueJob({
+      jobType: 'inbox.sync',
+      organizationId: session.organizationId,
+      payload: { mailboxes: mailboxes.length, requestedBy: session.userId },
+      // One sync per workspace at a time.
+      idempotencyKey: `inbox.sync:${session.organizationId}`,
+    });
+
+    return ok({ queued: true, jobId, mailboxes: mailboxes.length });
   });
 }

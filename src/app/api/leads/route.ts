@@ -8,7 +8,7 @@ import { recordLeadActivity, syncLeadTags, tagsForLeads, toLeadDto } from '@/lib
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/leads', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const query = parseQuery(request, leadListQuerySchema);
     const db = createServiceClient();
@@ -65,7 +65,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/leads', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     await enforceRateLimit(request, 'leads-write', 120, 60, session.userId);

@@ -20,7 +20,7 @@ type VitalPayload = {
  * networks, not just on our own laptops.
  */
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/perf/beacon', method: 'POST' }, async () => {
     let payload: VitalPayload | null = null;
     try {
       payload = (await request.json()) as VitalPayload;

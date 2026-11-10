@@ -12,9 +12,31 @@ export interface DnsCheck {
   detail: string;
 }
 
+/**
+ * A DNS lookup can hang for a long time when the domain has broken or
+ * unreachable nameservers. The resolver is given a deadline so the request
+ * cannot be held open indefinitely.
+ */
+const DNS_TIMEOUT_MS = 5000;
+
+async function withDnsTimeout<T>(lookup: Promise<T>, fallback: T): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      lookup,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), DNS_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function resolveTxtSafe(name: string): Promise<string[] | null> {
   try {
-    const records = await dns.resolveTxt(name);
+    const records = await withDnsTimeout(dns.resolveTxt(name), null);
+    if (!records) return null;
     return records.map((chunks) => chunks.join(''));
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
@@ -25,7 +47,8 @@ async function resolveTxtSafe(name: string): Promise<string[] | null> {
 
 async function resolveMxSafe(domain: string) {
   try {
-    return await dns.resolveMx(domain);
+    const records = await withDnsTimeout(dns.resolveMx(domain), null);
+    return records ?? null;
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
     if (code === 'ENOTFOUND' || code === 'ENODATA') return [];

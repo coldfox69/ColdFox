@@ -7,7 +7,7 @@ import { testMailboxConnection } from '@/lib/email/providers';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/mailboxes', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const { page, pageSize } = parseQuery(request, paginationSchema);
     const db = createServiceClient();
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/mailboxes', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin']);
     await enforceRateLimit(request, 'mailbox-create', 10, 3600, session.userId);

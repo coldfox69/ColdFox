@@ -8,7 +8,7 @@ import { ACTIVE_ORG_COOKIE } from '@/lib/auth/context';
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/onboarding', method: 'POST' }, async () => {
     const session = await requireApiSession(false);
     await enforceRateLimit(request, 'onboarding', 10, 3600, session.userId);
     const input = await parseBody(request, onboardingSchema);

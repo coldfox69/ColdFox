@@ -29,7 +29,7 @@ function toDto(row: Record<string, unknown>) {
 }
 
 export async function GET(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/campaigns', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const { page, pageSize } = parseQuery(request, paginationSchema);
     const db = createServiceClient();
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/campaigns', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     await enforceRateLimit(request, 'campaign-create', 30, 3600, session.userId);

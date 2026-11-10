@@ -6,7 +6,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 const MESSAGE_LIMIT = 500;
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/support/tickets/[id]', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const { id } = await params;
     const db = createServiceClient();
@@ -18,7 +18,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/support/tickets/[id]', method: 'POST' }, async () => {
     const session = await requireApiSession();
     const { id } = await params;
     const { body } = await parseBody(request, supportMessageSchema);
@@ -34,7 +34,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/support/tickets/[id]', method: 'PATCH' }, async () => {
     const session = await requireApiSession();
     const { id } = await params;
     const body = (await request.json().catch(() => ({}))) as { status?: string };

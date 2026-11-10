@@ -49,3 +49,4 @@ test-results
 legacy-vite/node_modules
 
 .vercel
+vercel-deploy.txt

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 const MESSAGE_LIMIT = 500;
 
 export async function GET() {
-  return withApi(async () => {
+  return withApi({ route: '/api/support/tickets', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const db = createServiceClient();
     const [tickets, categories] = await Promise.all([
@@ -42,7 +42,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/support/tickets', method: 'POST' }, async () => {
     const session = await requireApiSession();
     await enforceRateLimit(request, 'support-ticket', 10, 3600, session.userId);
     const input = await parseBody(request, supportTicketSchema);

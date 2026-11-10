@@ -114,7 +114,9 @@ export async function withTrace<T>(
     const duration = span.endedAt - span.startedAt;
     if (duration >= SLOW_REQUEST_MS) {
       console.warn(`[trace] slow ${name} ${duration}ms`, span.attributes);
-      await exportSpan(span, trace, id);
+      // Exported without awaiting: a slow request must not also wait for the
+      // collector to acknowledge the span.
+      void exportSpan(span, trace, id);
     }
     return result;
   } catch (error) {
@@ -124,7 +126,7 @@ export async function withTrace<T>(
     if (duration >= SLOW_REQUEST_MS) {
       console.error(`[trace] failed ${name} ${duration}ms`, span.attributes, span.error);
     }
-    await exportSpan(span, trace, id);
+    void exportSpan(span, trace, id);
     throw error;
   } finally {
     activeSpans.delete(id);

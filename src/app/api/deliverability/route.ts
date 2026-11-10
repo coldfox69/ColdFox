@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 const DOMAIN_LIMIT = 200;
 
 export async function GET() {
-  return withApi(async () => {
+  return withApi({ route: '/api/deliverability', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const db = createServiceClient();
     const { data: domains, error } = await db.from('sending_domains').select('*').eq('organization_id', session.organizationId).order('created_at', { ascending: false }).limit(DOMAIN_LIMIT);
@@ -24,7 +24,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/deliverability', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin']);
     const input = await parseBody(request, domainInputSchema);
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/deliverability', method: 'DELETE' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin']);
     const url = new URL(request.url);

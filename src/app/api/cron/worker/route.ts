@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { safeEqual } from '@/lib/crypto';
 import { runWorkerTick } from '@/lib/email/engine';
+import { runQueuedJobs } from '@/lib/jobs';
+// Registers the handlers for the queued job types.
+import '@/lib/job-handlers';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,7 +25,13 @@ async function handler(request: Request) {
   const started = Date.now();
   try {
     const summary = await runWorkerTick(50);
-    return NextResponse.json({ ok: true, data: { ...summary, durationMs: Date.now() - started } });
+    // Drain the background job queue as part of the same tick, so the
+    // scheduler that already calls this route needs no extra configuration.
+    const jobs = await runQueuedJobs({ limit: 10 });
+    return NextResponse.json({
+      ok: true,
+      data: { ...summary, jobs, durationMs: Date.now() - started },
+    });
   } catch (error) {
     console.error('[cron] worker failed', error);
     return NextResponse.json({ ok: false, error: 'Worker failed' }, { status: 500 });

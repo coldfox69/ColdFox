@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { ZodError, type ZodType } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getApiSession, type ApiSession } from '@/lib/auth/api-session';
+import { withTrace } from '@/lib/telemetry';
 import { createHash } from 'node:crypto';
 
 export class ApiError extends Error {
@@ -29,9 +30,23 @@ export function hashIp(request: Request) {
   return createHash('sha256').update(ip + (process.env.UNSUBSCRIBE_TOKEN_SECRET ?? '')).digest('hex').slice(0, 32);
 }
 
-export async function withApi(handler: () => Promise<Response>): Promise<Response> {
+/**
+ * Wraps every API route handler.
+ *
+ * The route name and method are recorded on a span so slow backend requests
+ * can be traced. The span is logged when it exceeds `SLOW_REQUEST_MS` and is
+ * exported over OTLP when a collector is configured.
+ */
+export async function withApi(
+  target: { route: string; method: string },
+  handler: () => Promise<Response>,
+): Promise<Response> {
   try {
-    return await handler();
+    return await withTrace(
+      `api ${target.method} ${target.route}`,
+      { 'http.route': target.route, 'http.method': target.method },
+      handler,
+    );
   } catch (error) {
     if (error instanceof ApiError) {
       return fail(error.status, error.message, error.code);

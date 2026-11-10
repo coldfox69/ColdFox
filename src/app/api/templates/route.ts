@@ -6,7 +6,7 @@ import { extractVariables, textToHtml } from '@/lib/email/template';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/templates', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const { page, pageSize } = parseQuery(request, paginationSchema);
     const db = createServiceClient();
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/templates', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     const input = await parseBody(request, templateInputSchema);

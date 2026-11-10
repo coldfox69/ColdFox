@@ -5,7 +5,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 const schema = z.object({ planKey: z.string().min(1).max(40) });
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/billing/checkout', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner']);
     const { planKey } = await parseBody(request, schema);

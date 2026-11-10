@@ -8,7 +8,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 const schema = z.object({ organizationId: z.string().uuid() });
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/org/switch', method: 'POST' }, async () => {
     const session = await requireApiSession(false);
 
     const { organizationId } = await parseBody(request, schema);

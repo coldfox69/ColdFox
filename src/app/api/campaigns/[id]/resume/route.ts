@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { ensureCampaignSteps, seedCampaignExecutions } from '@/lib/email/engine';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/campaigns/[id]/resume', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     const { id } = await params;

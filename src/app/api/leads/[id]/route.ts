@@ -4,7 +4,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { recordLeadActivity, syncLeadTags, tagsForLeads, toLeadDto } from '@/lib/leads';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/leads/[id]', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const { id } = await params;
     const db = createServiceClient();
@@ -34,7 +34,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/leads/[id]', method: 'PATCH' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     const { id } = await params;
@@ -76,7 +76,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/leads/[id]', method: 'DELETE' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     const { id } = await params;

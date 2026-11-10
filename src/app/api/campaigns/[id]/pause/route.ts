@@ -2,7 +2,7 @@ import { withApi, ok, requireApiSession, writeAudit, assertRole, ApiError } from
 import { createServiceClient } from '@/lib/supabase/service';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/campaigns/[id]/pause', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     const { id } = await params;

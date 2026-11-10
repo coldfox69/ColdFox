@@ -12,7 +12,7 @@ const CAMPAIGN_LIMIT = 1000;
 const EVENT_LIMIT = 5000;
 
 export async function GET() {
-  return withApi(async () => {
+  return withApi({ route: '/api/overview', method: 'GET' }, async () => {
     const session = await requireApiSession();
     const db = createServiceClient();
     const since = new Date(Date.now() - 56 * 86_400_000).toISOString();

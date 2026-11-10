@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/leads/import/analyze', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     await enforceRateLimit(request, 'lead-import-analyze', 20, 3600, session.userId);

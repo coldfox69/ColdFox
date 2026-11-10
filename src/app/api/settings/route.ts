@@ -3,7 +3,7 @@ import { settingsSchema } from '@/lib/validation';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export async function PATCH(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/settings', method: 'PATCH' }, async () => {
     const session = await requireApiSession();
     const input = await parseBody(request, settingsSchema);
     const db = createServiceClient();

@@ -24,7 +24,7 @@ function clean(value: unknown) {
 }
 
 export async function POST(request: Request) {
-  return withApi(async () => {
+  return withApi({ route: '/api/leads/import/confirm', method: 'POST' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin', 'member']);
     await enforceRateLimit(request, 'lead-import-confirm', 10, 3600, session.userId);

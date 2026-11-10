@@ -2,7 +2,7 @@ import { withApi, ok, requireApiSession, ApiError } from '@/lib/http';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/inbox/[id]/read', method: 'POST' }, async () => {
     const session = await requireApiSession();
     const { id } = await params;
     const db = createServiceClient();

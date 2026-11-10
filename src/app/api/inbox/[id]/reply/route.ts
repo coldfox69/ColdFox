@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withApi(async () => {
+  return withApi({ route: '/api/inbox/[id]/reply', method: 'POST' }, async () => {
     const session = await requireApiSession();
     await enforceRateLimit(request, 'inbox-reply', 60, 3600, session.userId);
     const { id } = await params;
