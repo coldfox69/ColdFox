@@ -1,7 +1,8 @@
 import 'server-only';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { USER_ID_HEADER, USER_EMAIL_HEADER, USER_NAME_HEADER } from '@/lib/auth/headers';
 import type { ActiveOrganization, OrgRole, SessionUser } from '@/lib/types';
 
 export const ACTIVE_ORG_COOKIE = 'cf_org_id';
@@ -18,20 +19,44 @@ export interface SessionContext {
 
 export async function getSessionContext(): Promise<SessionContext | null> {
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) return null;
 
-  const [{ data: profile }, { data: memberships }, { data: adminRow }] = await Promise.all([
-    supabase.from('profiles').select('full_name, avatar_url, onboarding_completed').eq('id', user.id).maybeSingle(),
+  // The proxy already validated the session and forwarded the identity in a
+  // request header. Re-using it avoids a second round trip to the auth
+  // server on every render. The fallback keeps this working if the proxy
+  // did not run.
+  const headerList = await headers();
+  const forwardedId = headerList.get(USER_ID_HEADER);
+  const forwardedEmail = headerList.get(USER_EMAIL_HEADER);
+  const forwardedName = headerList.get(USER_NAME_HEADER);
+
+  let userId = forwardedId;
+  let userEmail = forwardedEmail ?? '';
+  let userName = forwardedName ?? '';
+
+  if (!userId) {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error || !user) return null;
+    userId = user.id;
+    userEmail = user.email ?? '';
+    userName = (user.user_metadata?.full_name as string | undefined) ?? '';
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, avatar_url, onboarding_completed')
+    .eq('id', userId)
+    .maybeSingle();
+
+  const [{ data: memberships }, { data: adminRow }] = await Promise.all([
     supabase
       .from('organization_members')
       .select('role, organization:organizations!inner(id, name, slug, plan_key, timezone, deleted_at, is_suspended)')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('status', 'active'),
-    supabase.from('platform_admins').select('role').eq('user_id', user.id).maybeSingle(),
+    supabase.from('platform_admins').select('role').eq('user_id', userId).maybeSingle(),
   ]);
 
   const planKeys = Array.from(
@@ -64,14 +89,14 @@ export async function getSessionContext(): Promise<SessionContext | null> {
   const requestedOrg = cookieStore.get(ACTIVE_ORG_COOKIE)?.value;
   const active = orgs.find((o) => o.id === requestedOrg) ?? orgs[0] ?? null;
 
-  const email = (user.email ?? '').toLowerCase();
-  const name = (profile?.full_name as string | null) || user.user_metadata?.full_name || email.split('@')[0] || 'ColdFox user';
+  const email = (userEmail || '').toLowerCase();
+  const name = (profile?.full_name as string | null) || userName || email.split('@')[0] || 'ColdFox user';
 
   // Only coldfox6969@gmail.com can access the admin panel
   const isAdminEmail = email === 'coldfox6969@gmail.com';
 
   return {
-    user: { id: user.id, email, name, avatarUrl: (profile?.avatar_url as string | null) ?? null },
+    user: { id: userId, email, name, avatarUrl: (profile?.avatar_url as string | null) ?? null },
     role: active?.role ?? 'viewer',
     organization: active,
     organizations: orgs,

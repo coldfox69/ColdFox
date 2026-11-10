@@ -1,16 +1,18 @@
 import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { USER_ID_HEADERS, USER_ID_HEADER, USER_EMAIL_HEADER, USER_NAME_HEADER } from '@/lib/auth/headers';
 
 const PROTECTED_PREFIXES = ['/app', '/admin', '/onboarding'];
 const AUTH_PAGES = ['/login', '/signup', '/forgot-password'];
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
-
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) return response;
+  if (!url || !anonKey) return NextResponse.next({ request });
+
+  // Cookies that the auth server refreshed during this request.
+  const cookieUpdates: { name: string; value: string; options?: Parameters<NextResponse['cookies']['set']>[2] }[] = [];
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
@@ -18,9 +20,14 @@ export async function updateSession(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        for (const cookie of cookiesToSet) {
+          cookieUpdates.push(cookie as (typeof cookieUpdates)[number]);
+          try {
+            request.cookies.set(cookie.name, cookie.value);
+          } catch {
+            // Called from a Server Component: the middleware refreshes the session.
+          }
+        }
       },
     },
   });
@@ -31,6 +38,24 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // The identity is verified here, once. It is forwarded to the page and API
+  // handlers so they do not have to validate the same token a second time.
+  const requestHeaders = new Headers(request.headers);
+  for (const header of USER_ID_HEADERS) requestHeaders.delete(header);
+  if (user) {
+    requestHeaders.set(USER_ID_HEADER, user.id);
+    requestHeaders.set(USER_EMAIL_HEADER, user.email ?? '');
+    requestHeaders.set(USER_NAME_HEADER, (user.user_metadata?.full_name as string | undefined) ?? '');
+  }
+  const forwardedCookie = request.cookies.toString();
+  if (forwardedCookie) requestHeaders.set('cookie', forwardedCookie);
+
+  const build = () => {
+    const next = NextResponse.next({ request: { headers: requestHeaders } });
+    for (const cookie of cookieUpdates) next.cookies.set(cookie.name, cookie.value, cookie.options);
+    return next;
+  };
+
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
@@ -38,12 +63,15 @@ export async function updateSession(request: NextRequest) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = '/login';
     redirect.searchParams.set('next', pathname);
-    return NextResponse.redirect(redirect);
+    const res = NextResponse.redirect(redirect);
+    for (const cookie of cookieUpdates) res.cookies.set(cookie.name, cookie.value, cookie.options);
+    return res;
   }
 
   if (user && AUTH_PAGES.includes(pathname)) {
     const redirect = request.nextUrl.clone();
-    const next = request.nextUrl.searchParams.get('next');
+    redirect.pathname = '/login';
+    const next = redirect.searchParams.get('next');
     if (next && next.startsWith('/') && !next.startsWith('//') && !next.includes('://')) {
       redirect.pathname = next;
       redirect.search = '';
@@ -52,7 +80,9 @@ export async function updateSession(request: NextRequest) {
       redirect.pathname = user.email?.toLowerCase() === 'coldfox6969@gmail.com' ? '/admin' : '/app';
       redirect.search = '';
     }
-    return NextResponse.redirect(redirect);
+    const res = NextResponse.redirect(redirect);
+    for (const cookie of cookieUpdates) res.cookies.set(cookie.name, cookie.value, cookie.options);
+    return res;
   }
 
   // CSRF hardening for state-changing API requests: browsers always send Origin
@@ -74,5 +104,5 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  return response;
+  return build();
 }

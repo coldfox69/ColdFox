@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getNotifications } from '@/lib/data/app';
+import { getSessionContext } from '@/lib/auth/context';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,7 @@ function now() {
 
 export async function GET() {
   const marks: Record<string, number> = {};
+  const bootMs = Math.round(process.uptime() * 1000);
   let last = now();
   const mark = (name: string) => {
     const t = now();
@@ -20,15 +22,19 @@ export async function GET() {
     last = t;
   };
 
+  const ctx = await getSessionContext();
+  mark('getSessionContext (with forwarded identity)');
+  if (!ctx) return NextResponse.json({ marks, bootMs, note: 'no session' });
+
   const supabase = await createServerSupabaseClient();
   mark('createClient');
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  mark('auth.getUser');
+  mark('auth.getUser (direct)');
 
-  if (!user) return NextResponse.json({ marks, note: 'no user' });
+  if (!user) return NextResponse.json({ marks, bootMs, note: 'no user' });
 
   await Promise.all([
     supabase.from('profiles').select('full_name, avatar_url, onboarding_completed').eq('id', user.id).maybeSingle(),
@@ -36,9 +42,6 @@ export async function GET() {
     supabase.from('platform_admins').select('role').eq('user_id', user.id).maybeSingle(),
   ]);
   mark('3 parallel user queries');
-
-  await supabase.from('subscription_plans').select('key, name').in('key', ['free']);
-  mark('plans query');
 
   const service = createServiceClient();
   await service.from('organizations').select('id').limit(1);
@@ -56,5 +59,5 @@ export async function GET() {
   await getNotifications(user.id);
   mark('getNotifications');
 
-  return NextResponse.json({ marks, total: Math.round(now()) });
+  return NextResponse.json({ marks, bootMs, handlerMs: Math.round(Object.values(marks).reduce((a, b) => a + b, 0)) });
 }
