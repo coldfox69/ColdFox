@@ -20,11 +20,11 @@ export async function POST(request: Request) {
     if (!mailboxes?.length) throw new ApiError(422, 'Connect a mailbox before syncing the inbox.', 'no_mailbox');
 
     // The sync runs in the background so a slow provider connection cannot
-    // hold the request open.
+    // hold the request open. Spam folder is also synced as part of inbox.sync.
     const jobId = await enqueueJob({
       jobType: 'inbox.sync',
       organizationId: session.organizationId,
-      payload: { mailboxes: mailboxes.length, requestedBy: session.userId },
+      payload: { mailboxes: mailboxes.length, requestedBy: session.userId, includeSpam: true },
       // One sync per workspace at a time.
       idempotencyKey: `inbox.sync:${session.organizationId}`,
     });

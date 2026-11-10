@@ -24,7 +24,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
       url.searchParams.set('access_type', 'offline');
       url.searchParams.set('prompt', 'consent');
       url.searchParams.set('include_granted_scopes', 'true');
-      url.searchParams.set('scope', 'openid email https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly');
+      url.searchParams.set('scope', 'openid email https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.labels');
       url.searchParams.set('state', state);
       return NextResponse.redirect(url.toString());
     }
@@ -38,7 +38,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
     url.searchParams.set('redirect_uri', redirectUri);
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('response_mode', 'query');
-    url.searchParams.set('scope', 'openid email offline_access User.Read Mail.Send Mail.Read');
+    url.searchParams.set('scope', 'openid email offline_access User.Read Mail.Send Mail.Read Mail.ReadWrite');
     url.searchParams.set('state', state);
     return NextResponse.redirect(url.toString());
   });

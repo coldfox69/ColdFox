@@ -135,6 +135,71 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
     }
   };
 
+  const markAsNotSpam = async (id: string) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/api/inbox/${id}/not-spam`, { method: 'POST' });
+      patchThread(id, { status: 'inbox' });
+      toast.show('Moved to inbox (not spam).', 'success');
+      router.refresh();
+    } catch (error) {
+      toast.show(errorMessage(error), 'danger');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reportAsSpam = async (id: string) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/api/inbox/${id}/report-spam`, { method: 'POST' });
+      setThreads(list => list.filter(t => t.id !== id));
+      setSelectedId(null);
+      toast.show('Reported as spam and removed.', 'success');
+      router.refresh();
+    } catch (error) {
+      toast.show(errorMessage(error), 'danger');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteThread = async (id: string) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/api/inbox/${id}/delete`, { method: 'DELETE' });
+      setThreads(list => list.filter(t => t.id !== id));
+      setSelectedId(null);
+      toast.show('Conversation moved to trash.', 'success');
+      router.refresh();
+    } catch (error) {
+      toast.show(errorMessage(error), 'danger');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const markRead = async (id: string) => {
+    patchThread(id, { unread: false });
+    try {
+      await apiFetch(`/api/inbox/${id}/mark-read`, { method: 'POST' });
+    } catch (error) {
+      toast.show(errorMessage(error), 'danger');
+    }
+  };
+
+  const markUnread = async (id: string) => {
+    patchThread(id, { unread: true });
+    try {
+      await apiFetch(`/api/inbox/${id}/mark-unread`, { method: 'POST' });
+    } catch (error) {
+      toast.show(errorMessage(error), 'danger');
+    }
+  };
+
   return (
     <div className="h-full flex flex-col lg:flex-row min-h-0">
       {/* Column 1: folders */}
@@ -233,6 +298,21 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
                   <button onClick={() => void toggleArchive(selected)} className="px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
                     {selected.status === 'archived' ? 'Restore' : 'Archive'}
                   </button>
+                  <button onClick={() => void markRead(selected.id)} className="px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
+                     Mark read
+                   </button>
+                   <button onClick={() => void markUnread(selected.id)} className="px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
+                     Mark unread
+                   </button>
+                   <button onClick={() => void markAsNotSpam(selected.id)} className="px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
+                     Not spam
+                   </button>
+                   <button onClick={() => void reportAsSpam(selected.id)} className="px-3 py-1.5 rounded-lg border border-destructive/30 text-[12px] font-medium text-destructive hover:bg-destructive/10">
+                     Report spam
+                   </button>
+                   <button onClick={() => void deleteThread(selected.id)} className="px-3 py-1.5 rounded-lg border border-destructive/30 text-[12px] font-medium text-destructive hover:bg-destructive/10">
+                     Delete
+                   </button>
                   {selected.leadId && (
                     <Link href={`/app/leads/${selected.leadId}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
                       Contact profile <ExternalLink className="w-3 h-3" />

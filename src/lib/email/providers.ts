@@ -207,6 +207,252 @@ export async function sendEmail(creds: MailboxCredentials, email: OutboundEmail)
   }
 }
 
+// ── Message modification helpers ──────────────────────────────
+// These require gmail.modify / Mail.ReadWrite scopes.
+
+export async function markAsRead(creds: MailboxCredentials, providerMessageId: string): Promise<void> {
+  if (creds.kind === 'gmail') {
+    const token = await googleAccessToken(creds);
+    const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${providerMessageId}/modify`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(`Gmail mark-as-read failed (${res.status})`);
+    return;
+  }
+  if (creds.kind === 'outlook') {
+    const token = await microsoftAccessToken(creds);
+    const res = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${providerMessageId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isRead: true }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(`Graph mark-as-read failed (${res.status})`);
+    return;
+  }
+  // SMTP/IMAP: no server-side read tracking; no-op
+}
+
+export async function markAsUnread(creds: MailboxCredentials, providerMessageId: string): Promise<void> {
+  if (creds.kind === 'gmail') {
+    const token = await googleAccessToken(creds);
+    const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${providerMessageId}/modify`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ addLabelIds: ['UNREAD'] }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(`Gmail mark-as-unread failed (${res.status})`);
+    return;
+  }
+  if (creds.kind === 'outlook') {
+    const token = await microsoftAccessToken(creds);
+    const res = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${providerMessageId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isRead: false }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(`Graph mark-as-unread failed (${res.status})`);
+    return;
+  }
+}
+
+export async function moveToSpam(creds: MailboxCredentials, providerMessageId: string): Promise<void> {
+  if (creds.kind === 'gmail') {
+    const token = await googleAccessToken(creds);
+    const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${providerMessageId}/modify`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ addLabelIds: ['SPAM'], removeLabelIds: ['INBOX', 'UNREAD'] }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(`Gmail move-to-spam failed (${res.status})`);
+    return;
+  }
+  if (creds.kind === 'outlook') {
+    const token = await microsoftAccessToken(creds);
+    // Find the Junk folder ID
+    const foldersRes = await fetch('https://graph.microsoft.com/v1.0/me/mailFolders?$filter=displayName eq \'Junk Email\'&$select=id', {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(20_000),
+    });
+    const foldersData = (await foldersRes.json()) as { value?: { id: string }[] };
+    const junkId = foldersData.value?.[0]?.id;
+    if (!junkId) throw new Error('Could not find Junk folder');
+    const res = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${providerMessageId}/move`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ destinationId: junkId }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(`Graph move-to-spam failed (${res.status})`);
+    return;
+  }
+}
+
+export async function moveToInbox(creds: MailboxCredentials, providerMessageId: string): Promise<void> {
+  if (creds.kind === 'gmail') {
+    const token = await googleAccessToken(creds);
+    const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${providerMessageId}/modify`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ addLabelIds: ['INBOX'], removeLabelIds: ['SPAM'] }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(`Gmail move-to-inbox failed (${res.status})`);
+    return;
+  }
+  if (creds.kind === 'outlook') {
+    const token = await microsoftAccessToken(creds);
+    const foldersRes = await fetch('https://graph.microsoft.com/v1.0/me/mailFolders?$filter=displayName eq \'Inbox\'&$select=id', {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(20_000),
+    });
+    const foldersData = (await foldersRes.json()) as { value?: { id: string }[] };
+    const inboxId = foldersData.value?.[0]?.id;
+    if (!inboxId) throw new Error('Could not find Inbox folder');
+    const res = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${providerMessageId}/move`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ destinationId: inboxId }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(`Graph move-to-inbox (not spam) failed (${res.status})`);
+    return;
+  }
+}
+
+export async function trashMessage(creds: MailboxCredentials, providerMessageId: string): Promise<void> {
+  if (creds.kind === 'gmail') {
+    const token = await googleAccessToken(creds);
+    const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${providerMessageId}/trash`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(`Gmail trash failed (${res.status})`);
+    return;
+  }
+  if (creds.kind === 'outlook') {
+    const token = await microsoftAccessToken(creds);
+    const res = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${providerMessageId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok && res.status !== 204) throw new Error(`Graph delete failed (${res.status})`);
+    return;
+  }
+}
+
+export async function modifyLabels(creds: MailboxCredentials, providerMessageId: string, addLabels: string[], removeLabels: string[]): Promise<void> {
+  if (creds.kind === 'gmail') {
+    const token = await googleAccessToken(creds);
+    const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${providerMessageId}/modify`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ addLabelIds: addLabels, removeLabelIds: removeLabels }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(`Gmail modify labels failed (${res.status})`);
+    return;
+  }
+  // Outlook uses move/folders, not labels
+}
+
+// ── Spam folder fetch ──────────────────────────────────────────
+export async function fetchSpamMessages(creds: MailboxCredentials, options: { limit?: number } = {}): Promise<InboundEmail[]> {
+  const limit = options.limit ?? 25;
+  if (creds.kind === 'gmail') {
+    const token = await googleAccessToken(creds);
+    const listRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?q=in:spam&maxResults=${limit}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!listRes.ok) throw new Error(`Gmail spam fetch failed (${listRes.status})`);
+    const listData = (await listRes.json()) as { messages?: { id: string }[] };
+    const ids = (listData.messages ?? []).map((m) => m.id);
+    const results: InboundEmail[] = [];
+    for (const id of ids) {
+      const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!msgRes.ok) continue;
+      const msg = (await msgRes.json()) as Record<string, unknown>;
+      const payload = msg.payload as Record<string, unknown> | undefined;
+      const headers = (payload?.headers ?? []) as { name: string; value: string }[];
+      const getHeader = (name: string) => headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value ?? '';
+      const parts = (payload?.parts ?? []) as Record<string, unknown>[];
+      let bodyText = '';
+      let bodyHtml = '';
+      const extract = (part: Record<string, unknown>) => {
+        const mimeType = String(part.mimeType ?? '');
+        const body = part.body as { data?: string } | undefined;
+        if (body?.data) {
+          const decoded = Buffer.from(body.data.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
+          if (mimeType === 'text/plain' && !bodyText) bodyText = decoded;
+          if (mimeType === 'text/html' && !bodyHtml) bodyHtml = decoded;
+        }
+        if (Array.isArray(part.parts)) part.parts.forEach(extract);
+      };
+      extract(payload ?? {});
+      if (!bodyText && payload?.body) {
+        const body = payload.body as { data?: string };
+        if (body.data) bodyText = Buffer.from(body.data.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
+      }
+      const fromRaw = getHeader('From');
+      const fromMatch = fromRaw.match(/^(.*?)\s*<([^>]+)>$/) || [null, fromRaw, fromRaw];
+      results.push({
+        providerMessageId: String(msg.id),
+        threadId: String(msg.threadId ?? ''),
+        fromEmail: String(fromMatch[2] ?? fromRaw).toLowerCase(),
+        fromName: String(fromMatch[1] ?? '').trim() || undefined,
+        to: getHeader('To').split(',').map((s) => s.trim()).filter(Boolean),
+        subject: getHeader('Subject'),
+        text: bodyText,
+        html: bodyHtml,
+        references: [],
+        receivedAt: new Date(Number(msg.internalDate ?? Date.now())).toISOString(),
+      });
+    }
+    return results;
+  }
+  if (creds.kind === 'outlook') {
+    const token = await microsoftAccessToken(creds);
+    const res = await fetch('https://graph.microsoft.com/v1.0/me/mailFolders/junkemail/messages?$top=' + limit + '&$select=id,subject,from,toRecipients,receivedDateTime,body,bodyPreview,internetMessageId,conversationId&$orderby=receivedDateTime desc', {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) throw new Error(`Graph spam fetch failed (${res.status})`);
+    const data = (await res.json()) as { value?: Record<string, unknown>[] };
+    const messages = data.value ?? [];
+    return messages.map((m) => {
+      const from = m.from as { emailAddress?: { address?: string; name?: string } } | undefined;
+      const toRecipients = (m.toRecipients as { emailAddress?: { address?: string } }[]) ?? [];
+      const body = m.body as { contentType?: string; content?: string } | undefined;
+      return {
+        providerMessageId: String(m.id),
+        threadId: String(m.conversationId ?? ''),
+        fromEmail: String(from?.emailAddress?.address ?? '').toLowerCase(),
+        fromName: from?.emailAddress?.name,
+        to: toRecipients.map((r) => r.emailAddress?.address ?? '').filter(Boolean),
+        subject: String(m.subject ?? ''),
+        text: body?.contentType === 'Text' ? String(body.content ?? '') : '',
+        html: body?.contentType === 'HTML' ? String(body.content ?? '') : '',
+        references: [],
+        receivedAt: String(m.receivedDateTime ?? new Date().toISOString()),
+      };
+    });
+  }
+  // SMTP/IMAP: no spam folder sync for SMTP
+  return [];
+}
+
 export async function testMailboxConnection(creds: MailboxCredentials): Promise<{ ok: true; detail: string }> {
   if (creds.kind === 'smtp') {
     const transport = await createSmtpTransport(creds);
