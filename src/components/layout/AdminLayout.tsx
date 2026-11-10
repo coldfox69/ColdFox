@@ -11,6 +11,7 @@ import {
   Sun, Moon, Monitor, ExternalLink, LogOut, Gauge, FileSearch, AlertTriangle, Webhook,
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
+import { HoverPrefetchLink } from '@/components/shared/HoverPrefetchLink';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const adminNav = [
@@ -96,12 +97,12 @@ export function AdminLayout({
           <ul className="space-y-1">
             {adminNav.map(item => (
               <li key={item.path}>
-                <Link href={item.path} title={collapsed ? item.label : undefined}
+                <HoverPrefetchLink href={item.path} title={collapsed ? item.label : undefined}
                   aria-current={isActive(item.path) ? 'page' : undefined}
                   className={cn(navRow, isActive(item.path) ? navRowActive : navRowIdle, collapsed && 'justify-center px-2')}>
                   <item.icon className="w-4 h-4 shrink-0" />
                   {!collapsed && <span>{item.label}</span>}
-                </Link>
+                </HoverPrefetchLink>
               </li>
             ))}
           </ul>
@@ -114,10 +115,10 @@ export function AdminLayout({
               <p className="mt-0.5 text-[12px] text-muted-foreground">Role: {role}</p>
             </div>
           )}
-          <Link href="/app" className={cn(navRow, navRowIdle, collapsed && 'justify-center px-2')}>
+          <HoverPrefetchLink href="/app" className={cn(navRow, navRowIdle, collapsed && 'justify-center px-2')}>
             <ExternalLink className="w-4 h-4 shrink-0" />
             {!collapsed && 'Back to app'}
-          </Link>
+          </HoverPrefetchLink>
           <button onClick={signOut} className={cn(navRow, 'w-full text-destructive hover:bg-muted', collapsed && 'justify-center px-2')}>
             <LogOut className="w-4 h-4 shrink-0" />
             {!collapsed && 'Sign out'}

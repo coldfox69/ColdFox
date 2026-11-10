@@ -12,6 +12,7 @@ import {
   LogOut, ChevronsUpDown, Menu, ShieldCheck, ArrowRight
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
+import { HoverPrefetchLink } from '@/components/shared/HoverPrefetchLink';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import type { ActiveOrganization, SessionUser, ShellNotification } from '@/lib/types';
 
@@ -99,22 +100,22 @@ function SidebarContent({
         <ul className="space-y-1">
           {navItems.map(item => (
             <li key={item.path}>
-              <Link href={item.path} onClick={() => onToggleMenu()}
+              <HoverPrefetchLink href={item.path} onClick={() => onToggleMenu()}
                 aria-current={isActive(item.path) ? 'page' : undefined}
                 className={cn(navRow, isActive(item.path) ? navRowActive : navRowIdle, collapsed && 'justify-center px-2')}
                 title={collapsed ? item.label : undefined}>
                 <item.icon className="w-4 h-4 shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
-              </Link>
+              </HoverPrefetchLink>
             </li>
           ))}
           {isPlatformAdmin && (
             <li className="mt-4 border-t border-border pt-4">
-              <Link href="/admin" onClick={() => onToggleMenu()}
+              <HoverPrefetchLink href="/admin" onClick={() => onToggleMenu()}
                 className={cn(navRow, navRowIdle, collapsed && 'justify-center px-2')}>
                 <ShieldCheck className="w-4 h-4 shrink-0" />
                 {!collapsed && <span>Platform admin</span>}
-              </Link>
+              </HoverPrefetchLink>
             </li>
           )}
         </ul>
@@ -124,12 +125,12 @@ function SidebarContent({
         <ul className="space-y-1">
           {bottomItems.map(item => (
             <li key={item.path}>
-              <Link href={item.path} onClick={() => onToggleMenu()}
+              <HoverPrefetchLink href={item.path} onClick={() => onToggleMenu()}
                 aria-current={isActive(item.path) ? 'page' : undefined}
                 className={cn(navRow, isActive(item.path) ? navRowActive : navRowIdle, collapsed && 'justify-center px-2')}>
                 <item.icon className="w-4 h-4 shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
-              </Link>
+              </HoverPrefetchLink>
             </li>
           ))}
         </ul>

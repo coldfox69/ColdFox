@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatCard } from '@/components/shared/StatCard';
+import { HoverPrefetchLink } from '@/components/shared/HoverPrefetchLink';
 import { CampaignStatusBadge } from '@/components/shared/StatusBadge';
 import { cn } from '@/lib/utils';
 import type { OverviewVM } from '@/lib/view-models';
@@ -86,10 +87,10 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
             <ul className="space-y-1">
               {quickActions.map(a => (
                 <li key={a.to}>
-                  <Link href={a.to} className="flex items-center justify-between rounded-[8px] px-2 py-1.5 text-[13px] text-foreground transition-colors duration-[var(--dur)] hover:bg-muted">
+                  <HoverPrefetchLink href={a.to} className="flex items-center justify-between rounded-[8px] px-2 py-1.5 text-[13px] text-foreground transition-colors duration-[var(--dur)] hover:bg-muted">
                     {a.label}
                     <span aria-hidden className="text-muted-foreground">→</span>
-                  </Link>
+                  </HoverPrefetchLink>
                 </li>
               ))}
             </ul>
@@ -101,7 +102,7 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
         <section className="neu-card rounded-[16px] p-5 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold text-foreground">Recent campaigns</h2>
-            <Link href="/app/campaigns" className="text-[13px] font-medium text-accent-foreground hover:underline">All campaigns</Link>
+            <HoverPrefetchLink href="/app/campaigns" className="text-[13px] font-medium text-accent-foreground hover:underline">All campaigns</HoverPrefetchLink>
           </div>
           {activeCampaigns.length === 0 ? (
             <p className="text-[13px] text-muted-foreground">No active campaigns right now</p>
