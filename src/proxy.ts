@@ -3,18 +3,17 @@ import { updateSession } from '@/lib/supabase/session';
 
 export async function proxy(request: NextRequest) {
   const started = Date.now();
-  console.log(`[render] proxy arrived at=${started}`);
   const response = await updateSession(request);
   try {
     response.headers.set('Server-Timing', `proxy;dur=${Date.now() - started}`);
   } catch {
-    // ignore
+    // Some responses have immutable headers.
   }
   return response;
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/diag-bare|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|txt|xml)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|txt|xml)$).*)',
   ],
 };

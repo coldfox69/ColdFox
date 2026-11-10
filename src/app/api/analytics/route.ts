@@ -27,9 +27,9 @@ export async function GET() {
       db.from('leads').select('id', { count: 'exact', head: true }).eq('organization_id', org).is('deleted_at', null),
       db.from('campaigns').select('id, name, status, total_leads, emails_sent, replies, bounces, unsubscribes, created_at').eq('organization_id', org).order('created_at', { ascending: false }).limit(CAMPAIGN_LIMIT),
       // Exact per status counts, no campaign rows are transferred.
-      countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES, (query) => query.eq('organization_id', org)),
+      countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES, { organizationId: org }),
       // Exact per status counts: the breakdown never pulls lead rows into memory.
-      countByValue(db, 'leads', 'status', LEAD_STATUSES, (query) => query.eq('organization_id', org).is('deleted_at', null)),
+      countByValue(db, 'leads', 'status', LEAD_STATUSES, { organizationId: org, excludeDeleted: true }),
       db.from('mailboxes').select('id, email_address, status, reputation, sent_today, daily_limit').eq('organization_id', org).limit(200),
       // Bounded sample of the 56 day window, newest first.
       db.from('email_events').select('event_type, occurred_at, campaign_id').eq('organization_id', org).gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(EVENT_LIMIT),

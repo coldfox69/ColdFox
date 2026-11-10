@@ -15,7 +15,7 @@ export async function GET(request: Request) {
       db.from('automation_workflows').select('*, steps:automation_steps(id, step_order, step_type, config)', { count: 'exact' }).eq('organization_id', session.organizationId).order('created_at', { ascending: false }).range(from, from + pageSize - 1),
       // Only the per status totals are needed, so count them with head requests
       // instead of pulling thousands of execution rows into memory.
-      countByValue(db, 'automation_executions', 'status', EXECUTION_STATUSES, (query) => query.eq('organization_id', session.organizationId)),
+      countByValue(db, 'automation_executions', 'status', EXECUTION_STATUSES, { organizationId: session.organizationId }),
     ]);
     if (workflows.error) throw new ApiError(500, 'Could not load automations.');
     return ok({

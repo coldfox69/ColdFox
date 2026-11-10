@@ -1,11 +1,11 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Logo } from '@/components/shared/Logo';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 export function AuthShell({ title, subtitle, children, footer }: { title: string; subtitle: string; children: React.ReactNode; footer?: React.ReactNode }) {
@@ -13,7 +13,7 @@ export function AuthShell({ title, subtitle, children, footer }: { title: string
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
         <Link href="/" className="mb-8 flex items-center justify-center">
-          <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '64px', width: 'auto', maxWidth: '100%' }} sizes="200px" priority />
+          <Logo height={64} priority />
         </Link>
         <div className="neu-card rounded-[20px] p-7 sm:p-8">
           <h1 className="text-[22px] font-semibold text-foreground">{title}</h1>

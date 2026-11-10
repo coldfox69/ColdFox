@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { HoverPrefetchLink } from '@/components/shared/HoverPrefetchLink';
+import { Logo } from '@/components/shared/Logo';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const adminNav = [
@@ -86,7 +87,7 @@ export function AdminLayout({
           ) : (
             <div className="min-w-0 flex-1">
               <span className="flex items-center">
-                <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '48px', width: 'auto', maxWidth: '100%' }} sizes="150px" priority />
+                <Logo height={48} priority />
               </span>
               <p className="mt-1 text-[12px] text-muted-foreground">Admin panel</p>
             </div>

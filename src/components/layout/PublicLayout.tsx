@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 import { Menu, X, Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
+import { Logo } from '@/components/shared/Logo';
 
 const navLinks = [
   { label: 'Features', path: '/features' },
@@ -52,7 +52,7 @@ export function PublicNavbar() {
       <div className="mx-auto max-w-[1200px] px-6 sm:px-8">
         <div className="flex h-16 items-center gap-8">
           <Link href="/" className="flex items-center" aria-label="ColdFox home">
-            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '48px', width: 'auto' }} sizes="150px" priority />
+            <Logo height={48} priority />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
@@ -131,7 +131,7 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center">
-              <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={80} style={{ height: '44px', width: 'auto' }} sizes="120px" loading="lazy" />
+              <Logo height={44} />
             </Link>
             <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
               Cold email workspace. Import leads, connect your own mailbox, run sequences, handle replies.

@@ -49,9 +49,10 @@ export async function GET(request: Request) {
     // lead rows into memory, so it stays correct for very large lead sets.
     const [tagMap, statuses] = await Promise.all([
       tagsForLeads(db, session.organizationId, ids),
-      countByValue(db, 'leads', 'status', LEAD_STATUSES, (query) =>
-        query.eq('organization_id', session.organizationId).is('deleted_at', null),
-      ),
+      countByValue(db, 'leads', 'status', LEAD_STATUSES, {
+        organizationId: session.organizationId,
+        excludeDeleted: true,
+      }),
     ]);
 
     return ok({

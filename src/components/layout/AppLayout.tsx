@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { HoverPrefetchLink } from '@/components/shared/HoverPrefetchLink';
+import { Logo } from '@/components/shared/Logo';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import type { ActiveOrganization, SessionUser, ShellNotification } from '@/lib/types';
 
@@ -91,7 +92,7 @@ function SidebarContent({
           <Image src="/favicon.png" alt="ColdFox fox logo" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full" sizes="36px" />
         ) : (
           <span className="flex min-w-0 flex-1 items-center">
-            <Image src="/logo.png" alt="ColdFox - Smarter Cold Email Outreach" width={200} height={48} style={{ height: '48px', width: 'auto', maxWidth: '100%' }} sizes="150px" priority />
+            <Logo height={48} priority />
           </span>
         )}
       </div>

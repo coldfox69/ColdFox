@@ -51,29 +51,61 @@ const SUPPORT_MESSAGE_LIMIT = 500;
 /**
  * Counts the rows of every value in `values` for the given `column`.
  *
- * `head: true` makes PostgREST return the row count in a response header, so
- * no row payload is transferred at all. Counting this way keeps breakdowns over
- * large tables (leads, campaigns, executions) cheap instead of pulling tens of
- * thousands of rows into memory just to count them.
+ * The grouping happens inside Postgres (`count_statuses`), so this costs one
+ * round trip instead of one per value. If the function is unavailable, it
+ * falls back to one `count: 'exact'` head query per value.
  */
 export async function countByValue(
   db: SupabaseClient,
   table: string,
   column: string,
   values: readonly string[],
-  scope?: (query: CountQuery) => CountQuery,
+  options: { organizationId?: string | null; excludeDeleted?: boolean } = {},
 ): Promise<Record<string, number>> {
+  const counts = await countByValueGrouped(db, table, column, options);
+  if (counts) {
+    const filtered: Record<string, number> = {};
+    for (const value of values) {
+      const count = counts[value];
+      if (typeof count === 'number' && count > 0) filtered[value] = count;
+    }
+    return filtered;
+  }
+
+  // Fallback: one head count per value, no row payload transferred.
   const entries = await Promise.all(
     values.map(async (value) => {
       let query = db.from(table).select('id', { count: 'exact', head: true }).eq(column, value);
-      if (scope) query = scope(query);
+      if (options.organizationId) query = query.eq('organization_id', options.organizationId);
+      if (options.excludeDeleted) query = query.is('deleted_at', null);
       const { count } = await query;
       return [value, count ?? 0] as const;
     }),
   );
-  const counts: Record<string, number> = {};
-  for (const [value, count] of entries) if (count > 0) counts[value] = count;
-  return counts;
+  const filtered: Record<string, number> = {};
+  for (const [value, count] of entries) if (count > 0) filtered[value] = count;
+  return filtered;
+}
+
+/** Returns null when the grouped count function is unavailable. */
+async function countByValueGrouped(
+  db: SupabaseClient,
+  table: string,
+  column: string,
+  options: { organizationId?: string | null; excludeDeleted?: boolean },
+): Promise<Record<string, number> | null> {
+  const { data, error } = await db.rpc('count_statuses', {
+    p_table: table,
+    p_column: column,
+    p_org: options.organizationId ?? null,
+    p_exclude_deleted: options.excludeDeleted ?? false,
+  });
+  if (error) {
+    console.warn('[db] grouped count unavailable, falling back to per-value counts', error.message);
+    return null;
+  }
+  if (!data || typeof data !== 'object') return null;
+  return data as Record<string, number>;
 }
 
 const str = (value: unknown, fallback = ''): string => (value === null || value === undefined ? fallback : String(value));
@@ -340,7 +372,7 @@ async function getOverviewUncached(orgId: string): Promise<OverviewVM> {
     db.from('leads').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).is('deleted_at', null),
     db.from('campaigns').select('id, name, description, status, total_leads, emails_sent, replies, bounces, unsubscribes, created_at, launch_at, mailbox_id, template_id, mailbox:mailboxes(email_address)').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(CAMPAIGN_SAMPLE_LIMIT),
     // Exact per status counts, no campaign rows are transferred.
-    countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES, (query) => query.eq('organization_id', orgId)),
+    countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES, { organizationId: orgId }),
     db.from('mailboxes').select('id, email_address, display_name, provider, status, daily_limit, sent_today, warmup_enabled, reputation, last_error, created_at').eq('organization_id', orgId).limit(LIST_LIMIT),
     // Bounded sample of the 56 day window, newest first.
     db.from('email_events').select('event_type, occurred_at').eq('organization_id', orgId).gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(EVENT_SAMPLE_LIMIT),
@@ -438,7 +470,7 @@ async function getAnalyticsUncached(orgId: string): Promise<AnalyticsVM> {
     db.from('leads').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).is('deleted_at', null),
     db.from('campaigns').select('id, name, description, status, total_leads, emails_sent, replies, bounces, unsubscribes, created_at, launch_at, mailbox_id, template_id, mailbox:mailboxes(email_address)').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(CAMPAIGN_SAMPLE_LIMIT),
     // Exact per status counts, no campaign rows are transferred.
-    countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES, (query) => query.eq('organization_id', orgId)),
+    countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES, { organizationId: orgId }),
     db.from('mailboxes').select('id, email_address, display_name, provider, status, daily_limit, sent_today, warmup_enabled, reputation, last_error, created_at').eq('organization_id', orgId).limit(LIST_LIMIT),
     // Bounded sample of the 56 day window, newest first.
     db.from('email_events').select('event_type, occurred_at').eq('organization_id', orgId).gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(EVENT_SAMPLE_LIMIT),
@@ -629,7 +661,7 @@ export async function getAutomations(orgId: string) {
     db.from('automation_workflows').select('*, steps:automation_steps(id, step_order, step_type, config)').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(100),
     // Only the per status totals are needed, so count them instead of pulling
     // thousands of execution rows into memory.
-    countByValue(db, 'automation_executions', 'status', EXECUTION_STATUSES, (query) => query.eq('organization_id', orgId)),
+    countByValue(db, 'automation_executions', 'status', EXECUTION_STATUSES, { organizationId: orgId }),
   ]);
   return {
     workflows: (workflows.data ?? []).map((row) => {
