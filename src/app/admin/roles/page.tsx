@@ -1,28 +1,10 @@
-import { AdminModulePage } from '@/components/admin/AdminModulePage';
+﻿import { AdminModuleRoute } from '@/components/admin/AdminModuleRoute';
 
 export const metadata = {
-  title: 'Admin Roles - Admin',
-  description: 'Manage platform admin roles.',
+  title: 'Admin accounts - Admin',
+  description: 'Console access and role assignments.',
 };
 
-export default function RolesPage() {
-  return (
-    <AdminModulePage
-      module="roles"
-      title="Admin Roles"
-      description="Platform admin role assignments."
-      rowsKey="admins"
-      columns={[
-        { key: 'role', label: 'Role' },
-        { key: 'user_id', label: 'User ID' },
-        { key: 'granted_at', label: 'Granted At' },
-      ]}
-      emptyState={{
-        title: 'No admin roles',
-        description: 'No admin roles assigned yet.',
-      }}
-    />
-  );
+export default function Page() {
+  return <AdminModuleRoute module="roles" />;
 }
-
-

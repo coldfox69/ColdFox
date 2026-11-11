@@ -1,27 +1,10 @@
-import { AdminModulePage } from '@/components/admin/AdminModulePage';
+﻿import { AdminModuleRoute } from '@/components/admin/AdminModuleRoute';
 
 export const metadata = {
   title: 'Plans - Admin',
-  description: 'Manage subscription plans.',
+  description: 'The plan catalog used by onboarding and checkout.',
 };
 
-export default function PlansPage() {
-  return (
-    <AdminModulePage
-      module="plans"
-      title="Plans"
-      description="Available subscription plans."
-      columns={[
-        { key: 'key', label: 'Plan Key' },
-        { key: 'name', label: 'Name' },
-        { key: 'description', label: 'Description' },
-      ]}
-      emptyState={{
-        title: 'No plans',
-        description: 'No subscription plans defined.',
-      }}
-    />
-  );
+export default function Page() {
+  return <AdminModuleRoute module="plans" />;
 }
-
-

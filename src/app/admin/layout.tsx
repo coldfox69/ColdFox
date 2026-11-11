@@ -17,7 +17,11 @@ export default async function AdminShellLayout({
   if (!ctx.isPlatformAdmin) redirect('/app');
 
   return (
-    <AdminLayout user={ctx.user} role={ctx.adminRole ?? 'admin'}>
+    <AdminLayout
+      user={ctx.user}
+      role={ctx.adminRole ?? 'read_only'}
+      permissions={ctx.adminPermissions}
+    >
       {children}
     </AdminLayout>
   );

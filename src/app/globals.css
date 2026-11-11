@@ -503,3 +503,137 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ============================================================
+   Admin control center: a separate crimson and charcoal identity.
+   Scoped to .admin-theme so the user panel keeps its icy blue theme.
+   ============================================================ */
+.admin-theme {
+  --cf-navy: #211b1d;
+  --cf-navy-light: #32272a;
+  --cf-blue: #b82f3a;
+  --cf-blue-light: #ff8990;
+  --cf-accent: #a52833;
+  --cf-success: #2f7d5c;
+  --cf-warning: #9a6b1f;
+  --cf-danger: #b03a3a;
+
+  --shadow-raised: 10px 10px 20px rgba(133, 118, 124, 0.5), -10px -10px 20px rgba(255, 255, 255, 0.95);
+  --shadow-raised-sm: 5px 5px 10px rgba(133, 118, 124, 0.46), -5px -5px 10px rgba(255, 255, 255, 0.9);
+  --shadow-raised-lg: 18px 18px 36px rgba(133, 118, 124, 0.5), -18px -18px 36px rgba(255, 255, 255, 1);
+  --shadow-inset: inset 4px 4px 8px rgba(133, 118, 124, 0.46), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+  --shadow-inset-sm: inset 2px 2px 5px rgba(133, 118, 124, 0.46), inset -2px -2px 5px rgba(255, 255, 255, 0.9);
+
+  --background: #e7e5e8;
+  --foreground: #1b191d;
+  --card: #f1eff2;
+  --card-foreground: #1b191d;
+  --popover: #f6f4f6;
+  --popover-foreground: #1b191d;
+  --raised: #faf8fa;
+  --recessed: #dedade;
+  --band-raised: #eceaee;
+  --band-recessed: #e0dde1;
+  --grid-line: rgba(27, 25, 29, 0.045);
+  --rule: rgba(27, 25, 29, 0.1);
+  --rule-strong: rgba(27, 25, 29, 0.18);
+  --accent-rule: #b82f3a;
+  --primary: #b82f3a;
+  --primary-foreground: #ffffff;
+  --secondary: #dedade;
+  --secondary-foreground: #1b191d;
+  --muted: #e2dfe3;
+  --muted-foreground: #65606a;
+  --accent: #f0dadd;
+  --accent-foreground: #8f2029;
+  --destructive: #b03a3a;
+  --destructive-foreground: #ffffff;
+  --border: rgba(27, 25, 29, 0.09);
+  --input: #e2dfe3;
+  --ring: #c23a45;
+  --chart-1: #b82f3a;
+  --chart-2: #7b5b62;
+  --chart-3: #a58b91;
+  --chart-4: #ff8990;
+  --chart-5: #c8babf;
+  --sidebar: #edeaee;
+  --sidebar-foreground: #1b191d;
+  --sidebar-primary: #b82f3a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e2dce1;
+  --sidebar-accent-foreground: #1b191d;
+  --sidebar-border: rgba(27, 25, 29, 0.09);
+  --sidebar-ring: #c23a45;
+
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.dark .admin-theme {
+  --cf-navy: #141416;
+  --cf-navy-light: #1e1e22;
+  --cf-blue: #dc454f;
+  --cf-blue-light: #ff8990;
+  --cf-accent: #b82f3a;
+  --cf-success: #5fbd92;
+  --cf-warning: #d8a24d;
+  --cf-danger: #ef7b83;
+
+  --shadow-raised: 4px 4px 10px rgba(0, 0, 0, 0.52), -2px -2px 6px rgba(255, 255, 255, 0.03);
+  --shadow-raised-sm: 2px 2px 5px rgba(0, 0, 0, 0.46), -1px -1px 3px rgba(255, 255, 255, 0.03);
+  --shadow-raised-lg: 8px 8px 18px rgba(0, 0, 0, 0.56), -4px -4px 10px rgba(255, 255, 255, 0.03);
+  --shadow-inset: inset 3px 3px 7px rgba(0, 0, 0, 0.56), inset -2px -2px 5px rgba(255, 255, 255, 0.03);
+  --shadow-inset-sm: inset 2px 2px 4px rgba(0, 0, 0, 0.5), inset -1px -1px 3px rgba(255, 255, 255, 0.025);
+
+  --background: #19191d;
+  --foreground: #f4f4f6;
+  --card: #202025;
+  --card-foreground: #f4f4f6;
+  --popover: #27272d;
+  --popover-foreground: #f4f4f6;
+  --raised: #2b2b32;
+  --recessed: #131316;
+  --band-raised: #1d1d21;
+  --band-recessed: #141417;
+  --grid-line: rgba(255, 255, 255, 0.03);
+  --rule: rgba(255, 255, 255, 0.08);
+  --rule-strong: rgba(255, 255, 255, 0.15);
+  --accent-rule: #ff8990;
+  --primary: #dc454f;
+  --primary-foreground: #ffffff;
+  --secondary: #2b2b32;
+  --secondary-foreground: #f4f4f6;
+  --muted: #232329;
+  --muted-foreground: #a8a8b2;
+  --accent: #3a2226;
+  --accent-foreground: #ff8990;
+  --destructive: #e06a72;
+  --destructive-foreground: #17171a;
+  --border: #37373f;
+  --input: #151518;
+  --ring: #dc454f;
+  --chart-1: #dc454f;
+  --chart-2: #a8a8b2;
+  --chart-3: #6a4a50;
+  --chart-4: #ff8990;
+  --chart-5: #3a3a42;
+  --sidebar: #1c1c20;
+  --sidebar-foreground: #f4f4f6;
+  --sidebar-primary: #dc454f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #26262c;
+  --sidebar-accent-foreground: #f4f4f6;
+  --sidebar-border: #37373f;
+  --sidebar-ring: #dc454f;
+}
+
+.admin-theme .admin-brand-mark {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--primary);
+}
+
+.admin-theme .admin-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--primary) 55%, transparent);
+}

@@ -1,29 +1,10 @@
-import { AdminModulePage } from '@/components/admin/AdminModulePage';
+﻿import { AdminModuleRoute } from '@/components/admin/AdminModuleRoute';
 
 export const metadata = {
-  title: 'Audit & Security - Admin',
-  description: 'Audit log events.',
+  title: 'Audit log - Admin',
+  description: 'Administrative changes with actor and metadata.',
 };
 
-export default function AuditPage() {
-  return (
-    <AdminModulePage
-      module="audit"
-      title="Audit & Security"
-      description="Platform audit log events."
-      columns={[
-        { key: 'id', label: 'Audit ID' },
-        { key: 'action', label: 'Action' },
-        { key: 'entity_type', label: 'Entity Type' },
-        { key: 'actor_email', label: 'Actor' },
-        { key: 'created_at', label: 'Created' },
-      ]}
-      emptyState={{
-        title: 'No audit events',
-        description: 'No audit events have been recorded yet.',
-      }}
-    />
-  );
+export default function Page() {
+  return <AdminModuleRoute module="audit" />;
 }
-
-

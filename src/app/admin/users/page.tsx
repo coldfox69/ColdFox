@@ -1,29 +1,10 @@
-import { AdminModulePage } from '@/components/admin/AdminModulePage';
+﻿import { AdminModuleRoute } from '@/components/admin/AdminModuleRoute';
 
 export const metadata = {
   title: 'Users - Admin',
-  description: 'Manage platform users.',
+  description: 'Search every platform account, review membership and control access.',
 };
 
-export default function UsersPage() {
-  return (
-    <AdminModulePage
-      module="users"
-      title="Users"
-      description="Platform users and their sign-in activity."
-      columns={[
-        { key: 'id', label: 'User ID' },
-        { key: 'email', label: 'Email' },
-        { key: 'created_at', label: 'Created' },
-        { key: 'last_sign_in_at', label: 'Last Sign In' },
-        { key: 'confirmed', label: 'Confirmed' },
-      ]}
-      emptyState={{
-        title: 'No users',
-        description: 'No users have signed up yet.',
-      }}
-    />
-  );
+export default function Page() {
+  return <AdminModuleRoute module="users" />;
 }
-
-

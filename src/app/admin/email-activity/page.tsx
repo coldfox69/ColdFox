@@ -1,28 +1,10 @@
-import { AdminModulePage } from '@/components/admin/AdminModulePage';
+﻿import { AdminModuleRoute } from '@/components/admin/AdminModuleRoute';
 
 export const metadata = {
-  title: 'Email Activity - Admin',
-  description: 'Platform-wide email events.',
+  title: 'Email activity - Admin',
+  description: 'The event stream behind sending metrics.',
 };
 
-export default function EmailActivityPage() {
-  return (
-    <AdminModulePage
-      module="email-activity"
-      title="Email Activity"
-      description="Platform-wide email send and delivery events."
-      columns={[
-        { key: 'id', label: 'Event ID' },
-        { key: 'event_type', label: 'Event Type' },
-        { key: 'occurred_at', label: 'Occurred At' },
-        { key: 'campaign_id', label: 'Campaign ID' },
-      ]}
-      emptyState={{
-        title: 'No email activity',
-        description: 'No email events have been recorded yet.',
-      }}
-    />
-  );
+export default function Page() {
+  return <AdminModuleRoute module="email-activity" />;
 }
-
-

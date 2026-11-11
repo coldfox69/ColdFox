@@ -1,31 +1,10 @@
-import { AdminModulePage } from '@/components/admin/AdminModulePage';
+﻿import { AdminModuleRoute } from '@/components/admin/AdminModuleRoute';
 
 export const metadata = {
   title: 'Mailboxes - Admin',
-  description: 'Cross-organization mailbox status.',
+  description: 'Sending identities, limits and health. Credentials are never shown.',
 };
 
-export default function MailboxesPage() {
-  return (
-    <AdminModulePage
-      module="mailboxes"
-      title="Mailboxes"
-      description="All connected mailboxes across organizations."
-      columns={[
-        { key: 'id', label: 'Mailbox ID' },
-        { key: 'email_address', label: 'Email' },
-        { key: 'provider', label: 'Provider' },
-        { key: 'status', label: 'Status' },
-        { key: 'daily_limit', label: 'Daily Limit' },
-        { key: 'sent_today', label: 'Sent Today' },
-        { key: 'reputation', label: 'Reputation' },
-      ]}
-      emptyState={{
-        title: 'No mailboxes',
-        description: 'No mailboxes have been connected yet.',
-      }}
-    />
-  );
+export default function Page() {
+  return <AdminModuleRoute module="mailboxes" />;
 }
-
-

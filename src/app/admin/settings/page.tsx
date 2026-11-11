@@ -1,28 +1,10 @@
-import { AdminModulePage } from '@/components/admin/AdminModulePage';
+﻿import { AdminModuleRoute } from '@/components/admin/AdminModuleRoute';
 
 export const metadata = {
-  title: 'Global Settings - Admin',
-  description: 'Manage system settings.',
+  title: 'Global settings - Admin',
+  description: 'Key value platform settings.',
 };
 
-export default function SettingsPage() {
-  return (
-    <AdminModulePage
-      module="settings"
-      title="Global Settings"
-      description="System-wide configuration settings."
-      columns={[
-        { key: 'key', label: 'Key' },
-        { key: 'value', label: 'Value' },
-        { key: 'is_public', label: 'Public' },
-        { key: 'updated_at', label: 'Updated' },
-      ]}
-      emptyState={{
-        title: 'No settings',
-        description: 'No system settings defined.',
-      }}
-    />
-  );
+export default function Page() {
+  return <AdminModuleRoute module="settings" />;
 }
-
-

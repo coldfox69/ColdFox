@@ -1,28 +1,10 @@
-import { AdminModulePage } from '@/components/admin/AdminModulePage';
+﻿import { AdminModuleRoute } from '@/components/admin/AdminModuleRoute';
 
 export const metadata = {
-  title: 'Error Logs - Admin',
-  description: 'Platform error logs.',
+  title: 'Error logs - Admin',
+  description: 'Server errors captured by the platform.',
 };
 
-export default function ErrorsPage() {
-  return (
-    <AdminModulePage
-      module="errors"
-      title="Error Logs"
-      description="Recent platform error logs."
-      columns={[
-        { key: 'id', label: 'Error ID' },
-        { key: 'level', label: 'Level' },
-        { key: 'message', label: 'Message' },
-        { key: 'created_at', label: 'Created' },
-      ]}
-      emptyState={{
-        title: 'No errors',
-        description: 'No error logs found.',
-      }}
-    />
-  );
+export default function Page() {
+  return <AdminModuleRoute module="errors" />;
 }
-
-
