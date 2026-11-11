@@ -92,9 +92,35 @@ Set the following in Vercel project settings → Environment Variables:
 
 ## Step 4: Cron Job
 
-Vercel cron is configured in `vercel.json`. The `/api/cron/worker` endpoint runs every 5 minutes.
+Vercel Hobby accounts are limited to daily cron jobs, so `/api/cron/worker` is not scheduled by Vercel by default.
+Set up an external scheduler (for example cron-job.org, or a GitHub Actions schedule) that calls:
 
-Ensure `CRON_SECRET` is set in Vercel environment variables.
+```
+GET https://coldfox69.vercel.app/api/cron/worker
+Header: x-cron-secret: <CRON_SECRET>
+```
+
+every 1–5 minutes. The endpoint activates due scheduled campaigns, sends executions whose time has come, resets mailbox daily counters and syncs inbound replies. Ensure `CRON_SECRET` is set in Vercel environment variables (it already is) and in the scheduler.
+
+Example GitHub Actions workflow (add `CRON_SECRET` under repository secrets first):
+
+```yaml
+name: coldfox-worker
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" https://coldfox69.vercel.app/api/cron/worker
+```
+
+If you upgrade to Vercel Pro, add this to `vercel.json` instead:
+
+```json
+{ "crons": [{ "path": "/api/cron/worker", "schedule": "*/5 * * * *" }] }
+```
 
 ## Step 5: Database Migrations
 
