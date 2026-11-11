@@ -217,8 +217,10 @@ try {
       record('jittered 1-2s pause between eligible sends', gap >= 0.5 && gap <= 3, `gap=${gap}s`);
     }
 
-    const preCron = await service.from('campaign_executions').select('status').eq('campaign_id', created.campaignId);
-    record('no email accepted before worker runs', (preCron.data ?? []).every((e) => e.status === 'queued'));
+    const inline = await service.from('campaign_executions').select('status').eq('campaign_id', created.campaignId);
+    const inlineAccepted = (inline.data ?? []).filter((e) => e.status === 'accepted').length;
+    // The first recipient is due at launch; later slots use the jittered interval.
+    record('instant launch sends the first recipient inline', inlineAccepted >= 1, `accepted=${inlineAccepted}/2`);
   }
 
   // 5) Run the worker (EMAIL_TEST_MODE=true on the server): synthetic send only.

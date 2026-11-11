@@ -519,23 +519,24 @@ function classifySendError(message: string): 'transient' | 'permanent' {
   return 'permanent';
 }
 
-export async function runSendingTick(limit = 25): Promise<SendTickResult> {
+/** Load due executions, optionally scoped to one organization. */
+async function loadDueExecutions(limit: number, organizationId?: string) {
   const db = service();
-  const result: SendTickResult = { processed: 0, sent: 0, skipped: 0, retried: 0, failed: 0, errors: [] };
-  const { data: due, error } = await db
+  let query = db
     .from('campaign_executions')
     .select('*')
     .eq('status', 'queued')
     .lte('scheduled_for', new Date().toISOString())
     .order('scheduled_for', { ascending: true })
     .limit(Math.max(1, Math.min(limit, 100)));
+  if (organizationId) query = query.eq('organization_id', organizationId);
+  const { data, error } = await query;
   if (error) throw new Error(`Could not load due executions: ${error.message}`);
+  return data ?? [];
+}
 
-  const executions = due ?? [];
-  result.processed = executions.length;
-
-  // Executions are independent of each other: send them in bounded parallel batches.
-  // One failing execution must never stop the remaining ones.
+async function processExecutions(executions: Array<Record<string, unknown>>): Promise<SendTickResult> {
+  const result: SendTickResult = { processed: executions.length, sent: 0, skipped: 0, retried: 0, failed: 0, errors: [] };
   const outcomes: Array<PromiseSettledResult<'sent' | 'skipped' | 'requeued'>> = [];
   const batchSize = 8;
   for (let index = 0; index < executions.length; index += batchSize) {
@@ -558,6 +559,21 @@ export async function runSendingTick(limit = 25): Promise<SendTickResult> {
 
   await maybeCompleteCampaigns(executions.map((execution) => String(execution.campaign_id)));
   return result;
+}
+
+export async function runSendingTick(limit = 25): Promise<SendTickResult> {
+  const executions = await loadDueExecutions(limit);
+  return processExecutions(executions as Array<Record<string, unknown>>);
+}
+
+/**
+ * Drain due executions for one organization. Designed for callers that are
+ * already authenticated (the app itself after a launch, or a page that wants
+ * to flush the queue) so a campaign fires without needing an external cron.
+ */
+export async function runOrgSendingTick(organizationId: string, limit = 10): Promise<SendTickResult> {
+  const executions = await loadDueExecutions(limit, organizationId);
+  return processExecutions(executions as Array<Record<string, unknown>>);
 }
 
 /** Flip a campaign to completed when nothing is queued/processing left. */

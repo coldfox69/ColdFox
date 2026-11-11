@@ -1,7 +1,7 @@
 import { withApi, ok, parseBody, requireApiSession, writeAudit, assertRole, ApiError, enforceRateLimit } from '@/lib/http';
 import { campaignLaunchSchema } from '@/lib/validation';
 import { createServiceClient } from '@/lib/supabase/service';
-import { ensureCampaignSteps, seedCampaignExecutions } from '@/lib/email/engine';
+import { ensureCampaignSteps, seedCampaignExecutions, runOrgSendingTick } from '@/lib/email/engine';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withApi({ route: '/api/campaigns/[id]/launch', method: 'POST' }, async () => {
@@ -51,7 +51,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { error } = await db.from('campaigns').update({ status: 'active', started_at: now.toISOString(), launch_at: now.toISOString() }).eq('id', id);
     if (error) throw new ApiError(500, 'Could not launch the campaign.');
     const seeded = await seedCampaignExecutions(session.organizationId, id, now);
-    await writeAudit({ organizationId: session.organizationId, actorId: session.userId, actorEmail: session.email, action: 'campaign.launched', entityType: 'campaign', entityId: id, request });
-    return ok({ status: 'active', queued: seeded.queued });
+    // "Instant" should mean instant: drain the first batch inline so a small campaign starts receiving immediately.
+    const tick = await runOrgSendingTick(session.organizationId, 10);
+    await writeAudit({ organizationId: session.organizationId, actorId: session.userId, actorEmail: session.email, action: 'campaign.launched', entityType: 'campaign', entityId: id, request, metadata: { queued: seeded.queued, sent_immediately: tick.sent, failed_immediately: tick.failed } });
+    return ok({ status: 'active', queued: seeded.queued, sent: tick.sent, failed: tick.failed, retried: tick.retried, errors: tick.errors.slice(0, 3) });
   });
 }

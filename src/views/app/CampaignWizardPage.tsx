@@ -24,11 +24,11 @@ const TOMORROW_ISO = new Date(NOW_MS + 86_400_000).toISOString().slice(0, 10);
 const DETECTED_TZ = typeof Intl !== 'undefined' ? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC') : 'UTC';
 
 const intervalPresets = [
-  { id: '10-20', label: '10â€“20 seconds', min: 10, max: 20 },
-  { id: '20-40', label: '20â€“40 seconds', min: 20, max: 40 },
-  { id: '30-70', label: '30â€“70 seconds', min: 30, max: 70, recommended: true },
-  { id: '40-80', label: '40â€“80 seconds', min: 40, max: 80 },
-  { id: '60-120', label: '60â€“120 seconds', min: 60, max: 120 },
+  { id: '10-20', label: '10-20 seconds', min: 10, max: 20 },
+  { id: '20-40', label: '20-40 seconds', min: 20, max: 40 },
+  { id: '30-70', label: '30-70 seconds', min: 30, max: 70, recommended: true },
+  { id: '40-80', label: '40-80 seconds', min: 40, max: 80 },
+  { id: '60-120', label: '60-120 seconds', min: 60, max: 120 },
 ] as const;
 type IntervalPreset = (typeof intervalPresets)[number]['id'];
 
@@ -83,7 +83,7 @@ export default function CampaignWizardPage({
   const [confirmLaunch, setConfirmLaunch] = useState(false);
   const [launched, setLaunched] = useState<{ mode: 'now' | 'schedule' | 'draft'; name: string; start?: string; id?: string } | null>(null);
 
-  // Step 1 â€” basics
+  // Step 1 - basics
   const [details, setDetails] = useState({
     name: '',
     description: '',
@@ -94,7 +94,7 @@ export default function CampaignWizardPage({
     timezone: DETECTED_TZ,
   });
 
-  // Step 2 â€” lead list
+  // Step 2 - lead list
   const [leadLists, setLeadLists] = useState<LeadListSummary[] | null>(null);
   const [listsError, setListsError] = useState('');
   const [selectedListId, setSelectedListId] = useState('');
@@ -103,16 +103,16 @@ export default function CampaignWizardPage({
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const [previewQuery, setPreviewQuery] = useState('');
 
-  // Step 3 â€” template
+  // Step 3 - template
   const [templateKind, setTemplateKind] = useState<'single' | 'group'>('single');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
 
-  // Step 4 â€” sending
+  // Step 4 - sending
   const [intervalPreset, setIntervalPreset] = useState<IntervalPreset>('30-70');
   const [dailyCap, setDailyCap] = useState(100);
   const [stopOnReply, setStopOnReply] = useState(true);
 
-  // Step 5 â€” review samples
+  // Step 5 - review samples
   const [sampleBusy, setSampleBusy] = useState(false);
   const [samples, setSamples] = useState<{ lead_id: string; email: string; subject: string; body: string; ai: boolean; notes: string[] }[]>([]);
 
@@ -365,7 +365,7 @@ export default function CampaignWizardPage({
             {!prereqs.template && (
               <li className="flex flex-wrap items-center gap-2 text-muted-foreground">
                 Please create an email template before creating your campaign.
-                <Link href="/app/templates" className="font-medium text-accent-foreground hover:underline">Create template â†’</Link>
+                <Link href="/app/templates" className="font-medium text-accent-foreground hover:underline">Create template</Link>
               </li>
             )}
           </ul>
@@ -442,16 +442,16 @@ export default function CampaignWizardPage({
             </div>
             {listsError && <p role="alert" className="text-sm text-destructive">{listsError}</p>}
             {leadLists === null ? (
-              <div className="rounded-[16px] border border-border p-6 flex items-center gap-3 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading your lead listsâ€¦</div>
+              <div className="rounded-[16px] border border-border p-6 flex items-center gap-3 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading your lead lists...</div>
             ) : leadLists.length === 0 ? (
               <p className="text-sm text-muted-foreground">No lead lists yet. <Link href="/app/lead-lists#new" className="font-medium text-accent-foreground hover:underline">Add lead list</Link> to continue.</p>
             ) : (
               <div>
                 <label htmlFor="cllist" className="text-sm font-medium mb-1.5 block">Lead list</label>
                 <select id="cllist" className={inputCls} value={selectedListId} onChange={(event) => handleSelectList(event.target.value)}>
-                  <option value="">Choose a listâ€¦</option>
+                  <option value="">Choose a list...</option>
                   {leadLists.filter((list) => list.leadCount > 0).map((list) => (
-                    <option key={list.id} value={list.id}>{list.name} Â· {list.leadCount} leads Â· added {new Date(list.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</option>
+                    <option key={list.id} value={list.id}>{list.name}  |  {list.leadCount} leads  |  added {new Date(list.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</option>
                   ))}
                 </select>
               </div>
@@ -459,7 +459,7 @@ export default function CampaignWizardPage({
 
             {selectedListId && (
               previewLoading || !preview ? (
-                <div className="rounded-[16px] border border-border p-6 flex items-center gap-3 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Checking suppression list and eligibilityâ€¦</div>
+                <div className="rounded-[16px] border border-border p-6 flex items-center gap-3 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Checking suppression list and eligibility...</div>
               ) : (
                 <>
                   <div className="flex flex-wrap gap-x-8 gap-y-3 rounded-[16px] neu-inset-sm p-4 text-[12px]">
@@ -490,9 +490,9 @@ export default function CampaignWizardPage({
                               <tr key={row.id} className="border-t border-border hover:bg-muted/40">
                                 <td className="px-3 py-2"><input type="checkbox" aria-label={`Include ${row.email}`} checked={included} onChange={(event) => toggleExcluded(row.id, event.target.checked)} className="h-4 w-4 accent-primary" /></td>
                                 <td className="px-3 py-2 font-medium text-foreground">{row.email}</td>
-                                <td className="px-3 py-2 text-muted-foreground">{[row.firstName, row.lastName].filter(Boolean).join(' ') || 'â€”'}</td>
-                                <td className="px-3 py-2 text-muted-foreground">{row.company ?? 'â€”'}</td>
-                                <td className="px-3 py-2 text-muted-foreground">{row.jobTitle ?? 'â€”'}</td>
+                                <td className="px-3 py-2 text-muted-foreground">{[row.firstName, row.lastName].filter(Boolean).join(' ') || '-'}</td>
+                                <td className="px-3 py-2 text-muted-foreground">{row.company ?? '-'}</td>
+                                <td className="px-3 py-2 text-muted-foreground">{row.jobTitle ?? '-'}</td>
                               </tr>
                             );
                           })}
@@ -606,19 +606,19 @@ export default function CampaignWizardPage({
             <h2 className="text-base font-semibold text-foreground">Campaign overview</h2>
             <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-[13px]">
               {[
-                ['Campaign name', details.name.trim() || 'â€”'],
-                ['Sending mailbox', selectedMailbox?.email ?? 'â€”'],
-                ['Sending mode', details.mode === 'now' ? 'Instant sending (on confirm)' : `Scheduled for ${scheduledAt?.toLocaleString() ?? 'â€”'} (${details.timezone})`],
+                ['Campaign name', details.name.trim() || '-'],
+                ['Sending mailbox', selectedMailbox?.email ?? '-'],
+                ['Sending mode', details.mode === 'now' ? 'Instant sending (on confirm)' : `Scheduled for ${scheduledAt?.toLocaleString() ?? '-'} (${details.timezone})`],
                 ['Lead list', leadLists?.find((l) => l.id === selectedListId)?.name ?? selectedListId],
-                ['Total leads', String(preview?.leadCount ?? 'â€”')],
+                ['Total leads', String(preview?.leadCount ?? '-')],
                 ['Valid recipients', String(eligibleTotal)],
                 ['Excluded recipients', String(excludedCount)],
                 ['Template type', templateKind === 'group' ? 'Multiple (rotating variants)' : 'Single'],
-                ['Template', selectedTemplate?.name ?? 'â€”'],
+                ['Template', selectedTemplate?.name ?? '-'],
                 ['Variants', selectedTemplate?.mode === 'group' ? String(selectedTemplate.variants.length) : '1'],
                 ['AI personalization', selectedTemplate?.aiPersonalization ? 'Enabled' : 'Disabled'],
                 ['Stop on reply', stopOnReply ? 'Yes' : 'No'],
-                ['Sending interval', intervalPresets.find((p) => p.id === intervalPreset)?.label ?? '30â€“70 seconds'],
+                ['Sending interval', intervalPresets.find((p) => p.id === intervalPreset)?.label ?? '30-70 seconds'],
                 ['Max per day', String(dailyCap)],
               ].map(([label, value]) => (
                 <div key={label} className="flex flex-col border-b border-border pb-2">
@@ -634,15 +634,15 @@ export default function CampaignWizardPage({
                 <button type="button" onClick={() => void loadSamples()} disabled={sampleBusy} className="inline-flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-50">{sampleBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null} Refresh</button>
               </div>
               {samples.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground">{sampleBusy ? 'Generating samplesâ€¦' : 'No samples yet. If the template uses AI personalization, generation takes a few seconds per sample.'}</p>
+                <p className="text-[13px] text-muted-foreground">{sampleBusy ? 'Generating samples...' : 'No samples yet. If the template uses AI personalization, generation takes a few seconds per sample.'}</p>
               ) : (
                 <ul className="grid gap-3">
                   {samples.map((sample) => (
                     <li key={sample.lead_id} className="rounded-xl bg-card border border-border p-3">
-                      <p className="text-[12px] font-medium text-muted-foreground">{sample.email}{sample.ai ? ' Â· AI personalized' : ''}</p>
+                      <p className="text-[12px] font-medium text-muted-foreground">{sample.email}{sample.ai ? '  |  AI personalized' : ''}</p>
                       <p className="text-[13px] font-semibold text-foreground mt-1">{sample.subject}</p>
                       <p className="text-[13px] whitespace-pre-wrap text-foreground/90 mt-1">{sample.body}</p>
-                      {sample.notes.length > 0 && <p className="text-[11px] text-muted-foreground mt-2">{sample.notes.join(' Â· ')}</p>}
+                      {sample.notes.length > 0 && <p className="text-[11px] text-muted-foreground mt-2">{sample.notes.join('  |  ')}</p>}
                     </li>
                   ))}
                 </ul>
@@ -680,7 +680,7 @@ export default function CampaignWizardPage({
               <button type="button" onClick={() => (details.mode === 'now' ? setConfirmLaunch(true) : void createAndLaunch('schedule'))} disabled={busy || issues.some((issue) => issue.level === 'error')}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
                 {details.mode === 'now' ? <Zap className="w-4 h-4" /> : <CalendarClock className="w-4 h-4" />}
-                {busy ? 'Creatingâ€¦' : details.mode === 'now' ? 'Start campaign' : 'Create & schedule'}
+                {busy ? 'Creating...' : details.mode === 'now' ? 'Start campaign' : 'Create & schedule'}
               </button>
             </>
           )}

@@ -111,13 +111,24 @@ export default function CampaignDetailPage({ campaignId }: { campaignId: string 
     return () => { cancelled = true; };
   }, [campaignId]);
 
-  // Poll while the campaign is live so the numbers stay fresh.
+  // Poll while the campaign is live so the numbers stay fresh; each tick also drains the sending queue for this workspace.
   useEffect(() => {
     if (!detail) return;
     const live = ['active', 'scheduled'].includes(detail.campaign.status);
     if (!live) return;
-    const timer = setInterval(() => { void load(); }, 8000);
-    return () => clearInterval(timer);
+    let cancelled = false;
+    const timer = setInterval(() => {
+      void (async () => {
+        try {
+          await apiFetch(`/api/campaigns/send-due`, { method: 'POST', body: JSON.stringify({}) });
+        } catch {
+          // Ticking is best-effort; the next interval will retry.
+        } finally {
+          if (!cancelled) void load();
+        }
+      })();
+    }, 5000);
+    return () => { cancelled = true; clearInterval(timer); };
   }, [detail, load]);
 
   const stats = detail?.stats;
