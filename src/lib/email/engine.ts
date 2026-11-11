@@ -702,6 +702,11 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
       'List-Unsubscribe': `<${unsubscribeUrl}>${mailtoUnsubscribe ? `, <${mailtoUnsubscribe}>` : ''}`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
       'X-ColdFox-Campaign': String(execution.campaign_id),
+      // Bulk marketing mail signalling (Google/Yahoo bulk sender requirements):
+      // this tells inbox providers it is a marketing campaign so they classify
+      // rather than flag it as unexpected personal mail.
+      'Precedence': 'bulk',
+      'Feedback-ID': `${execution.campaign_id}:${execution.organization_id}:coldfox:coldfox`,
     };
 
     // Safe test mode (EMAIL_TEST_MODE=true): the full pipeline runs, but the
