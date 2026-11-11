@@ -23,6 +23,7 @@ import {
   type MessageVM,
   type OverviewVM,
   type TemplateVM,
+  type TemplateVariantVM,
 } from '@/lib/view-models';
 
 type Row = Record<string, unknown>;
@@ -174,7 +175,7 @@ function mapMailbox(row: Row): MailboxVM {
   };
 }
 
-function mapTemplate(row: Row): TemplateVM {
+function mapTemplate(row: Row, variants: TemplateVariantVM[] = []): TemplateVM {
   return {
     id: str(row.id),
     name: str(row.name),
@@ -186,6 +187,10 @@ function mapTemplate(row: Row): TemplateVM {
     updatedAt: formatDate(row.updated_at),
     isShared: Boolean(row.is_shared),
     usageCount: num(row.usage_count),
+    mode: (str(row.mode) as TemplateVM['mode']) || 'single',
+    aiPersonalization: Boolean(row.ai_personalization),
+    aiReviewed: Boolean(row.ai_review),
+    variants,
   };
 }
 
@@ -295,12 +300,24 @@ export async function getTemplates(orgId: string): Promise<TemplateVM[]> {
   const db = createServiceClient();
   const { data } = await db
     .from('email_templates')
-    .select('id, name, subject, body_text, category, tags, is_shared, usage_count, created_at, updated_at')
+    .select('id, name, subject, body_text, category, tags, is_shared, usage_count, created_at, updated_at, mode, ai_personalization, ai_review')
     .eq('organization_id', orgId)
     .is('archived_at', null)
     .order('updated_at', { ascending: false })
     .limit(LIST_LIMIT);
-  return (data ?? []).map(mapTemplate);
+  const templates = (data ?? []) as Row[];
+  const ids = templates.map((row) => str(row.id));
+  const { data: variantRows } = ids.length
+    ? await db.from('email_template_variants').select('template_id, id, variant_order, subject, body_text').eq('organization_id', orgId).in('template_id', ids).order('variant_order')
+    : { data: [] as Row[] };
+  const variantsByTemplate = new Map<string, TemplateVariantVM[]>();
+  for (const row of (variantRows ?? []) as Row[]) {
+    const key = str(row.template_id);
+    const list = variantsByTemplate.get(key) ?? [];
+    list.push({ id: str(row.id), order: num(row.variant_order), subject: str(row.subject), bodyText: str(row.body_text) });
+    variantsByTemplate.set(key, list);
+  }
+  return templates.map((row) => mapTemplate(row, variantsByTemplate.get(str(row.id)) ?? []));
 }
 
 export async function getInbox(orgId: string): Promise<ConversationThreadVM[]> {

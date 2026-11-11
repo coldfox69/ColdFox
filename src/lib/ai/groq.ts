@@ -23,7 +23,7 @@ export async function callGroqJson<T>(options: {
   if (!apiKey) {
     throw new ApiError(503, 'AI is not configured on this deployment. Add GROQ_API_KEY to enable it.', 'ai_not_configured');
   }
-  const model = options.model || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  const model = options.model || process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
   const request = async (extra: string) => {
     const response = await fetch(GROQ_ENDPOINT, {
@@ -130,7 +130,7 @@ export async function* callGroqStream(options: {
   if (!apiKey) {
     throw new ApiError(503, 'AI is not configured on this deployment. Add GROQ_API_KEY to enable it.', 'ai_not_configured');
   }
-  const model = options.model || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  const model = options.model || process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
   const response = await fetch(GROQ_ENDPOINT, {
     method: 'POST',

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, ChevronLeft, ChevronRight, ArrowUpDown, Megaphone, MoreHorizontal, Pause, Play, Copy, Trash2 } from 'lucide-react';
+import { Plus, Search, ChevronLeft, ChevronRight, ArrowUpDown, Megaphone, MoreHorizontal, Pause, Play, Copy, Trash2, Eye } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { CampaignStatusBadge } from '@/components/shared/StatusBadge';
@@ -80,17 +80,8 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
   const duplicate = async (c: Campaign) => {
     setBusy(c.id);
     try {
-      await apiFetch('/api/campaigns', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: `${c.name} (copy)`.slice(0, 160),
-          description: c.description || null,
-          mailbox_id: c.mailboxId || null,
-          template_id: c.templateId || null,
-          lead_ids: [],
-        }),
-      });
-      toast.show(`Duplicated "${c.name}".`, 'success');
+      await apiFetch(`/api/campaigns/${c.id}/duplicate`, { method: 'POST', body: JSON.stringify({}) });
+      toast.show(`Duplicated "${c.name}". The copy is saved as a draft.`, 'success');
       router.refresh();
     } catch (error) {
       toast.show(errorMessage(error), 'danger');
@@ -173,7 +164,7 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
               {visible.map(c => (
                 <tr key={c.id} className="hover:bg-muted/40 transition-colors">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-foreground">{c.name}</p>
+                    <Link href={`/app/campaigns/${c.id}`} className="font-medium text-foreground hover:underline">{c.name}</Link>
                     <p className="text-[12px] text-muted-foreground line-clamp-1 max-w-xs">{c.description}</p>
                   </td>
                   <td className="px-4 py-3 text-foreground">{c.emailsSent.toLocaleString()}</td>
@@ -188,6 +179,7 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
                       <div className="absolute right-4 top-11 z-20 w-44 neu-card rounded-xl py-1 text-left shadow-lg">
                         {c.status === 'active' && <MenuItem icon={Pause} label="Pause" onClick={() => void updateStatus(c.id, 'paused', `"${c.name}" paused.`)} />}
                         {(c.status === 'paused' || c.status === 'draft') && <MenuItem icon={Play} label="Resume" onClick={() => void updateStatus(c.id, 'active', `"${c.name}" resumed.`)} />}
+                        <MenuItem icon={Eye} label="View" onClick={() => router.push(`/app/campaigns/${c.id}`)} />
                         <MenuItem icon={Copy} label="Duplicate" onClick={() => void duplicate(c)} />
                         <MenuItem icon={Trash2} label="Cancel" danger onClick={() => void remove(c)} />
                       </div>

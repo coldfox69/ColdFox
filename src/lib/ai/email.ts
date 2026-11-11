@@ -187,7 +187,7 @@ export async function* generateAiEmailStream(
   }
 
   const finalUsage = await stream.return(undefined as never).catch(() => undefined);
-  usage = (finalUsage as AiUsage | undefined) ?? { model: process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile', tokensIn: 0, tokensOut: 0 };
+  usage = (finalUsage as AiUsage | undefined) ?? { model: process.env.GROQ_MODEL ?? 'openai/gpt-oss-120b', tokensIn: 0, tokensOut: 0 };
 
   let parsed: unknown;
   try {

@@ -10,6 +10,7 @@ import { type LeadStatus, type LeadVM as Lead } from '@/lib/view-models';
 import { useToast } from '@/components/shared/ToastProvider';
 import { cn } from '@/lib/utils';
 import { LeadFormModal } from '@/components/leads/LeadFormModal';
+import { LeadImportStep } from '@/components/campaign/LeadImportStep';
 import { useRouter } from 'next/navigation';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { fromLeadStatus } from '@/lib/view-models';
@@ -39,6 +40,7 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<Lead | 'new' | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showImport, setShowImport] = useState(() => typeof window !== 'undefined' && window.location.hash === '#import');
 
   const rows = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
@@ -165,12 +167,27 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
         description={`${items.length.toLocaleString()} leads in your workspace`}
         actions={
           <>
-            <button onClick={() => router.push('/app/leads/import')} disabled={!canImport} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Upload className="w-4 h-4" /> Import</button>
+            <button onClick={() => setShowImport((open) => !open)} disabled={!canImport} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Upload className="w-4 h-4" /> Import</button>
             <button onClick={exportCsv} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Download className="w-4 h-4" /> Export</button>
             <button onClick={() => setEditing('new')} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Plus className="w-4 h-4" /> Add lead</button>
           </>
         }
       />
+
+      <a id="import" />
+      {showImport && (
+        <div className="neu-card rounded-[16px] mt-4 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-foreground">Import leads</h2>
+            <button onClick={() => setShowImport(false)} aria-label="Close import panel" className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X className="w-4 h-4" /></button>
+          </div>
+          <LeadImportStep onComplete={(result) => {
+            toast.show(`Imported ${result.created} leads into ${result.leadListName ?? 'your lead list'}.`, 'success');
+            setShowImport(false);
+            router.refresh();
+          }} />
+        </div>
+      )}
 
       <div className="neu-card rounded-[16px] p-3 flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">

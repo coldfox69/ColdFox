@@ -89,6 +89,10 @@ export const leadListQuerySchema = z.object({
   dir: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
+export const templateVariantSchema = z.object({
+  subject: z.string().trim().min(1).max(300),
+  body_text: z.string().trim().min(1).max(50000),
+});
 export const templateInputSchema = z.object({
   name: z.string().trim().min(1).max(160),
   subject: z.string().trim().min(1).max(300),
@@ -96,6 +100,12 @@ export const templateInputSchema = z.object({
   category: z.string().trim().max(60).default('General'),
   tags: z.array(z.string().trim().max(40)).max(10).default([]),
   is_shared: z.boolean().default(false),
+  /** 'single' (one subject/body) or 'group' (rotatable A/B variants). */
+  mode: z.enum(['single', 'group']).default('single'),
+  /** Full variant set for group templates; order defines the variant ids. */
+  variants: z.array(templateVariantSchema).min(1).max(10).optional(),
+  /** When true, the send engine AI-personalizes each recipient before sending. */
+  ai_personalization: z.boolean().default(false),
 });
 export const templateUpdateSchema = templateInputSchema.partial();
 
@@ -107,6 +117,10 @@ export const campaignInputSchema = z.object({
   timezone: z.string().trim().max(64).default('UTC'),
   daily_limit: z.coerce.number().int().min(1).max(2000).default(100),
   lead_ids: z.array(z.string().uuid()).max(10000).default([]),
+  /** Prepare recipients from a lead list instead of ad-hoc lead ids. */
+  lead_list_id: z.string().uuid().optional().nullable(),
+  /** Explicit exclusions applied on top of the list (e.g. filtered out in preview). */
+  exclude_lead_ids: z.array(z.string().uuid()).max(10000).default([]),
   subject: z.string().trim().min(1).max(300).optional(),
   body: z.string().trim().min(1).max(50000).optional(),
   follow_up_days: z.coerce.number().int().min(0).max(60).optional(),
@@ -114,6 +128,10 @@ export const campaignInputSchema = z.object({
   send_window_end: z.string().regex(/^\d{2}:\d{2}$/).default('17:00'),
   weekdays: z.array(z.number().int().min(0).max(6)).min(1).max(7).default([1, 2, 3, 4, 5]),
   stop_on_reply: z.boolean().default(true),
+  /** Random pause between two sends, used to spread load instead of bursting. */
+  interval_min_seconds: z.coerce.number().int().min(1).max(3600).default(30),
+  interval_max_seconds: z.coerce.number().int().min(1).max(3600).default(70),
+  ai_personalization: z.boolean().default(false),
 });
 export type CampaignInput = z.infer<typeof campaignInputSchema>;
 

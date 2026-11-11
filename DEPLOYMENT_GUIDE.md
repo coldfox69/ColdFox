@@ -52,7 +52,7 @@ Set the following in Vercel project settings → Environment Variables:
 | Variable | Description |
 |----------|-------------|
 | `GROQ_API_KEY` | Groq API key |
-| `GROQ_MODEL` | `llama-3.3-70b-versatile` |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` |
 
 ### Required (Security)
 | Variable | Description |

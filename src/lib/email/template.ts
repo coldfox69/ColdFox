@@ -76,6 +76,7 @@ export function buildLeadVariables(lead: Record<string, unknown> | null | undefi
     last_name: str(lead.last_name),
     email: str(lead.email),
     company: str(lead.company_name),
+    company_name: str(lead.company_name),
     job_title: str(lead.job_title),
     website: str(lead.website),
     industry: str(lead.industry),

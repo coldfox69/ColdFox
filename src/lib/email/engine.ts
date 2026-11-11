@@ -9,6 +9,9 @@ import {
   type MailboxCredentials,
 } from '@/lib/email/providers';
 import { applyUnsubscribeFooter, buildLeadVariables, renderHtml, renderText, textToHtml } from '@/lib/email/template';
+import { findUnresolvedPlaceholders } from '@/lib/placeholders';
+import { pickVariant } from '@/lib/email/rotation';
+import { personalizeForRecipient } from '@/lib/ai/personalize';
 
 const service = () => createServiceClient();
 
@@ -211,14 +214,30 @@ export async function seedCampaignExecutions(organizationId: string, campaignId:
   ]);
   const settings = settingsResult.data ?? {};
   const timezone = String(campaign.timezone || 'UTC');
-  const first = nextSendWindow(startAt, timezone, String(settings.send_window_start ?? '09:00'), String(settings.send_window_end ?? '17:00'), (settings.weekdays as number[]) ?? [1, 2, 3, 4, 5]);
+  const windowStart = (settings.send_window_start ?? '09:00') as string;
+  const windowEnd = (settings.send_window_end ?? '17:00') as string;
+  const weekdays = (settings.weekdays as number[]) ?? [1, 2, 3, 4, 5];
+  const first = nextSendWindow(startAt, timezone, String(windowStart), String(windowEnd), weekdays);
+  // Every recipient gets its own jittered slot inside the configured pause range.
+  const minSec = Math.max(1, Number(campaign.interval_min_seconds ?? 30));
+  const maxSec = Math.max(minSec, Number(campaign.interval_max_seconds ?? 70));
+  const planned = (campaignLeadsResult.data ?? []).filter((cl) => ['queued', 'active'].includes(String(cl.status)));
+  const reservations: Date[] = [];
+  let cursor = first.getTime();
+  for (let i = 0; i < planned.length; i += 1) {
+    if (i === 0) reservations.push(new Date(cursor));
+    else {
+      const gap = Math.floor(Math.random() * (maxSec - minSec + 1)) + minSec;
+      cursor = nextSendWindow(new Date(cursor + gap * 1000), timezone, String(windowStart), String(windowEnd), weekdays).getTime();
+      reservations.push(new Date(cursor));
+    }
+  }
 
-  const campaignLeads = campaignLeadsResult.data;
-  if (!campaignLeads?.length) return { queued: 0 };
+  if (!planned.length) return { queued: 0 };
 
-  const rows = campaignLeads
-    .filter((cl) => ['queued', 'active'].includes(String(cl.status)))
-    .map((cl) => ({
+  const plannedIds = planned.map((cl) => cl.id);
+  const rows = planned
+    .map((cl, index) => ({
       organization_id: organizationId,
       campaign_id: campaignId,
       campaign_lead_id: cl.id,
@@ -226,7 +245,7 @@ export async function seedCampaignExecutions(organizationId: string, campaignId:
       step_id: initialStep.id,
       step_order: initialStep.step_order,
       status: 'queued',
-      scheduled_for: first.toISOString(),
+      scheduled_for: (reservations[index] ?? first).toISOString(),
       idempotency_key: `campaign:${campaignId}:lead:${cl.lead_id}:step:${initialStep.step_order}`,
     }));
 
@@ -234,10 +253,12 @@ export async function seedCampaignExecutions(organizationId: string, campaignId:
   if (rows.length) {
     const { error: insertError } = await db.from('campaign_executions').upsert(rows, { onConflict: 'idempotency_key', ignoreDuplicates: true });
     if (insertError) throw new Error(`Could not queue campaign: ${insertError.message}`);
-    updates.push(db.from('campaign_leads').update({ status: 'active', next_send_at: first.toISOString() }).in('id', campaignLeads.map((c) => c.id)).in('status', ['queued', 'active']));
+    // The executions table is the source of truth for send timing; this only
+    // marks the recipients and sets a rough next action timestamp.
+    updates.push(db.from('campaign_leads').update({ status: 'active', next_send_at: first.toISOString() }).in('id', plannedIds).in('status', ['queued', 'active']));
   }
 
-  updates.push(db.from('campaigns').update({ total_leads: campaignLeads.length }).eq('id', campaignId));
+  updates.push(db.from('campaigns').update({ total_leads: rows.length }).eq('id', campaignId));
   await Promise.all(updates);
   return { queued: rows.length };
 }
@@ -352,27 +373,155 @@ async function getOrCreateThread(input: {
   return createThread(input);
 }
 
-function renderStepContent(step: Record<string, unknown>, template: Record<string, unknown> | null, vars: Record<string, string | null | undefined>) {
-  const subjectTemplate = String(step.subject_override ?? template?.subject ?? '');
-  const textTemplate = String(step.body_override ?? template?.body_text ?? '');
-  const htmlTemplate = String(template?.body_html ?? '');
-  const subject = renderText(subjectTemplate, vars).trim();
-  const text = renderText(textTemplate, vars);
-  const html = htmlTemplate ? renderHtml(htmlTemplate, vars) : textToHtml(text);
-  return { subject, text, html };
+export interface PersonalizedContent {
+  subject: string;
+  text: string;
+  html: string;
+  /** The variant chosen for this recipient, when the campaign uses a group template. */
+  variantId: string | null;
+  /** True when the AI produced the copy for this recipient (after validation fallback). */
+  personalized: boolean;
+}
+
+interface CampaignRow extends Record<string, unknown> {
+  ai_personalization?: boolean | null;
+  lead_list_id?: string | null;
+  created_by?: string | null;
+  name?: string | null;
+}
+
+/**
+ * Render the message for one recipient:
+ * 1. pick the rotating variant for group templates,
+ * 2. optionally AI-personalize,
+ * 3. replace {{placeholders}},
+ * 4. refuse to emit unresolved placeholders.
+ */
+async function buildPersonalizedContent(input: {
+  db: ReturnType<typeof service>;
+  campaign: CampaignRow;
+  step: Record<string, unknown> | null;
+  template: Record<string, unknown> | null;
+  lead: Record<string, unknown>;
+  vars: Record<string, string | null | undefined>;
+  senderName: string;
+  senderCompany: string | null;
+  seed: string;
+}): Promise<PersonalizedContent> {
+  const { db, campaign, step, template, lead, vars, senderName, senderCompany, seed } = input;
+  const subjectOverride = String(step?.subject_override ?? '');
+  const bodyOverride = String(step?.body_override ?? '');
+  const groupMode = template?.mode === 'group' && !subjectOverride && !bodyOverride;
+
+  let variantId: string | null = null;
+  if (groupMode && template?.id) {
+    const { data: variants } = await db
+      .from('email_template_variants')
+      .select('*')
+      .eq('template_id', String(template.id))
+      .order('variant_order', { ascending: true });
+    const usable = (variants ?? []).map((variant) => ({
+      id: String(variant.id),
+      variant_order: Number(variant.variant_order),
+      subject: String(variant.subject),
+      body_text: String(variant.body_text),
+    }));
+    const picked = pickVariant(usable, seed);
+    if (picked) variantId = picked.id;
+    const baseSubject = picked?.subject ?? String(template.subject ?? '');
+    const baseBody = picked?.body_text ?? String(template.body_text ?? '');
+    return personalizeAndRender({ db, campaign, lead, vars, senderName, senderCompany, baseSubject, baseBody, htmlSource: null, variantId, seed });
+  }
+
+  const baseSubject = subjectOverride || String(template?.subject ?? '');
+  const baseBody = bodyOverride || String(template?.body_text ?? '');
+  const htmlSource = template?.body_html ? String(template.body_html) : null;
+  return personalizeAndRender({ db, campaign, lead, vars, senderName, senderCompany, baseSubject, baseBody, htmlSource, variantId, seed });
+}
+
+async function personalizeAndRender(input: {
+  db: ReturnType<typeof service>;
+  campaign: CampaignRow;
+  lead: Record<string, unknown>;
+  vars: Record<string, string | null | undefined>;
+  senderName: string;
+  senderCompany: string | null;
+  baseSubject: string;
+  baseBody: string;
+  htmlSource: string | null;
+  variantId: string | null;
+  seed: string;
+}): Promise<PersonalizedContent> {
+  const { db, campaign, lead, vars, senderName, senderCompany, htmlSource, variantId } = input;
+  let baseSubject = input.baseSubject;
+  let baseBody = input.baseBody;
+  let personalized = false;
+
+  if (campaign.ai_personalization) {
+    try {
+      let columns: import('@/lib/placeholders').LeadListColumn[] = [];
+      if (campaign.lead_list_id) {
+        const { data: listRow } = await db.from('lead_lists').select('columns').eq('id', String(campaign.lead_list_id)).maybeSingle();
+        if (Array.isArray(listRow?.columns)) columns = listRow.columns as import('@/lib/placeholders').LeadListColumn[];
+      }
+      const userId = String(campaign.created_by ?? '');
+      const output = await personalizeForRecipient({
+        organizationId: String(campaign.organization_id),
+        userId,
+        lead,
+        columns,
+        subject: baseSubject,
+        body: baseBody,
+        senderName,
+        senderCompany,
+        campaignName: campaign.name ? String(campaign.name) : null,
+      });
+      baseSubject = output.subject;
+      baseBody = output.body;
+      personalized = true;
+    } catch (aiError) {
+      // AI unavailable or over limit: fall back to the approved template.
+      console.warn('[ai] recipient personalization failed, using original template:', aiError instanceof Error ? aiError.message : aiError);
+    }
+  }
+
+  const subject = renderText(baseSubject, vars).trim();
+  const text = renderText(baseBody, vars);
+  const html = !personalized && htmlSource ? renderHtml(htmlSource, vars) : textToHtml(text);
+  const unresolved = findUnresolvedPlaceholders(subject, text);
+  if (unresolved.length) {
+    throw new Error(`Cannot send: unresolved placeholders ${unresolved.map((key) => `{{${key}}}`).join(', ')}`);
+  }
+  return { subject, text, html, variantId, personalized };
 }
 
 export interface SendTickResult {
   processed: number;
   sent: number;
   skipped: number;
+  retried: number;
   failed: number;
   errors: string[];
 }
 
+/** Classify provider errors as transient (retry with backoff) or permanent (dead-letter). */
+function classifySendError(message: string): 'transient' | 'permanent' {
+  const lower = message.toLowerCase();
+  // SMTP permanent codes (mailbox/user rejected, reputation, policy).
+  if (/\b(550|551|552|553|554|556)\b/.test(lower)) return 'permanent';
+  // Rate limiting is explicitly transient and safe to back off on.
+  if (/429|rate ?limit|too many requests|throttl/.test(lower)) return 'transient';
+  // Network-level failures before the provider accepted the message.
+  if (/fetch failed|network|econnreset|econnrefused|etimedout|enotfound|eai_again|esocket|socket hang up|timed? ?out|dns/.test(lower)) return 'transient';
+  // HTTP 5xx from the provider or token service.
+  if (/\b5\d\d\b/.test(lower)) return 'transient';
+  // 4xx is permanent: auth, validation, policy.
+  return 'permanent';
+}
+
 export async function runSendingTick(limit = 25): Promise<SendTickResult> {
   const db = service();
-  const result: SendTickResult = { processed: 0, sent: 0, skipped: 0, failed: 0, errors: [] };
+  const result: SendTickResult = { processed: 0, sent: 0, skipped: 0, retried: 0, failed: 0, errors: [] };
   const { data: due, error } = await db
     .from('campaign_executions')
     .select('*')
@@ -387,7 +536,7 @@ export async function runSendingTick(limit = 25): Promise<SendTickResult> {
 
   // Executions are independent of each other: send them in bounded parallel batches.
   // One failing execution must never stop the remaining ones.
-  const outcomes: Array<PromiseSettledResult<'sent' | 'skipped'>> = [];
+  const outcomes: Array<PromiseSettledResult<'sent' | 'skipped' | 'requeued'>> = [];
   const batchSize = 8;
   for (let index = 0; index < executions.length; index += batchSize) {
     const batch = executions.slice(index, index + batchSize);
@@ -398,6 +547,7 @@ export async function runSendingTick(limit = 25): Promise<SendTickResult> {
   for (const outcome of outcomes) {
     if (outcome.status === 'fulfilled') {
       if (outcome.value === 'sent') result.sent += 1;
+      else if (outcome.value === 'requeued') result.retried += 1;
       else result.skipped += 1;
       continue;
     }
@@ -405,10 +555,28 @@ export async function runSendingTick(limit = 25): Promise<SendTickResult> {
     const message = outcome.reason instanceof Error ? outcome.reason.message : 'Unknown send error';
     result.errors.push(message.slice(0, 300));
   }
+
+  await maybeCompleteCampaigns(executions.map((execution) => String(execution.campaign_id)));
   return result;
 }
 
-export async function sendExecution(executionId: string): Promise<'sent' | 'skipped'> {
+/** Flip a campaign to completed when nothing is queued/processing left. */
+async function maybeCompleteCampaigns(campaignIds: string[]) {
+  const db = service();
+  const unique = [...new Set(campaignIds)];
+  await Promise.allSettled(unique.map(async (campaignId) => {
+    const { count } = await db
+      .from('campaign_executions')
+      .select('id', { count: 'exact', head: true })
+      .eq('campaign_id', campaignId)
+      .in('status', ['queued', 'processing']);
+    if ((count ?? 1) === 0) {
+      await db.from('campaigns').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', campaignId).eq('status', 'active');
+    }
+  }));
+}
+
+export async function sendExecution(executionId: string): Promise<'sent' | 'skipped' | 'requeued'> {
   const db = service();
   const { data: execution, error } = await db.from('campaign_executions').select('*').eq('id', executionId).maybeSingle();
   if (error || !execution) throw new Error('Execution not found.');
@@ -490,12 +658,24 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
     const { data: template } = templateId
       ? await db.from('email_templates').select('*').eq('id', templateId).eq('organization_id', execution.organization_id).maybeSingle()
       : { data: null };
+    const senderName = String(mailbox.display_name || org?.name || 'ColdFox user');
+    const senderCompany = org?.name ? String(org.name) : null;
     const vars = {
       ...buildLeadVariables(lead),
-      sender_name: String(mailbox.display_name || org?.name || 'ColdFox user'),
-      sender_company: String(org?.name || ''),
+      sender_name: senderName,
+      sender_company: senderCompany ?? '',
     };
-    const content = renderStepContent(step ?? {}, template ?? null, vars);
+    const content = await buildPersonalizedContent({
+      db,
+      campaign: campaign as Record<string, unknown>,
+      step: step ?? null,
+      template: template ?? null,
+      lead,
+      vars,
+      senderName,
+      senderCompany,
+      seed: String(execution.idempotency_key ?? executionId),
+    });
     if (!content.subject) throw new Error('Email subject is empty. Add a subject before sending.');
     if (!content.text.trim()) throw new Error('Email body is empty. Add a body before sending.');
 
@@ -508,15 +688,19 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
       'X-ColdFox-Campaign': String(execution.campaign_id),
     };
 
-    const outcome = await sendEmail(credentials, {
-      fromName: String(mailbox.display_name || org?.name || 'ColdFox'),
-      fromEmail: String(mailbox.email_address),
-      to: String(lead.email),
-      subject: content.subject,
-      text: withFooter.text,
-      html: withFooter.html,
-      headers,
-    });
+    // Safe test mode (EMAIL_TEST_MODE=true): the full pipeline runs, but the
+    // provider call is replaced by a synthetic acceptance and clearly logged.
+    const outcome = process.env.EMAIL_TEST_MODE === 'true'
+      ? { providerMessageId: `test-message-${executionId}`, provider: 'smtp' as const, acceptedAt: new Date().toISOString() }
+      : await sendEmail(credentials, {
+          fromName: String(mailbox.display_name || org?.name || 'ColdFox'),
+          fromEmail: String(mailbox.email_address),
+          to: String(lead.email),
+          subject: content.subject,
+          text: withFooter.text,
+          html: withFooter.html,
+          headers,
+        });
 
     const thread = await getOrCreateThread({
       organizationId: execution.organization_id,
@@ -549,6 +733,10 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
       provider_message_id: outcome.providerMessageId,
       finished_at: new Date().toISOString(),
       error: null,
+      variant_id: content.variantId,
+      personalized: content.personalized,
+      personalized_subject: content.personalized ? content.subject : null,
+      personalized_body: content.personalized ? content.text : null,
     }).eq('id', executionId);
 
     // Every write below is independent: run them together, and never let one of
@@ -564,7 +752,7 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
         campaign_id: execution.campaign_id,
         lead_id: execution.lead_id,
         event_type: 'accepted',
-        metadata: { provider: outcome.provider, execution_id: executionId },
+        metadata: { provider: outcome.provider, execution_id: executionId, ...(process.env.EMAIL_TEST_MODE === 'true' ? { test_mode: true } : {}) },
       }),
       db.from('campaign_events').insert({
         organization_id: execution.organization_id,
@@ -572,7 +760,7 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
         lead_id: execution.lead_id,
         execution_id: executionId,
         event_type: 'sent',
-        metadata: { provider: outcome.provider },
+        metadata: { provider: outcome.provider, ...(process.env.EMAIL_TEST_MODE === 'true' ? { test_mode: true } : {}) },
       }),
     ]);
 
@@ -580,8 +768,19 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
     return 'sent';
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown send error';
-    // A failed provider call is ambiguous: the message may have been accepted.
-    // Never auto-retry; a human must confirm before resending.
+    const attempts = Number(execution.attempts ?? 1);
+    const classification = classifySendError(message);
+    if (classification === 'transient' && attempts < 4) {
+      // Exponential backoff: 5, 10, 20 minutes between retries.
+      const backoffMinutes = 5 * 2 ** (attempts - 1);
+      const requeueAt = new Date(Date.now() + backoffMinutes * 60_000).toISOString();
+      await Promise.allSettled([
+        db.from('campaign_executions').update({ status: 'queued', scheduled_for: requeueAt, started_at: null, error: message.slice(0, 1000) }).eq('id', executionId),
+        db.from('campaign_leads').update({ next_send_at: requeueAt, error: message.slice(0, 500) }).eq('id', execution.campaign_lead_id),
+      ]);
+      return 'requeued';
+    }
+    // Permanent failure (or retries exhausted): dead-letter the recipient.
     await Promise.allSettled([
       db.from('campaign_executions').update({
         status: 'failed',
@@ -593,6 +792,14 @@ export async function sendExecution(executionId: string): Promise<'sent' | 'skip
       // a bad template should not block an otherwise healthy account.
       db.from('mailboxes').update({ last_error: message.slice(0, 500) }).eq('id', campaign.mailbox_id),
       db.rpc('record_mailbox_send', { p_mailbox: campaign.mailbox_id, p_org: execution.organization_id, p_success: false }).then(() => undefined),
+      db.from('campaign_events').insert({
+        organization_id: execution.organization_id,
+        campaign_id: execution.campaign_id,
+        lead_id: execution.lead_id,
+        execution_id: executionId,
+        event_type: 'failed',
+        metadata: { attempts, error: message.slice(0, 500) },
+      }).then(() => undefined, () => undefined),
     ]);
     throw err;
   }

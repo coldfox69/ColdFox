@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Megaphone, Users, Mail, Inbox, Wand2,
   FileText, BarChart2, Zap, Shield, Ban, HelpCircle, Settings,
   ChevronLeft, ChevronRight, Bell, Search, Sun, Moon, Monitor, User,
-  LogOut, ChevronsUpDown, Menu, ShieldCheck, ArrowRight
+  LogOut, ChevronsUpDown, Menu, ShieldCheck, ArrowRight, Rows3,
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { HoverPrefetchLink } from '@/components/shared/HoverPrefetchLink';
@@ -21,6 +21,7 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Overview', path: '/app' },
   { icon: Megaphone, label: 'Campaigns', path: '/app/campaigns' },
   { icon: Users, label: 'Leads & CRM', path: '/app/leads' },
+  { icon: Rows3, label: 'Lead lists', path: '/app/lead-lists' },
   { icon: Mail, label: 'Mailboxes', path: '/app/mailboxes' },
   { icon: Inbox, label: 'Unified inbox', path: '/app/inbox' },
   { icon: Wand2, label: 'AI email writer', path: '/app/ai-writer' },

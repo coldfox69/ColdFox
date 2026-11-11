@@ -14,12 +14,47 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       .maybeSingle();
     if (error || !campaign) throw new ApiError(404, 'Campaign not found.', 'not_found');
 
-    const [settings, steps, executions, leads] = await Promise.all([
+    const [settings, steps, executions, leads, executionStatusRows] = await Promise.all([
       db.from('campaign_settings').select('*').eq('campaign_id', id).maybeSingle(),
       db.from('campaign_steps').select('*').eq('campaign_id', id).order('step_order'),
-      db.from('campaign_executions').select('id, step_order, status, scheduled_for, started_at, finished_at, error, provider_message_id, lead:leads(id, first_name, last_name, email)').eq('campaign_id', id).order('scheduled_for', { ascending: false }).limit(100),
+      db.from('campaign_executions').select('id, step_order, status, scheduled_for, started_at, finished_at, error, provider_message_id, variant_id, personalized, lead:leads(id, first_name, last_name, email)').eq('campaign_id', id).order('scheduled_for', { ascending: false }).limit(100),
       db.from('campaign_leads').select('id, status, current_step, last_sent_at, next_send_at, error, lead:leads(id, first_name, last_name, email, company_name)').eq('campaign_id', id).limit(500),
+      db.from('campaign_executions').select('status, variant_id').eq('campaign_id', id).limit(100000),
     ]);
+
+    // Exact per-status breakdown, no campaign rows are copied to the client.
+    const statusCounts: Record<string, number> = {};
+    const variantCounts: Record<string, number> = {};
+    for (const row of executionStatusRows.data ?? []) {
+      const key = String((row as Record<string, unknown>).status);
+      statusCounts[key] = (statusCounts[key] ?? 0) + 1;
+      const variantId = (row as Record<string, unknown>).variant_id;
+      if (variantId) variantCounts[String(variantId)] = (variantCounts[String(variantId)] ?? 0) + 1;
+    }
+    const terminal = ['accepted', 'delivered', 'failed', 'skipped', 'cancelled', 'replied', 'bounced', 'unsubscribed'];
+    const total = executionStatusRows.data?.length ?? Number(campaign.total_leads ?? 0);
+    const done = terminal.reduce((sum, status) => sum + (statusCounts[status] ?? 0), 0);
+    const stats = {
+      totalRecipients: Number(campaign.total_leads ?? 0),
+      executions: total,
+      queued: (statusCounts['queued'] ?? 0) + (statusCounts['processing'] ?? 0),
+      sent: statusCounts['accepted'] ?? 0,
+      accepted: statusCounts['accepted'] ?? 0,
+      skipped: statusCounts['skipped'] ?? 0,
+      failed: statusCounts['failed'] ?? 0,
+      bounces: Number(campaign.bounces ?? 0),
+      replies: Number(campaign.replies ?? 0),
+      unsubscribes: Number(campaign.unsubscribes ?? 0),
+      progress: total > 0 ? Math.round((done / total) * 100) : 0,
+      variants: variantCounts,
+    };
+
+    let templateVariants: { id: string; variant_order: number; subject: string }[] = [];
+    const templateId = campaign.template_id as string | null;
+    if (templateId) {
+      const { data: variants } = await db.from('email_template_variants').select('id, variant_order, subject').eq('template_id', templateId).order('variant_order');
+      templateVariants = (variants ?? []) as { id: string; variant_order: number; subject: string }[];
+    }
 
     return ok({
       campaign,
@@ -27,6 +62,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       steps: steps.data ?? [],
       executions: executions.data ?? [],
       leads: leads.data ?? [],
+      stats,
+      variants: templateVariants,
     });
   });
 }

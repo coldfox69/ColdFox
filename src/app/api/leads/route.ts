@@ -4,6 +4,7 @@ import { leadInputSchema, leadListQuerySchema, LEAD_STATUSES } from '@/lib/valid
 import { countByValue } from '@/lib/data/app';
 import { createServiceClient } from '@/lib/supabase/service';
 import { recordLeadActivity, syncLeadTags, tagsForLeads, toLeadDto } from '@/lib/leads';
+import { findOrCreateManualList } from '@/lib/lead-lists';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,11 +73,13 @@ export async function POST(request: Request) {
     await enforceRateLimit(request, 'leads-write', 120, 60, session.userId);
     const input = await parseBody(request, leadInputSchema);
     const db = createServiceClient();
+    const manualListId = await findOrCreateManualList(db, session.organizationId, session.userId);
 
     const { data: lead, error } = await db
       .from('leads')
       .insert({
         organization_id: session.organizationId,
+        lead_list_id: manualListId,
         first_name: input.first_name ?? null,
         last_name: input.last_name ?? null,
         email: input.email,

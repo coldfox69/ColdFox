@@ -73,6 +73,13 @@ export interface MailboxVM {
   lastError?: string | null;
 }
 
+export interface TemplateVariantVM {
+  id: string;
+  order: number;
+  subject: string;
+  bodyText: string;
+}
+
 export interface TemplateVM {
   id: string;
   name: string;
@@ -84,6 +91,11 @@ export interface TemplateVM {
   updatedAt: string;
   isShared: boolean;
   usageCount: number;
+  mode: 'single' | 'group';
+  aiPersonalization: boolean;
+  /** True when the template has an AI deliverability review on record. */
+  aiReviewed: boolean;
+  variants: TemplateVariantVM[];
 }
 
 export interface MessageVM {

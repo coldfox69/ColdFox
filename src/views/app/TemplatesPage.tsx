@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { useToast } from '@/components/shared/ToastProvider';
-import { TemplateEditorModal, renderSample } from '@/components/templates/TemplateEditorModal';
+import { TemplateEditorModal, renderSample, type TemplateEditorValues } from '@/components/templates/TemplateEditorModal';
 import { type TemplateVM as Template } from '@/lib/view-models';
 import { cn } from '@/lib/utils';
 import { apiFetch, errorMessage } from '@/lib/client/api';
@@ -42,7 +42,7 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
     );
   }, [items, debouncedQuery, category, scope]);
 
-  const saveTemplate = async (values: Pick<Template, 'name' | 'subject' | 'body' | 'category' | 'isShared'>) => {
+  const saveTemplate = async (values: TemplateEditorValues) => {
     const payload = {
       name: values.name,
       subject: values.subject,
@@ -50,10 +50,14 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
       category: values.category,
       is_shared: values.isShared,
       tags: [],
+      mode: values.mode,
+      variants: values.mode === 'group' ? values.variants.map((variant) => ({ subject: variant.subject, body_text: variant.body })) : undefined,
+      ai_personalization: values.aiPersonalization,
     };
-    if (editing === 'new') {
+    if (editing === 'new' || !editing) {
       const created = await apiFetch<Record<string, unknown>>('/api/templates', { method: 'POST', body: JSON.stringify(payload) });
       const now = new Date().toISOString().slice(0, 10);
+      const createdVariants = Array.isArray(created.variants) ? (created.variants as Record<string, unknown>[]).map((row, index) => ({ id: String(row.id ?? index), order: Number(row.variant_order ?? index + 1), subject: String(row.subject ?? ''), bodyText: String(row.body_text ?? '') })) : [];
       setItems(list => [{
         id: String(created.id),
         name: values.name,
@@ -65,11 +69,27 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
         updatedAt: now,
         isShared: values.isShared,
         usageCount: 0,
+        mode: values.mode,
+        aiPersonalization: values.aiPersonalization,
+        aiReviewed: false,
+        variants: values.mode === 'group' ? createdVariants : [],
       }, ...list]);
-      toast.show('Template created.', 'success');
-    } else if (editing) {
-      await apiFetch(`/api/templates/${editing.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
-      setItems(list => list.map(t => (t.id === editing.id ? { ...t, ...values, updatedAt: new Date().toISOString().slice(0, 10) } : t)));
+      toast.show(values.mode === 'group' ? 'Template group created.' : 'Template created.', 'success');
+    } else {
+      const updated = await apiFetch<Record<string, unknown>>(`/api/templates/${editing.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+      const updatedVariants = Array.isArray(updated.variants) ? (updated.variants as Record<string, unknown>[]).map((row, index) => ({ id: String(row.id ?? index), order: Number(row.variant_order ?? index + 1), subject: String(row.subject ?? ''), bodyText: String(row.body_text ?? '') })) : [];
+      setItems(list => list.map(t => (t.id === editing.id ? {
+        ...t,
+        name: values.name,
+        subject: values.subject,
+        body: values.body,
+        category: values.category,
+        isShared: values.isShared,
+        mode: values.mode,
+        aiPersonalization: values.aiPersonalization,
+        variants: values.mode === 'group' ? updatedVariants : [],
+        updatedAt: new Date().toISOString().slice(0, 10),
+      } : t)));
       toast.show('Template saved.', 'success');
     }
     setEditing(null);
@@ -88,6 +108,9 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
           category: t.category,
           tags: t.tags,
           is_shared: false,
+          mode: t.mode,
+          ai_personalization: t.aiPersonalization,
+          variants: t.mode === 'group' ? t.variants.map((variant) => ({ subject: variant.subject, body_text: variant.bodyText })) : undefined,
         }),
       });
       toast.show(`Duplicated "${t.name}".`, 'success');
@@ -167,7 +190,7 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
                   <span className="inline-flex items-center gap-1">{t.isShared ? <Users className="w-3 h-3" /> : <Lock className="w-3 h-3" />}{t.isShared ? 'Shared' : 'Personal'}</span>
                 </StatusBadge>
               </div>
-              <p className="text-[12px] text-muted-foreground">{t.category} · Used {t.usageCount} times · Updated {t.updatedAt}</p>
+               <p className="text-[12px] text-muted-foreground">{t.category} · {t.mode === 'group' ? `${t.variants.length} variants · ` : ''}{t.aiPersonalization ? 'AI personalization · ' : ''}Used {t.usageCount} times · Updated {t.updatedAt}</p>
               <p className="text-sm text-foreground/80 line-clamp-3">{renderSample(t.body)}</p>
               <div className="flex flex-wrap gap-1.5">
                 {t.tags.map(tag => <span key={tag} className="px-2 py-0.5 rounded-md bg-muted text-[12px] text-muted-foreground">{tag}</span>)}
