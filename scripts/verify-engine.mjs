@@ -222,9 +222,15 @@ try {
   }
 
   // 5) Run the worker (EMAIL_TEST_MODE=true on the server): synthetic send only.
+  // The 1-2s jitter may leave the second recipient scheduled a beat after the
+  // cron fires, so drain twice with a short gap between calls.
   const worker = await fetch(`${BASE}/api/cron/worker`, { headers: { 'x-cron-secret': env.CRON_SECRET } });
   const workerJson = await worker.json().catch(() => null);
-  record('cron worker completes with synthetic sends', worker.status === 200 && workerJson?.ok === true, `sent=${workerJson?.data?.sent}`);
+  await new Promise((resolve) => setTimeout(resolve, 2500));
+  const worker2 = await fetch(`${BASE}/api/cron/worker`, { headers: { 'x-cron-secret': env.CRON_SECRET } });
+  const worker2Json = await worker2.json().catch(() => null);
+  const totalSent = Number(workerJson?.data?.sent ?? 0) + Number(worker2Json?.data?.sent ?? 0);
+  record('cron worker completes with synthetic sends', worker.status === 200 && workerJson?.ok === true && worker2.status === 200 && worker2Json?.ok === true, `sent=${totalSent}`);
 
   if (created.campaignId) {
     const afterCron = await service.from('campaign_executions').select('id, status, personalized, variant_id').eq('campaign_id', created.campaignId);

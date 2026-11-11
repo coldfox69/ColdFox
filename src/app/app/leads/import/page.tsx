@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import { getSessionContext } from '@/lib/auth/context';
 import { redirect } from 'next/navigation';
 
@@ -10,6 +10,6 @@ export const metadata: Metadata = {
 export default async function Page() {
   const ctx = await getSessionContext();
   if (!ctx?.organization) redirect('/login');
-  redirect('/app/leads#import');
+  redirect('/app/lead-lists#new');
 }
 

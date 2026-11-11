@@ -3,7 +3,7 @@ import { requireApiSession, assertRole, withApi, ApiError } from '@/lib/http';
 import { signState } from '@/lib/crypto';
 import { appUrl } from '@/lib/email/engine';
 
-export async function GET(_request: Request, { params }: { params: Promise<{ provider: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ provider: string }> }) {
   return withApi({ route: '/api/mailboxes/oauth/[provider]/start', method: 'GET' }, async () => {
     const session = await requireApiSession();
     assertRole(session, ['owner', 'admin']);
@@ -12,7 +12,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
     const normalized = provider === 'gmail' ? 'google' : provider === 'outlook' ? 'microsoft' : provider;
     if (!['google', 'microsoft'].includes(normalized)) throw new ApiError(404, 'Unknown mailbox provider.');
 
-    const state = signState({ userId: session.userId, organizationId: session.organizationId, provider: normalized });
+    const url0 = new URL(request.url);
+    const senderName = (url0.searchParams.get('sender_name') ?? '').trim().slice(0, 120) || undefined;
+
+    const state = signState({ userId: session.userId, organizationId: session.organizationId, provider: normalized, senderName });
     // Use the normalized provider name in the redirect URI.
     const redirectUri = `${appUrl()}/api/mailboxes/oauth/${normalized}/callback`;
 

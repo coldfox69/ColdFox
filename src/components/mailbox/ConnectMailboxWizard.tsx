@@ -16,6 +16,8 @@ const steps = ['Provider', 'Account', 'Confirm'];
 export interface MailboxConnectInput {
   provider: Provider;
   email: string;
+  /** Shown as the From display name when sending campaign email. */
+  senderName: string;
   host?: string;
   port?: number;
   password?: string;
@@ -31,6 +33,7 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
   const [step, setStep] = useState(0);
   const [provider, setProvider] = useState<Provider | null>(null);
   const [email, setEmail] = useState('');
+  const [senderName, setSenderName] = useState('');
   const [host, setHost] = useState('');
   const [port, setPort] = useState('587');
   const [password, setPassword] = useState('');
@@ -46,6 +49,7 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
   const next = () => {
     if (step === 0 && !provider) return setError('Choose a provider to continue.');
     if (step === 1) {
+      if (senderName.trim().length < 2) return setError('Enter the sender name that recipients will see, e.g. "Abu Raihan".');
       if (!/^\S+@\S+\.\S+$/.test(email)) return setError('Enter a valid email address.');
       if (provider === 'smtp' && (!host.trim() || !/^\d+$/.test(port) || !password)) return setError('Enter the server host, port, and password.');
     }
@@ -62,7 +66,7 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
     setBusy(true);
     setError('');
     try {
-      await onConnect({ provider, email, host, port: Number(port) || 587, password });
+      await onConnect({ provider, email, senderName: senderName.trim(), host, port: Number(port) || 587, password });
     } catch (connectError) {
       setError(connectError instanceof Error ? connectError.message : 'Could not connect the mailbox.');
     } finally {
@@ -111,6 +115,10 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
 
         {step === 1 && provider && (
           <div className="space-y-4">
+            <label className="block text-sm font-medium">Sender name
+              <input autoFocus value={senderName} onChange={e => setSenderName(e.target.value)} className={cn(inputCls, 'mt-1.5')} placeholder="e.g. Abu Raihan" />
+              <span className="mt-1 block text-[11px] text-muted-foreground">Recipients see this in the From line of every email sent from this mailbox.</span>
+            </label>
             <label className="block text-sm font-medium">Email address
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} className={cn(inputCls, 'mt-1.5')} placeholder="you@company.com" />
             </label>
@@ -140,6 +148,7 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
               <Mail className="w-6 h-6 text-[var(--cf-success)]" />
             </div>
             <p className="font-semibold text-foreground">Ready to connect {email}</p>
+            <p className="text-sm text-muted-foreground mt-1">Sending as <span className="text-foreground font-medium">{senderName}</span></p>
             <p className="text-sm text-muted-foreground mt-1">
               {provider === 'smtp'
                 ? 'ColdFox tests the SMTP connection before saving encrypted credentials.'

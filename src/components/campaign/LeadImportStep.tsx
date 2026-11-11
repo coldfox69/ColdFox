@@ -76,7 +76,18 @@ const inputCls = 'w-full px-3.5 py-2.5 rounded-[10px] border border-transparent 
 
 type InputMode = 'file' | 'paste';
 
-export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportResult) => void }) {
+export function LeadImportStep({
+  onComplete,
+  nameFirst = false,
+  listName: controlledName,
+  onListNameChange,
+}: {
+  onComplete?: (result: ImportResult) => void;
+  /** When true the name field is shown first and the upload area lives under it. */
+  nameFirst?: boolean;
+  listName?: string;
+  onListNameChange?: (value: string) => void;
+}) {
   const [inputMode, setInputMode] = useState<InputMode>('file');
   const [file, setFile] = useState<File | null>(null);
   const [analysis, setAnalysis] = useState<AnalyzeResponse | null>(null);
@@ -86,9 +97,15 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<ImportResult | null>(null);
-  const [listName, setListName] = useState('');
+  const [listNameState, setListNameState] = useState('');
   const [pasted, setPasted] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const listName = controlledName ?? listNameState;
+  const setListName = (value: string) => {
+    if (controlledName !== undefined) onListNameChange?.(value);
+    else setListNameState(value);
+  };
 
   const reset = () => {
     setFile(null);
@@ -228,6 +245,20 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
 
   return (
     <div className="space-y-6">
+      {nameFirst && (
+        <div className="neu-card rounded-[16px] p-5">
+          <label htmlFor="lead-list-name-top" className="block text-sm font-semibold text-foreground mb-1.5">Lead list name</label>
+          <input
+            id="lead-list-name-top"
+            autoFocus
+            className={inputCls}
+            placeholder='e.g. "SaaS Founders" or "US Business Owners"'
+            value={listName}
+            onChange={(event) => setListName(event.target.value)}
+          />
+          <p className="text-[12px] text-muted-foreground mt-1.5">First name the list, then upload the lead sheet or paste it below.</p>
+        </div>
+      )}
       {!file && (
         <>
           <div className="inline-flex gap-1 rounded-[10px] bg-input p-1 shadow-[var(--shadow-inset-sm)]" role="tablist" aria-label="Import method">
@@ -347,6 +378,7 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
             )}
           </div>
 
+          {!nameFirst && (
           <div className="neu-card rounded-[16px] p-5">
             <div>
               <label htmlFor="lead-list-name" className="text-sm font-semibold text-foreground mb-1.5 block">Lead list name</label>
@@ -354,6 +386,7 @@ export function LeadImportStep({ onComplete }: { onComplete?: (result: ImportRes
               <p className="text-[12px] text-muted-foreground mt-1.5">Every imported file becomes a named lead list with its own personalization variables.</p>
             </div>
           </div>
+          )}
 
           <div className="neu-card rounded-[16px] p-5">
             <h3 className="font-semibold text-sm text-foreground mb-3">Column mapping</h3>

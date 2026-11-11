@@ -104,6 +104,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
     if (!refreshToken) return failure('The provider did not return a refresh token. Remove the app permission and reconnect.');
 
     const mailboxProvider = provider === 'google' ? 'gmail' : 'outlook';
+    const senderName = typeof state.senderName === 'string' && state.senderName.trim().length >= 2 ? state.senderName.trim().slice(0, 120) : null;
+    const resolvedDisplayName = senderName ?? displayName;
     const { data: existing } = await db
       .from('mailboxes')
       .select('id')
@@ -120,7 +122,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
           organization_id: state.organizationId,
           user_id: state.userId,
           email_address: email,
-          display_name: displayName,
+          display_name: resolvedDisplayName,
           provider: mailboxProvider,
           status: 'connected',
           is_default: (count ?? 0) === 0,
@@ -131,7 +133,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
       if (insertError || !created) return failure('Could not save the connected mailbox.');
       mailboxId = created.id as string;
     } else {
-      await db.from('mailboxes').update({ status: 'connected', last_error: null, display_name: displayName }).eq('id', mailboxId);
+      await db.from('mailboxes').update({ status: 'connected', last_error: null, display_name: resolvedDisplayName }).eq('id', mailboxId);
     }
 
     await saveMailboxCredentials(mailboxId, state.organizationId, {

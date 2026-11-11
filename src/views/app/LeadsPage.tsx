@@ -2,18 +2,15 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Search, Plus, Download, Upload, Trash2, X, Tag, ArrowUpDown } from 'lucide-react';
+import { Search, Plus, Download, Trash2, X, Tag, ArrowUpDown } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { LeadStatusBadge } from '@/components/shared/StatusBadge';
 import { type LeadStatus, type LeadVM as Lead } from '@/lib/view-models';
 import { useToast } from '@/components/shared/ToastProvider';
 import { cn } from '@/lib/utils';
-import { LeadFormModal } from '@/components/leads/LeadFormModal';
-import { LeadImportStep } from '@/components/campaign/LeadImportStep';
 import { useRouter } from 'next/navigation';
 import { apiFetch, errorMessage } from '@/lib/client/api';
-import { fromLeadStatus } from '@/lib/view-models';
 import { useDebouncedValue } from '@/hooks/use-debounce';
 
 
@@ -29,7 +26,7 @@ const statusOptions: { value: LeadStatus | 'all'; label: string }[] = [
 
 type SortKey = 'name' | 'company' | 'lastContacted' | 'nextFollowUp';
 
-export default function LeadsPage({ initialLeads, canImport = true }: { initialLeads: Lead[]; canImport?: boolean }) {
+export default function LeadsPage({ initialLeads }: { initialLeads: Lead[] }) {
   const toast = useToast();
   const router = useRouter();
   const [items, setItems] = useState<Lead[]>(initialLeads);
@@ -38,9 +35,7 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
   const [status, setStatus] = useState<LeadStatus | 'all'>('all');
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'name', desc: false });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [editing, setEditing] = useState<Lead | 'new' | null>(null);
   const [busy, setBusy] = useState(false);
-  const [showImport, setShowImport] = useState(() => typeof window !== 'undefined' && window.location.hash === '#import');
 
   const rows = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
@@ -88,55 +83,6 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
     }
   };
 
-  const saveLead = async (lead: Lead) => {
-    setBusy(true);
-    try {
-      const payload = {
-        first_name: lead.firstName || null,
-        last_name: lead.lastName || null,
-        email: lead.email,
-        company_name: lead.company || null,
-        job_title: lead.jobTitle || null,
-        status: fromLeadStatus(lead.status),
-        tags: lead.tags,
-        source: lead.source || 'manual',
-        next_follow_up_at: lead.nextFollowUp ? new Date(`${lead.nextFollowUp}T09:00:00Z`).toISOString() : null,
-        notes: lead.notes || null,
-      };
-      if (editing === 'new') {
-        const created = await apiFetch<Lead>('/api/leads', { method: 'POST', body: JSON.stringify(payload) });
-        setItems(list => [created, ...list]);
-        toast.show(`${lead.firstName} ${lead.lastName} saved.`);
-      } else {
-        const updated = await apiFetch<Lead>(`/api/leads/${lead.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
-        setItems(list => list.map(l => (l.id === lead.id ? updated : l)));
-        toast.show(`${lead.firstName} ${lead.lastName} saved.`);
-      }
-      setEditing(null);
-      router.refresh();
-    } catch (error) {
-      toast.show(errorMessage(error), 'danger');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const deleteLead = async () => {
-    if (!editing || editing === 'new') return;
-    setBusy(true);
-    try {
-      await apiFetch(`/api/leads/${editing.id}`, { method: 'DELETE' });
-      setItems(list => list.filter(l => l.id !== editing.id));
-      setEditing(null);
-      toast.show('Lead deleted.', 'danger');
-      router.refresh();
-    } catch (error) {
-      toast.show(errorMessage(error), 'danger');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const exportCsv = () => {
     toast.show(`Exporting ${rows.length} leads…`, 'info');
     // A file download has to be a real navigation, so a hidden anchor is
@@ -167,27 +113,11 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
         description={`${items.length.toLocaleString()} leads in your workspace`}
         actions={
           <>
-            <button onClick={() => setShowImport((open) => !open)} disabled={!canImport} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Upload className="w-4 h-4" /> Import</button>
+            <Link href="/app/lead-lists#new" className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]"><Plus className="w-4 h-4" /> Add lead list</Link>
             <button onClick={exportCsv} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Download className="w-4 h-4" /> Export</button>
-            <button onClick={() => setEditing('new')} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Plus className="w-4 h-4" /> Add lead</button>
           </>
         }
       />
-
-      <a id="import" />
-      {showImport && (
-        <div className="neu-card rounded-[16px] mt-4 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-foreground">Import leads</h2>
-            <button onClick={() => setShowImport(false)} aria-label="Close import panel" className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X className="w-4 h-4" /></button>
-          </div>
-          <LeadImportStep onComplete={(result) => {
-            toast.show(`Imported ${result.created} leads into ${result.leadListName ?? 'your lead list'}.`, 'success');
-            setShowImport(false);
-            router.refresh();
-          }} />
-        </div>
-      )}
 
       <div className="neu-card rounded-[16px] p-3 flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
@@ -241,7 +171,6 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
                       <p className="font-medium text-foreground hover:text-accent-foreground">{l.firstName} {l.lastName}</p>
                       <p className="text-[12px] text-muted-foreground">{l.email}</p>
                     </Link>
-                    <button onClick={() => setEditing(l)} className="mt-1 text-[12px] font-medium text-primary hover:underline">Edit details</button>
                   </td>
                   <td className="px-4 py-3 text-foreground">{l.company}</td>
                   <td className="px-4 py-3 text-muted-foreground">{l.jobTitle}</td>
@@ -257,14 +186,6 @@ export default function LeadsPage({ initialLeads, canImport = true }: { initialL
         </div>
       )}
 
-      {editing && (
-        <LeadFormModal
-          lead={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
-          onSave={(lead) => void saveLead(lead)}
-          onDelete={editing !== 'new' ? () => void deleteLead() : undefined}
-        />
-      )}
     </div>
   );
 }

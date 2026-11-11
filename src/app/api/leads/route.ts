@@ -4,7 +4,6 @@ import { leadInputSchema, leadListQuerySchema, LEAD_STATUSES } from '@/lib/valid
 import { countByValue } from '@/lib/data/app';
 import { createServiceClient } from '@/lib/supabase/service';
 import { recordLeadActivity, syncLeadTags, tagsForLeads, toLeadDto } from '@/lib/leads';
-import { findOrCreateManualList } from '@/lib/lead-lists';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,7 +72,11 @@ export async function POST(request: Request) {
     await enforceRateLimit(request, 'leads-write', 120, 60, session.userId);
     const input = await parseBody(request, leadInputSchema);
     const db = createServiceClient();
-    const manualListId = await findOrCreateManualList(db, session.organizationId, session.userId);
+    // Leads enter a workspace only through a named lead list.
+    if (!input.lead_list_id) throw new ApiError(422, 'Leads can only be added through a lead list. Use "Add lead list" first.', 'lead_list_required');
+    const { data: targetList } = await db.from('lead_lists').select('id').eq('id', input.lead_list_id).eq('organization_id', session.organizationId).is('archived_at', null).maybeSingle();
+    if (!targetList) throw new ApiError(422, 'Choose a lead list in this workspace.');
+    const manualListId = input.lead_list_id;
 
     const { data: lead, error } = await db
       .from('leads')

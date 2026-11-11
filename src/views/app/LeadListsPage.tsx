@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { Upload, Search, Pencil, Trash2, Archive, ArchiveRestore, Download, Copy, ChevronDown, ChevronUp, Layers, Loader2, Rows3, Info } from 'lucide-react';
+import { Search, Pencil, Trash2, Archive, ArchiveRestore, Download, Copy, ChevronDown, ChevronUp, Layers, Loader2, Rows3, Info, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useToast } from '@/components/shared/ToastProvider';
 import { apiFetch, errorMessage } from '@/lib/client/api';
+import { LeadImportStep } from '@/components/campaign/LeadImportStep';
 
 interface PlaceholderDetail {
   key: string;
@@ -42,6 +42,8 @@ export default function LeadListsPage() {
   const [renameFor, setRenameFor] = useState<LeadListSummary | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(() => typeof window !== 'undefined' && window.location.hash === '#new');
+  const [addName, setAddName] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -147,11 +149,34 @@ export default function LeadListsPage() {
         title="Lead lists"
         description="Uploaded lead files and their personalization variables. Each list generates its own placeholders."
         actions={
-          <Link href="/app/leads#import" className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]">
-            <Upload className="w-4 h-4" /> Import leads
-          </Link>
+          <button onClick={() => setShowAdd((open) => !open)} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]">
+            {showAdd ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} Add lead list
+          </button>
         }
       />
+
+      {showAdd && (
+        <div id="new" className="neu-card rounded-[16px] p-6 scroll-mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Add a lead list</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">Name the list first, then upload the sheet or paste it. Leads are added only through this flow.</p>
+            </div>
+            <button onClick={() => setShowAdd(false)} aria-label="Close" className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X className="w-5 h-5" /></button>
+          </div>
+          <LeadImportStep
+            nameFirst
+            listName={addName}
+            onListNameChange={setAddName}
+            onComplete={(result) => {
+              toast.show(`Created "${result.leadListName ?? addName}" with ${result.created} leads.`, 'success');
+              setShowAdd(false);
+              setAddName('');
+              void load();
+            }}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
         <div className="relative flex-1">
@@ -174,7 +199,7 @@ export default function LeadListsPage() {
             icon={<Rows3 className="w-8 h-8" />}
             title={lists.length === 0 ? 'No lead lists yet' : 'No lead lists match'}
             description={lists.length === 0 ? 'Upload a CSV or XLSX file and give it a name. Contacts are analyzed automatically and placeholders are generated from the columns.' : 'Try another search term.'}
-            action={lists.length === 0 ? <Link href="/app/leads#import" className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground"><Upload className="w-4 h-4" /> Import your first list</Link> : undefined}
+            action={lists.length === 0 ? <button type="button" onClick={() => setShowAdd(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground"><Plus className="w-4 h-4" /> Add lead list</button> : undefined}
           />
         </div>
       ) : (

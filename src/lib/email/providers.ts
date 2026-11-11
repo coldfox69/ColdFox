@@ -55,7 +55,7 @@ function assertHeaderSafe(value: string, name: string) {
   if (/[\r\n]/.test(value)) throw new Error(`Invalid characters in ${name}`);
 }
 
-function mimeMessage(email: OutboundEmail): string {
+export function mimeMessage(email: OutboundEmail): string {
   assertHeaderSafe(email.subject, 'subject');
   assertHeaderSafe(email.fromName, 'from name');
   assertHeaderSafe(email.fromEmail, 'from address');
@@ -67,7 +67,7 @@ function mimeMessage(email: OutboundEmail): string {
     .map(([key, value]) => `${key}: ${value.replace(/[\r\n]+/g, ' ')}`)
     .join('\r\n');
   const boundary = `cf_${randomUUID().replace(/-/g, '')}`;
-  return [
+  const headerLines = [
     `From: ${email.fromName ? `"${email.fromName.replace(/"/g, '')}" ` : ''}<${email.fromEmail}>`,
     `To: <${email.to}>`,
     `Subject: =?UTF-8?B?${Buffer.from(email.subject, 'utf8').toString('base64')}?=`,
@@ -77,21 +77,28 @@ function mimeMessage(email: OutboundEmail): string {
     extraHeaders,
     'MIME-Version: 1.0',
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
-    '',
-    `--${boundary}`,
+  ].filter(Boolean);
+  const textPart = [
     'Content-Type: text/plain; charset=UTF-8',
     'Content-Transfer-Encoding: base64',
     '',
     Buffer.from(email.text, 'utf8').toString('base64'),
-    `--${boundary}`,
+  ].join('\r\n');
+  const htmlPart = [
     'Content-Type: text/html; charset=UTF-8',
     'Content-Transfer-Encoding: base64',
     '',
     Buffer.from(email.html, 'utf8').toString('base64'),
+  ].join('\r\n');
+  return [
+    ...headerLines,
+    '',
+    `--${boundary}`,
+    textPart,
+    `--${boundary}`,
+    htmlPart,
     `--${boundary}--`,
-  ]
-    .filter((line) => line !== '')
-    .join('\r\n');
+  ].join('\r\n');
 }
 
 async function googleAccessToken(creds: Extract<MailboxCredentials, { kind: 'gmail' }>): Promise<string> {

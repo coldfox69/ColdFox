@@ -91,7 +91,7 @@ export default function MailboxesPage({
     if (input.provider === 'gmail' || input.provider === 'outlook') {
       // The OAuth flow needs a full page navigation to the provider.
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.assign(`/api/mailboxes/oauth/${input.provider}/start`);
+      window.location.assign(`/api/mailboxes/oauth/${input.provider}/start?sender_name=${encodeURIComponent(input.senderName)}`);
       return;
     }
     if (!input.host || !input.password) throw new Error('Enter the server host and password.');
@@ -105,11 +105,12 @@ export default function MailboxesPage({
         secure: (input.port || 587) === 465,
         username: input.email,
         password: input.password,
+        display_name: input.senderName,
         daily_limit: 100,
       }),
     });
     setWizardOpen(false);
-    toast.show(`${input.email} connected.`, 'success');
+    toast.show(`${input.email} connected. Sending as ${input.senderName}.`, 'success');
     router.refresh();
   };
 
@@ -145,7 +146,7 @@ export default function MailboxesPage({
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-foreground truncate">{m.email}</p>
-                      <p className="text-[12px] text-muted-foreground">{providerLabel[m.provider]} · Last sync {m.lastSync}</p>
+                      <p className="text-[12px] text-muted-foreground">{providerLabel[m.provider]}{m.displayName ? ` · Sending as ${m.displayName}` : ''} · Last sync {m.lastSync}</p>
                     </div>
                   </div>
                   <StatusBadge variant={statusVariant[m.status]}>{m.status}</StatusBadge>

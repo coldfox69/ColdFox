@@ -62,6 +62,8 @@ export const leadInputSchema = z.object({
   custom_data: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).default({}),
   next_follow_up_at: z.string().datetime().optional().nullable(),
   notes: z.string().trim().max(5000).optional().nullable(),
+  /** Leads can only enter a workspace through a named lead list. */
+  lead_list_id: z.string().uuid().optional().nullable(),
 });
 export type LeadInput = z.infer<typeof leadInputSchema>;
 
