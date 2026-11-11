@@ -53,3 +53,4 @@ vercel-deploy.txt
 
 # temporary scratch files
 .tmp-*
+.env*

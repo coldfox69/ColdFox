@@ -1,3 +1,5 @@
+'use client';
+
 import { AdminConsole } from '@/components/admin/AdminConsole';
 import { ADMIN_MODULE_CONFIG } from '@/lib/admin/config';
 
