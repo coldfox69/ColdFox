@@ -153,6 +153,39 @@ export function AdminConsole({ config }: { config: AdminModuleConfig }) {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [menuOpen, setMenuOpen] = useState('');
+  const [menuAnchor, setMenuAnchor] = useState<{ x: number; y: number } | null>(null);
+
+  const closeMenu = () => {
+    setMenuOpen('');
+    setMenuAnchor(null);
+  };
+
+  const toggleMenu = (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
+    if (menuOpen === id) {
+      closeMenu();
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuWidth = 208; // w-52
+    const estimatedHeight = Math.min(72 * 4, 16 + 40 * 6);
+    const openUp = rect.bottom + estimatedHeight + 8 > window.innerHeight && rect.top - estimatedHeight - 8 > 0;
+    const y = openUp ? rect.top - estimatedHeight - 6 : rect.bottom + 6;
+    const x = Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8));
+    setMenuAnchor({ x, y });
+    setMenuOpen(id);
+  };
+
+  // Close the menu on viewport changes so it never detaches from its row.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = () => closeMenu();
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', close, true);
+    return () => {
+      window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', close, true);
+    };
+  }, [menuOpen]);
   const [detailId, setDetailId] = useState('');
   const [detail, setDetail] = useState<AdminDetailResponse | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -474,6 +507,7 @@ export function AdminConsole({ config }: { config: AdminModuleConfig }) {
     if ((action.action === 'delete' || action.action === 'remove_admin') && !canDelete) return false;
     return true;
   });
+  const activeMenuRow = menuOpen ? rows.find((row) => rowId(row) === menuOpen) ?? null : null;
 
   if (!canRead) {
     return (
@@ -728,37 +762,15 @@ export function AdminConsole({ config }: { config: AdminModuleConfig }) {
                             </button>
                           ) : null}
                           {actions.length ? (
-                            <div className="relative">
-                              <button
-                                type="button"
-                                aria-label="Row actions"
-                                aria-expanded={menuOpen === id}
-                                onClick={() => setMenuOpen((current) => (current === id ? '' : id))}
-                                className="flex h-7 w-7 items-center justify-center rounded-[7px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                              >
-                                <ChevronDown className="h-3.5 w-3.5" />
-                              </button>
-                              {menuOpen === id ? (
-                                <>
-                                  <button type="button" aria-label="Close actions" className="fixed inset-0 z-20 cursor-default" onClick={() => setMenuOpen('')} />
-                                  <div className="absolute right-0 top-8 z-30 w-52 overflow-hidden rounded-[10px] border border-border bg-popover p-1 shadow-[var(--shadow-raised)]">
-                                    {actions.map((action) => (
-                                      <button
-                                        key={action.key}
-                                        type="button"
-                                        onClick={() => startAction(action, row)}
-                                        className={cn(
-                                          'flex w-full items-center gap-2 rounded-[7px] px-2.5 py-1.5 text-left text-[12px] transition-colors hover:bg-muted',
-                                          action.tone === 'danger' ? 'text-destructive' : 'text-foreground',
-                                        )}
-                                      >
-                                        {action.label}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </>
-                              ) : null}
-                            </div>
+                            <button
+                              type="button"
+                              aria-label="Row actions"
+                              aria-expanded={menuOpen === id}
+                              onClick={(event) => toggleMenu(event, id)}
+                              className="flex h-7 w-7 items-center justify-center rounded-[7px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                            >
+                              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', menuOpen === id && 'rotate-180')} />
+                            </button>
                           ) : null}
                         </div>
                       </td>
@@ -807,6 +819,36 @@ export function AdminConsole({ config }: { config: AdminModuleConfig }) {
           </div>
         </div>
       </div>
+
+      {/* Fixed-position row-actions menu: escapes the table's overflow-x clip. */}
+      {menuOpen && menuAnchor ? (
+        <>
+          <button type="button" aria-label="Close actions" className="fixed inset-0 z-30 cursor-default bg-transparent" onClick={() => closeMenu()} />
+          <div
+            role="menu"
+            aria-label="Row actions"
+            className="fixed z-40 max-h-72 w-52 overflow-y-auto overscroll-contain rounded-[12px] border border-border bg-popover p-1.5 shadow-[var(--shadow-raised-lg)]"
+            style={{ top: menuAnchor.y, left: menuAnchor.x }}
+          >
+            {activeMenuRow ? availableRowActions.filter((action) => !action.visibleWhen || action.visibleWhen(activeMenuRow)).map((action) => (
+              <button
+                key={action.key}
+                role="menuitem"
+                type="button"
+                onClick={() => startAction(action, activeMenuRow)}
+                className={cn(
+                  'flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left text-[13px] leading-snug transition-colors hover:bg-muted',
+                  action.tone === 'danger' ? 'text-destructive hover:bg-destructive/10' : 'text-foreground',
+                )}
+              >
+                {action.label}
+              </button>
+            )) : (
+              <div className="px-2.5 py-3 text-[12px] text-muted-foreground">This record no longer exists in this list.</div>
+            )}
+          </div>
+        </>
+      ) : null}
 
       {secondary?.rows?.length ? (
         <div className="neu-card overflow-hidden rounded-[16px]">
