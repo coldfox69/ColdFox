@@ -54,3 +54,6 @@ vercel-deploy.txt
 # temporary scratch files
 .tmp-*
 .env*
+
+# supabase cli scratch
+supabase/.temp
