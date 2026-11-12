@@ -1212,7 +1212,15 @@ export async function runWorkerTick(limit = 25) {
   const sent = await runSendingTick(limit);
   const summary = { activated, ...sent, mailboxesSynced: 0, syncErrors: [] as string[] };
 
-  const { data: mailboxes } = await db.from('mailboxes').select('id').in('status', ['connected', 'syncing']).limit(5);
+  // Inbox sync is expensive (one IMAP session per mailbox), so it runs at most
+  // every five minutes even when the scheduler calls this worker every minute.
+  const syncCutoff = new Date(Date.now() - 4 * 60_000).toISOString();
+  const { data: mailboxes } = await db
+    .from('mailboxes')
+    .select('id')
+    .in('status', ['connected', 'syncing'])
+    .or(`last_sync_at.is.null,last_sync_at.lt."${syncCutoff}"`)
+    .limit(5);
   const targets = mailboxes ?? [];
   // Mailboxes are independent of each other: sync them concurrently instead of
   // waiting for each mailbox to finish before starting the next one.
