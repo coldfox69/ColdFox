@@ -19,6 +19,38 @@ export function appUrl() {
   return (process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')).replace(/\/$/, '');
 }
 
+const WORKER_HEARTBEAT_KEY = 'worker_heartbeat';
+/** A worker that has not run for this long is treated as not running at all. */
+const WORKER_STALE_MS = 5 * 60_000;
+
+/** Record that the scheduled worker ran, so the UI can prove background sending is alive. */
+export async function recordWorkerHeartbeat(durationMs: number, summary: Record<string, unknown>) {
+  const { error } = await service().from('system_settings').upsert(
+    {
+      key: WORKER_HEARTBEAT_KEY,
+      value: { last_run_at: new Date().toISOString(), duration_ms: durationMs, summary },
+      is_public: false,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'key' },
+  );
+  // A missing heartbeat must never fail the send tick that produced it.
+  if (error) console.error('[worker] heartbeat write failed', error.message);
+}
+
+export async function getWorkerHeartbeat() {
+  const { data } = await service().from('system_settings').select('value').eq('key', WORKER_HEARTBEAT_KEY).maybeSingle();
+  const value = (data?.value ?? {}) as { last_run_at?: string; duration_ms?: number; summary?: Record<string, unknown> };
+  const lastRunAt = value.last_run_at ?? null;
+  const ageMs = lastRunAt ? Date.now() - new Date(lastRunAt).getTime() : Number.POSITIVE_INFINITY;
+  return {
+    lastRunAt,
+    ageSeconds: Number.isFinite(ageMs) ? Math.max(0, Math.round(ageMs / 1000)) : null,
+    stale: ageMs > WORKER_STALE_MS,
+    lastSummary: value.summary ?? null,
+  };
+}
+
 export function mapCredentials(mailbox: Record<string, unknown>, config: Record<string, unknown>): MailboxCredentials {
   const provider = mailbox.provider as string;
   if (provider === 'gmail') {

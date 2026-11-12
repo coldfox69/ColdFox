@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { safeEqual } from '@/lib/crypto';
-import { runWorkerTick } from '@/lib/email/engine';
+import { recordWorkerHeartbeat, runWorkerTick } from '@/lib/email/engine';
 import { runQueuedJobs } from '@/lib/jobs';
 // Registers the handlers for the queued job types.
 import '@/lib/job-handlers';
@@ -28,9 +28,12 @@ async function handler(request: Request) {
     // Drain the background job queue as part of the same tick, so the
     // scheduler that already calls this route needs no extra configuration.
     const jobs = await runQueuedJobs({ limit: 10 });
+    const durationMs = Date.now() - started;
+    // Proves to the UI that background sending is actually running, not just configured.
+    await recordWorkerHeartbeat(durationMs, { ...summary, jobs });
     return NextResponse.json({
       ok: true,
-      data: { ...summary, jobs, durationMs: Date.now() - started },
+      data: { ...summary, jobs, durationMs },
     });
   } catch (error) {
     console.error('[cron] worker failed', error);

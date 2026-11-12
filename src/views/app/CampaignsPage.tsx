@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Search, ChevronLeft, ChevronRight, ArrowUpDown, Megaphone, MoreHorizontal, Pause, Play, Copy, Trash2, Eye } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -26,6 +26,15 @@ const filters: { value: CampaignStatus | 'all'; label: string }[] = [
 
 type SortKey = 'name' | 'emailsSent' | 'replyRate' | 'createdAt';
 
+type WorkerStatus = { lastRunAt: string | null; ageSeconds: number | null; stale: boolean };
+
+function workerAge(seconds: number | null) {
+  if (seconds === null) return 'never';
+  if (seconds < 90) return `${seconds}s ago`;
+  if (seconds < 5400) return `${Math.round(seconds / 60)} min ago`;
+  return `${Math.round(seconds / 3600)} h ago`;
+}
+
 export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: Campaign[] }) {
   const toast = useToast();
   const router = useRouter();
@@ -38,6 +47,25 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(1);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [worker, setWorker] = useState<WorkerStatus | null>(null);
+
+  const hasLiveCampaigns = useMemo(
+    () => items.some(c => c.status === 'scheduled' || c.status === 'active'),
+    [items],
+  );
+
+  useEffect(() => {
+    if (!hasLiveCampaigns) return;
+    let cancelled = false;
+    const load = () => {
+      apiFetch<WorkerStatus>('/api/cron/status')
+        .then(next => { if (!cancelled) setWorker(next); })
+        .catch(() => { if (!cancelled) setWorker(null); });
+    };
+    load();
+    const timer = setInterval(load, 60_000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [hasLiveCampaigns]);
 
   const filtered = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
@@ -139,6 +167,27 @@ export default function CampaignsPage({ initialCampaigns }: { initialCampaigns: 
           ))}
         </div>
       </div>
+
+      {hasLiveCampaigns && (
+        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-[12px] bg-card px-3 py-2 text-[12px] shadow-[var(--shadow-raised-sm)]">
+          <span
+            className={cn('h-2 w-2 rounded-full', !worker ? 'bg-muted-foreground' : worker.stale ? 'bg-amber-500' : 'bg-[var(--cf-success)]')}
+            aria-hidden="true"
+          />
+          {!worker ? (
+            <span className="text-muted-foreground">Checking the background sender…</span>
+          ) : worker.stale ? (
+            <span className="text-[var(--cf-warning)]">
+              Background sender is not running. Scheduled campaigns will not start on their own until the scheduler is active
+              {worker.lastRunAt ? ` (last run ${workerAge(worker.ageSeconds)}).` : '.'}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">
+              Background sender is active, last run {workerAge(worker.ageSeconds)}. Scheduled campaigns keep sending with this browser closed.
+            </span>
+          )}
+        </div>
+      )}
 
       {visible.length === 0 ? (
         <div className="neu-card rounded-[16px] mt-4">
