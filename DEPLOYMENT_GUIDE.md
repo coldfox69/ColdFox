@@ -90,19 +90,56 @@ Set the following in Vercel project settings → Environment Variables:
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
 | `BILLING_PROVIDER` | `stripe` when configured |
 
-## Step 4: Cron Job
+## Step 4: Background Worker (scheduled sending)
 
-Vercel Hobby accounts are limited to daily cron jobs, so `/api/cron/worker` is not scheduled by Vercel by default.
-Set up an external scheduler (for example cron-job.org, or a GitHub Actions schedule) that calls:
+Campaigns must keep sending when no browser is open, so the worker has to be
+called on a schedule. Vercel Hobby only allows daily cron jobs, so ColdFox uses
+**Supabase `pg_cron` + `pg_net`**: the database itself calls the endpoint every
+minute. No third-party scheduler account is needed.
+
+Migration `0016_background_worker_scheduler.sql` enables both extensions and
+creates the `coldfox-worker` job. It reads the shared secret from Supabase Vault
+(name `coldfox_cron_secret`), which must equal `CRON_SECRET` in Vercel. Set or
+rotate it with:
+
+```sql
+delete from vault.secrets where name = 'coldfox_cron_secret';
+select vault.create_secret('<CRON_SECRET>', 'coldfox_cron_secret',
+  'ColdFox background worker shared secret');
+```
+
+What each minute tick does: activates campaigns whose `launch_at` has passed,
+sends executions whose jittered time has come, resets mailbox daily counters,
+and syncs inbound replies over IMAP (throttled to once every 5 minutes).
+
+Check it is alive:
+
+```sql
+select j.jobname, d.status, d.start_time
+from cron.job_run_details d join cron.job j on j.jobid = d.jobid
+order by d.start_time desc limit 5;
+
+select status_code, error_msg, created from net._http_response
+order by created desc limit 5;
+```
+
+The app also shows this on `/app/campaigns`: a green "Background sender is
+active" line when the worker ran in the last 5 minutes, and an amber warning
+when it has gone stale.
+
+Manual endpoint call, useful for debugging:
 
 ```
-GET https://coldfox69.vercel.app/api/cron/worker
+GET https://coldfoxpro.vercel.app/api/cron/worker
 Header: x-cron-secret: <CRON_SECRET>
 ```
 
-every 1–5 minutes. The endpoint activates due scheduled campaigns, sends executions whose time has come, resets mailbox daily counters and syncs inbound replies. Ensure `CRON_SECRET` is set in Vercel environment variables (it already is) and in the scheduler.
+`vercel.json` additionally declares one daily cron as a safety net in case the
+database scheduler is ever removed.
 
-Example GitHub Actions workflow (add `CRON_SECRET` under repository secrets first):
+If you prefer an external scheduler instead (cron-job.org, GitHub Actions, or a
+Cloudflare Worker cron trigger), call the same endpoint with the same header
+every 1–5 minutes:
 
 ```yaml
 name: coldfox-worker
@@ -113,10 +150,10 @@ jobs:
   worker:
     runs-on: ubuntu-latest
     steps:
-      - run: curl -fsS -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" https://coldfox69.vercel.app/api/cron/worker
+      - run: curl -fsS -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" https://coldfoxpro.vercel.app/api/cron/worker
 ```
 
-If you upgrade to Vercel Pro, add this to `vercel.json` instead:
+On Vercel Pro you can drop the database scheduler and use a native cron instead:
 
 ```json
 { "crons": [{ "path": "/api/cron/worker", "schedule": "*/5 * * * *" }] }
