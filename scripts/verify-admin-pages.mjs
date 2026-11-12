@@ -30,6 +30,7 @@ const adminPages = [
   '/admin/analytics', '/admin/revenue', '/admin/system-health', '/admin/feature-flags', '/admin/settings',
   '/admin/jobs', '/admin/errors', '/admin/audit', '/admin/roles', '/admin/webhooks',
   '/admin/abuse', '/admin/email-activity', '/admin/ai-usage', '/admin/api-usage', '/admin/integrations',
+  '/admin/ai-agents',
 ];
 
 const results = [];

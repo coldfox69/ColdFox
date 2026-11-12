@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 
-const BASE = 'https://coldfox69.vercel.app';
+const BASE = process.env.BASE_URL ?? 'https://coldfoxpro.vercel.app';
 function loadEnv() {
   const raw = fs.readFileSync('.env.local', 'utf8').replace(/^\uFEFF/, '');
   const env = {};
