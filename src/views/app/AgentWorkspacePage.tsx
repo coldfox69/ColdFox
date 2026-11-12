@@ -58,18 +58,22 @@ export default function AgentWorkspacePage({
   slug,
   source = 'manual',
   automationId = null,
+  initialAgent = null,
+  initialRuns = [],
 }: {
   slug: string;
   source?: 'manual' | 'automation';
   automationId?: string | null;
+  initialAgent?: AgentDetail | null;
+  initialRuns?: RunRow[];
 }) {
   const toast = useToast();
-  const [agent, setAgent] = useState<AgentDetail | null>(null);
-  const [runs, setRuns] = useState<RunRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [agent, setAgent] = useState<AgentDetail | null>(initialAgent);
+  const [runs, setRuns] = useState<RunRow[]>(initialRuns);
+  const [loading, setLoading] = useState(!initialAgent);
   const [busy, setBusy] = useState(false);
 
-  const [inputs, setInputs] = useState<Record<string, unknown>>({});
+  const [inputs, setInputs] = useState<Record<string, unknown>>(() => emptyInputs(initialAgent?.fields ?? []));
   const [mailboxes, setMailboxes] = useState<MailboxOption[]>([]);
   const [templates, setTemplates] = useState<TemplateOption[]>([]);
 

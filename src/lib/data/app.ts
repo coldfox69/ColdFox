@@ -4,6 +4,7 @@ import { cacheRemember } from '@/lib/cache';
 import { tagsForLeads } from '@/lib/leads';
 import type { PostgrestFilterBuilder, SupabaseClient } from '@supabase/supabase-js';
 import { CAMPAIGN_STATUSES, EXECUTION_STATUSES } from '@/lib/validation';
+import { toAgentDetail, type AgentRow } from '@/lib/agents/service';
 import {
   formatDate,
   formatDateTime,
@@ -734,6 +735,47 @@ export async function getPublishedAgents() {
     apiConfigured: connected.has(str(row.id)),
     updatedAt: str(row.updated_at),
   }));
+}
+
+/**
+ * One agent with its input schema and the runs of this workspace, so the
+ * agent page can render before the browser takes over.
+ */
+export async function getAgentForWorkspace(slug: string, orgId: string) {
+  const db = createServiceClient();
+  const { data } = await db
+    .from('ai_agents')
+    .select('*')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .maybeSingle();
+  if (!data) return null;
+  const row = data as unknown as AgentRow;
+  const { data: credential } = await db.from('ai_agent_credentials').select('agent_id').eq('agent_id', row.id).maybeSingle();
+  const { data: runs } = await db
+    .from('ai_agent_runs')
+    .select('id, status, created_at, finished_at, lead_list_id, campaign_id, error, scheduled_for')
+    .eq('organization_id', orgId)
+    .eq('agent_id', row.id)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  return {
+    agent: toAgentDetail(row, Boolean(credential)),
+    runs: (runs ?? []).map((run) => {
+      const record = run as Row;
+      return {
+        id: str(record.id),
+        status: str(record.status),
+        createdAt: str(record.created_at),
+        finishedAt: record.finished_at ? str(record.finished_at) : null,
+        scheduledFor: record.scheduled_for ? str(record.scheduled_for) : null,
+        leadListId: record.lead_list_id ? str(record.lead_list_id) : null,
+        campaignId: record.campaign_id ? str(record.campaign_id) : null,
+        error: record.error ? str(record.error) : null,
+      };
+    }),
+  };
 }
 
 export async function getWorkspaceSettings(orgId: string, userId: string) {
