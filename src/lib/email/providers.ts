@@ -465,10 +465,33 @@ export async function testMailboxConnection(creds: MailboxCredentials): Promise<
     const transport = await createSmtpTransport(creds);
     try {
       await transport.verify();
-      return { ok: true, detail: 'SMTP connection and authentication succeeded.' };
     } finally {
       transport.close();
     }
+
+    if (creds.imapHost) {
+      const { ImapFlow } = await import('imapflow');
+      const client = new ImapFlow({
+        host: creds.imapHost,
+        port: creds.imapPort || 993,
+        secure: true,
+        auth: { user: creds.username, pass: creds.password },
+        logger: false,
+      });
+      try {
+        await client.connect();
+        const lock = await client.getMailboxLock('INBOX');
+        lock.release();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'IMAP connection failed.';
+        throw new Error(`SMTP worked but IMAP failed: ${message.slice(0, 200)}`);
+      } finally {
+        await client.logout().catch(() => {});
+      }
+      return { ok: true, detail: 'SMTP and IMAP connections and authentication succeeded.' };
+    }
+
+    return { ok: true, detail: 'SMTP connection and authentication succeeded. IMAP was skipped, so replies will not sync.' };
   }
   if (creds.kind === 'gmail') {
     const token = await googleAccessToken(creds);

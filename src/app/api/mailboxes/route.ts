@@ -71,7 +71,7 @@ export async function POST(request: Request) {
         status: 'connected',
         daily_limit: input.daily_limit,
         is_default: (count ?? 0) === 0,
-        provider_config: { host: input.host, port: input.port, secure: input.secure, imap_host: input.imap_host ?? null },
+        provider_config: { host: input.host, port: input.port, secure: input.secure, imap_host: input.imap_host ?? null, imap_port: input.imap_port ?? null },
       })
       .select('*')
       .single();

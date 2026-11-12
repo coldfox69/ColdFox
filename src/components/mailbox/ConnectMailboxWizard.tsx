@@ -20,7 +20,12 @@ export interface MailboxConnectInput {
   senderName: string;
   host?: string;
   port?: number;
+  /** SMTP auth user. Defaults to the email address when left blank. */
+  username?: string;
   password?: string;
+  /** Optional IMAP host. Without it, replies are not synchronised. */
+  imapHost?: string;
+  imapPort?: number;
 }
 
 type Props = {
@@ -36,6 +41,9 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
   const [senderName, setSenderName] = useState('');
   const [host, setHost] = useState('');
   const [port, setPort] = useState('587');
+  const [username, setUsername] = useState('');
+  const [imapHost, setImapHost] = useState('');
+  const [imapPort, setImapPort] = useState('993');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -51,7 +59,8 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
     if (step === 1) {
       if (senderName.trim().length < 2) return setError('Enter the sender name that recipients will see, e.g. "Abu Raihan".');
       if (!/^\S+@\S+\.\S+$/.test(email)) return setError('Enter a valid email address.');
-      if (provider === 'smtp' && (!host.trim() || !/^\d+$/.test(port) || !password)) return setError('Enter the server host, port, and password.');
+      if (provider === 'smtp' && (!host.trim() || !/^\d+$/.test(port) || !password)) return setError('Enter the SMTP host, port, and password.');
+      if (provider === 'smtp' && imapHost.trim() && !/^\d+$/.test(imapPort)) return setError('Enter a numeric IMAP port, e.g. 993.');
     }
     setError('');
     setStep(s => s + 1);
@@ -66,7 +75,17 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
     setBusy(true);
     setError('');
     try {
-      await onConnect({ provider, email, senderName: senderName.trim(), host, port: Number(port) || 587, password });
+      await onConnect({
+        provider,
+        email,
+        senderName: senderName.trim(),
+        host,
+        port: Number(port) || 587,
+        username: username.trim() || email,
+        password,
+        imapHost: imapHost.trim() || undefined,
+        imapPort: imapHost.trim() ? Number(imapPort) || 993 : undefined,
+      });
     } catch (connectError) {
       setError(connectError instanceof Error ? connectError.message : 'Could not connect the mailbox.');
     } finally {
@@ -126,15 +145,29 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
               <>
                 <div className="grid grid-cols-3 gap-3">
                   <label className="col-span-2 block text-sm font-medium">SMTP host
-                    <input value={host} onChange={e => setHost(e.target.value)} className={cn(inputCls, 'mt-1.5')} placeholder="smtp.example.com" />
+                    <input value={host} onChange={e => setHost(e.target.value)} className={cn(inputCls, 'mt-1.5')} placeholder="smtp.gmail.com" />
                   </label>
                   <label className="block text-sm font-medium">Port
-                    <input value={port} onChange={e => setPort(e.target.value)} className={cn(inputCls, 'mt-1.5')} />
+                    <input value={port} onChange={e => setPort(e.target.value)} className={cn(inputCls, 'mt-1.5')} placeholder="465" />
                   </label>
                 </div>
-                <label className="block text-sm font-medium">Password
-                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} className={cn(inputCls, 'mt-1.5')} />
+                <label className="block text-sm font-medium">Username
+                  <input value={username} onChange={e => setUsername(e.target.value)} className={cn(inputCls, 'mt-1.5')} placeholder={email || 'you@company.com'} autoComplete="off" />
+                  <span className="mt-1 block text-[11px] text-muted-foreground">Leave blank if it is the same as the email address.</span>
                 </label>
+                <label className="block text-sm font-medium">Password or app password
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} className={cn(inputCls, 'mt-1.5')} autoComplete="new-password" />
+                  <span className="mt-1 block text-[11px] text-muted-foreground">Use an app-specific password, not your normal account password.</span>
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <label className="col-span-2 block text-sm font-medium">IMAP host <span className="text-muted-foreground font-normal">(optional)</span>
+                    <input value={imapHost} onChange={e => setImapHost(e.target.value)} className={cn(inputCls, 'mt-1.5')} placeholder="imap.gmail.com" />
+                  </label>
+                  <label className="block text-sm font-medium">Port
+                    <input value={imapPort} onChange={e => setImapPort(e.target.value)} className={cn(inputCls, 'mt-1.5')} placeholder="993" />
+                  </label>
+                </div>
+                <p className="text-[11px] text-muted-foreground">IMAP is needed to sync replies into the inbox. Without it, campaigns still send, but replies are not detected.</p>
               </>
             ) : (
               <p className="text-sm text-muted-foreground flex gap-2"><ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-[var(--cf-success)]" /> You will be redirected to {provider === 'gmail' ? 'Google' : 'Microsoft'} to approve access. ColdFox never sees your password.</p>
@@ -151,7 +184,7 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
             <p className="text-sm text-muted-foreground mt-1">Sending as <span className="text-foreground font-medium">{senderName}</span></p>
             <p className="text-sm text-muted-foreground mt-1">
               {provider === 'smtp'
-                ? 'ColdFox tests the SMTP connection before saving encrypted credentials.'
+                ? 'ColdFox tests the SMTP and IMAP connections before saving encrypted credentials.'
                 : `You will be redirected to ${provider === 'gmail' ? 'Google' : 'Microsoft'} to approve access.`}
             </p>
           </div>
