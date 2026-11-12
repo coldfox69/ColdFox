@@ -2,6 +2,7 @@ import 'server-only';
 import { registerJobHandler } from '@/lib/jobs';
 import { createServiceClient } from '@/lib/supabase/service';
 import { syncMailbox } from '@/lib/email/engine';
+import { runAgentTask } from '@/lib/agents/runner';
 
 /**
  * Handlers for the background job queue.
@@ -9,6 +10,19 @@ import { syncMailbox } from '@/lib/email/engine';
  * Importing this file registers every handler. It is imported by the cron
  * route that drains the queue.
  */
+
+/**
+ * Run an AI agent task.
+ *
+ * The task calls the agent API, imports whatever leads it returns into a lead
+ * list and, when the user asked for it, hands the list to the email outreach
+ * pipeline.
+ */
+registerJobHandler('agents.run', async (job) => {
+  const runId = String(job.payload?.runId ?? '');
+  if (!runId) throw new Error('The job has no agent run.');
+  await runAgentTask(runId);
+});
 
 /**
  * Sync the connected mailboxes of a workspace.

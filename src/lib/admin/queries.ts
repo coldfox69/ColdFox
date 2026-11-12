@@ -459,6 +459,50 @@ export async function listModule(
       };
     }
 
+    case 'ai-agents': {
+      let query = db
+        .from('ai_agents')
+        .select('id, name, slug, description, purpose, icon, category, status, agent_type, input_schema, api_config, supports_outreach, sort_order, created_at, updated_at, published_at', { count: 'exact' });
+      if (params.status) query = query.eq('status', params.status);
+      if (params.q) query = query.ilike('name', `%${params.q}%`);
+      const sort = ['sort_order', 'name', 'updated_at', 'created_at'].includes(params.sort) ? params.sort : 'sort_order';
+      const { data, count, error } = await query.order(sort, { ascending: params.dir === 'asc' }).range(from, to);
+      if (error) return emptyPage(params);
+
+      const agentIds = (data ?? []).map((row) => String(row.id));
+      const { data: credentials } = agentIds.length
+        ? await db.from('ai_agent_credentials').select('agent_id').in('agent_id', agentIds)
+        : { data: [] as Array<{ agent_id: string }> };
+      const connected = new Set((credentials ?? []).map((row) => String(row.agent_id)));
+
+      const rows = (data ?? []).map((row) => {
+        const record = row as Record<string, unknown>;
+        const schema = Array.isArray(record.input_schema) ? record.input_schema : [];
+        return {
+          ...record,
+          api_configured: connected.has(String(record.id)),
+          field_count: schema.length,
+        };
+      });
+
+      const [total, published, runs] = await Promise.all([
+        db.from('ai_agents').select('id', { count: 'exact', head: true }),
+        db.from('ai_agents').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+        db.from('ai_agent_runs').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 30 * 86_400_000).toISOString()),
+      ]);
+
+      return {
+        rows,
+        ...pageMeta(params.page, params.pageSize, count ?? 0),
+        summary: {
+          total: total.count ?? 0,
+          published: published.count ?? 0,
+          connected: connected.size,
+          runs: runs.count ?? 0,
+        },
+      };
+    }
+
     case 'api-usage': {
       const { data } = await db.from('rate_limits').select('*').order('window_start', { ascending: false }).limit(500);
       const all = (data ?? []).filter((row) => (params.q ? String(row.key).toLowerCase().includes(params.q.toLowerCase()) : true));
@@ -1116,6 +1160,63 @@ export async function getModuleDetail(
         ],
         sections: [],
         actions: event.processed_at ? [] : [{ key: 'mark_processed', label: 'Mark processed' }],
+      };
+    }
+
+    case 'ai-agents': {
+      const { data: agent } = await db.from('ai_agents').select('*').eq('id', id).maybeSingle();
+      if (!agent) throw new Error('Agent not found.');
+      const record = agent as Record<string, unknown>;
+      const { data: credential } = await db.from('ai_agent_credentials').select('agent_id, updated_at').eq('agent_id', id).maybeSingle();
+      const { data: runs } = await db
+        .from('ai_agent_runs')
+        .select('id, organization_id, status, created_at, finished_at, error')
+        .eq('agent_id', id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      const apiConfig = (record.api_config ?? {}) as Record<string, unknown>;
+      const fields = Array.isArray(record.input_schema) ? (record.input_schema as Array<Record<string, unknown>>) : [];
+      return {
+        title: String(record.name ?? 'Agent'),
+        subtitle: String(record.description ?? ''),
+        fields: [
+          { key: 'slug', label: 'Slug', value: record.slug },
+          { key: 'status', label: 'Status', type: 'status', value: record.status },
+          { key: 'category', label: 'Category', value: record.category },
+          { key: 'agent_type', label: 'Type', type: 'status', value: record.agent_type },
+          { key: 'api_endpoint', label: 'API endpoint', value: apiConfig.base_url ? `${apiConfig.base_url}${apiConfig.path ?? ''}` : 'Not connected' },
+          { key: 'api_configured', label: 'API key', type: 'bool', value: Boolean(credential) },
+          { key: 'supports_outreach', label: 'Hands over to outreach', type: 'bool', value: record.supports_outreach },
+          { key: 'field_count', label: 'Input fields', type: 'number', value: fields.length },
+          { key: 'updated_at', label: 'Updated', type: 'datetime', value: record.updated_at },
+        ],
+        sections: [
+          {
+            title: 'Input fields',
+            columns: [
+              { key: 'key', label: 'Key' },
+              { key: 'label', label: 'Label' },
+              { key: 'type', label: 'Type', type: 'status' },
+              { key: 'required', label: 'Required', type: 'bool' },
+            ],
+            rows: fields.map((field) => ({
+              key: field.key,
+              label: field.label,
+              type: field.type,
+              required: field.required === true,
+            })),
+          },
+          {
+            title: 'Recent runs',
+            columns: [
+              { key: 'id', label: 'Run' },
+              { key: 'status', label: 'Status', type: 'status' },
+              { key: 'created_at', label: 'Started', type: 'datetime' },
+              { key: 'error', label: 'Message' },
+            ],
+            rows: runs ?? [],
+          },
+        ],
       };
     }
 

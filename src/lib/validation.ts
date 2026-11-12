@@ -198,6 +198,45 @@ export const supportTicketSchema = z.object({
   priority: z.enum(['low', 'normal', 'high', 'urgent']).default('normal'),
 });
 
+// ── AI agents ─────────────────────────────────────────────────
+
+/** The email outreach part of an agent task. */
+export const agentOutreachSchema = z.object({
+  enabled: z.boolean().default(true),
+  mailbox_id: z.string().uuid().optional().nullable(),
+  template_id: z.string().uuid().optional().nullable(),
+  campaign_name: z.string().trim().max(160).optional(),
+  subject: z.string().trim().max(300).optional(),
+  body: z.string().trim().max(50000).optional(),
+  timezone: z.string().trim().max(64).default('UTC'),
+  daily_limit: z.coerce.number().int().min(1).max(2000).default(100),
+  send_window_start: z.string().regex(/^\d{2}:\d{2}$/).default('09:00'),
+  send_window_end: z.string().regex(/^\d{2}:\d{2}$/).default('17:00'),
+  weekdays: z.array(z.number().int().min(0).max(6)).min(1).max(7).default([1, 2, 3, 4, 5]),
+  stop_on_reply: z.boolean().default(true),
+  interval_min_seconds: z.coerce.number().int().min(1).max(3600).default(30),
+  interval_max_seconds: z.coerce.number().int().min(1).max(3600).default(70),
+  ai_personalization: z.boolean().default(false),
+});
+
+export const agentRunSchema = z.object({
+  /** Values for the fields the agent asked for. */
+  inputs: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.array(z.string())])).default({}),
+  outreach: agentOutreachSchema.optional(),
+  /** now runs the task straight away, schedule waits for send_at. */
+  mode: z.enum(['now', 'schedule']).default('now'),
+  send_at: z.string().datetime().optional(),
+  source: z.enum(['manual', 'automation']).default('manual'),
+  /** An existing automation workflow this task belongs to. */
+  automation_id: z.string().uuid().optional().nullable(),
+});
+
+export const automationUpdateSchema = z.object({
+  status: z.enum(['draft', 'active', 'paused', 'archived']).optional(),
+  name: z.string().trim().max(160).optional(),
+  description: z.string().trim().max(2000).optional(),
+});
+
 export const supportMessageSchema = z.object({
   body: z.string().trim().min(1).max(5000),
 });

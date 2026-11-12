@@ -4,6 +4,8 @@ import { ApiError, writeAudit } from '@/lib/http';
 import type { ApiSession } from '@/lib/auth/api-session';
 import { syncLeadTags } from '@/lib/leads';
 import { LEAD_STATUSES } from '@/lib/validation';
+import { agentSlug } from '@/lib/agents/inputs';
+import { removeAgentCredential, saveAgentCredential } from '@/lib/agents/service';
 
 type Body = Record<string, unknown>;
 type Row = Record<string, unknown>;
@@ -835,6 +837,95 @@ export async function mutateModule(input: {
         return { data: { removed: true } };
       }
       throw new ApiError(405, 'Unsupported role action.');
+    }
+
+    case 'ai-agents': {
+      const agentId = id ?? '';
+      if (action === 'create' || action === 'update') {
+        const name = text(values.name, 120);
+        if (!name) throw new ApiError(422, 'An agent name is required.');
+        const slugBase = text(values.slug, 80)?.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') || agentSlug(name);
+        const { data: clash } = await db.from('ai_agents').select('id').eq('slug', slugBase).maybeSingle();
+        const slug = action === 'create' && clash ? `${slugBase}-${Math.random().toString(36).slice(2, 6)}` : slugBase;
+
+        const inputSchema = jsonValue(values.input_schema, []);
+        if (!Array.isArray(inputSchema)) throw new ApiError(422, 'The input fields must be a list.');
+        const apiConfig = jsonValue(values.api_config, {});
+        if (!apiConfig || typeof apiConfig !== 'object') throw new ApiError(422, 'The API configuration must be an object.');
+
+        const payload = {
+          name,
+          slug,
+          description: text(values.description, 2000),
+          purpose: text(values.purpose, 2000),
+          icon: text(values.icon, 40) ?? 'bot',
+          category: text(values.category, 60) ?? 'general',
+          agent_type: values.agent_type === 'builtin' ? 'builtin' : 'external',
+          input_schema: inputSchema,
+          api_config: apiConfig,
+          supports_outreach: bool(values.supports_outreach),
+          outreach_defaults: jsonValue(values.outreach_defaults, {}),
+          sort_order: number(values.sort_order, 0, 1000, 0),
+        };
+
+        if (action === 'create') {
+          const { data, error } = await db
+            .from('ai_agents')
+            .insert({ ...payload, status: 'draft', created_by: session.userId })
+            .select('id')
+            .single();
+          if (error || !data) throw new ApiError(500, `Could not create the agent: ${error?.message ?? ''}`);
+          await audit(session, request, 'admin.agent.created', 'ai_agent', String(data.id), { name, slug });
+          return { status: 201, data: { id: data.id } };
+        }
+
+        if (!agentId) throw new ApiError(422, 'Missing agent id.');
+        const { data, error } = await db.from('ai_agents').update(payload).eq('id', agentId).select('id').single();
+        if (error || !data) throw new ApiError(500, `Could not update the agent: ${error?.message ?? ''}`);
+        await audit(session, request, 'admin.agent.updated', 'ai_agent', agentId, { name, slug });
+        return { data: { id: agentId } };
+      }
+
+      if (!agentId) throw new ApiError(422, 'Missing agent id.');
+
+      if (action === 'set_api_key') {
+        const apiKey = text(values.api_key, 500);
+        if (!apiKey) throw new ApiError(422, 'Enter the API key of the agent.');
+        await saveAgentCredential(db, agentId, { api_key: apiKey });
+        await audit(session, request, 'admin.agent.credential_set', 'ai_agent', agentId);
+        return { data: { configured: true } };
+      }
+      if (action === 'remove_api_key') {
+        await removeAgentCredential(db, agentId);
+        await audit(session, request, 'admin.agent.credential_removed', 'ai_agent', agentId);
+        return { data: { configured: false } };
+      }
+
+      const statusAction: Record<string, string> = {
+        publish: 'published',
+        unpublish: 'draft',
+        disable: 'disabled',
+        enable: 'published',
+      };
+      if (statusAction[action]) {
+        const status = statusAction[action];
+        const { error } = await db
+          .from('ai_agents')
+          .update({ status, published_at: status === 'published' ? new Date().toISOString() : null })
+          .eq('id', agentId);
+        if (error) throw new ApiError(500, 'Could not change the agent status.');
+        await audit(session, request, `admin.agent.${action}`, 'ai_agent', agentId, { status });
+        return { data: { id: agentId, status } };
+      }
+
+      if (action === 'delete') {
+        const { error } = await db.from('ai_agents').delete().eq('id', agentId);
+        if (error) throw new ApiError(500, 'Could not delete the agent.');
+        await audit(session, request, 'admin.agent.deleted', 'ai_agent', agentId);
+        return { data: { deleted: true } };
+      }
+
+      throw new ApiError(405, 'Unsupported agent action.');
     }
 
     default:

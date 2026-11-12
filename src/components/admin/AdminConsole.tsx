@@ -1061,7 +1061,7 @@ export function AdminConsole({ config }: { config: AdminModuleConfig }) {
                     ) : (
                       <input
                         id={inputId}
-                        type={field.type === 'email' ? 'email' : field.type === 'number' ? 'number' : field.type === 'datetime' ? 'datetime-local' : 'text'}
+                        type={field.type === 'email' ? 'email' : field.type === 'number' ? 'number' : field.type === 'datetime' ? 'datetime-local' : field.type === 'password' ? 'password' : 'text'}
                         value={String(value ?? '')}
                         onChange={(event) => setFormValues((current) => ({ ...current, [field.key]: event.target.value }))}
                         placeholder={field.placeholder}

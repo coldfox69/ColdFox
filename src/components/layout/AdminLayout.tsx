@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, Building2, CreditCard, Megaphone, Mail, Activity,
   Cpu, Key, Ticket, Flag, Briefcase, Shield, Plug, Settings, ChevronLeft, Bell,
   Sun, Moon, Monitor, ExternalLink, LogOut, Gauge, FileSearch, AlertTriangle, Webhook,
-  BarChart3, UserRound, Receipt, TrendingUp, Coins, Filter, ScrollText, PanelLeftClose, PanelLeftOpen,
+  BarChart3, UserRound, Receipt, TrendingUp, Coins, Filter, ScrollText, PanelLeftClose, PanelLeftOpen, Bot,
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { HoverPrefetchLink } from '@/components/shared/HoverPrefetchLink';
@@ -65,6 +65,7 @@ const adminNav: Array<{ label: string; items: NavItem[] }> = [
     label: 'AI and support',
     items: [
       { icon: Cpu, label: 'AI management', path: '/admin/ai-usage', module: 'ai-usage' },
+      { icon: Bot, label: 'AI agents', path: '/admin/ai-agents', module: 'ai-agents' },
       { icon: Key, label: 'API monitoring', path: '/admin/api-usage', module: 'api-usage' },
       { icon: Ticket, label: 'Support tickets', path: '/admin/tickets', module: 'tickets' },
       { icon: Flag, label: 'Announcements', path: '/admin/announcements', module: 'announcements' },

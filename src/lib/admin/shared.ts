@@ -55,6 +55,7 @@ export const ADMIN_MODULES: Record<string, ModuleAccess> = {
   tickets: { read: 'support.view', manage: 'support.manage', remove: 'support.manage' },
   announcements: { read: 'announcements.manage', manage: 'announcements.manage', remove: 'announcements.manage' },
   'ai-usage': { read: 'ai.view', manage: 'ai.manage', remove: 'ai.manage' },
+  'ai-agents': { read: 'ai.manage', manage: 'ai.manage', remove: 'ai.manage' },
   'api-usage': { read: 'settings.manage' },
   'feature-flags': { read: 'flags.manage', manage: 'flags.manage', remove: 'flags.manage' },
   settings: { read: 'settings.manage', manage: 'settings.manage', remove: 'settings.manage' },

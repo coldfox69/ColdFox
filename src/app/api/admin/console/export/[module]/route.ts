@@ -9,7 +9,7 @@ const EXPORTABLE = new Set([
   'users', 'organizations', 'leads', 'campaigns', 'mailboxes', 'subscriptions',
   'plans', 'billing', 'tickets', 'announcements', 'ai-usage', 'api-usage',
   'feature-flags', 'settings', 'jobs', 'errors', 'audit', 'roles', 'webhooks',
-  'email-activity', 'abuse',
+  'email-activity', 'abuse', 'ai-agents',
 ]);
 
 export async function GET(request: Request, { params }: { params: Promise<{ module: string }> }) {

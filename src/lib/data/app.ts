@@ -675,7 +675,7 @@ export async function getSupport(orgId: string) {
 export async function getAutomations(orgId: string) {
   const db = createServiceClient();
   const [workflows, executionCounts] = await Promise.all([
-    db.from('automation_workflows').select('*, steps:automation_steps(id, step_order, step_type, config)').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(100),
+    db.from('automation_workflows').select('*, agent:ai_agents(id, name, slug, icon), steps:automation_steps(id, step_order, step_type, config)').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(100),
     // Only the per status totals are needed, so count them instead of pulling
     // thousands of execution rows into memory.
     countByValue(db, 'automation_executions', 'status', EXECUTION_STATUSES, { organizationId: orgId }),
@@ -683,12 +683,17 @@ export async function getAutomations(orgId: string) {
   return {
     workflows: (workflows.data ?? []).map((row) => {
       const typed = row as Row;
+      const agent = typed.agent as Row | null;
       return {
         id: str(typed.id),
         name: str(typed.name),
         description: str(typed.description),
         status: str(typed.status),
         triggerType: str(typed.trigger_type),
+        agentId: str(typed.agent_id),
+        agentName: agent ? str(agent.name) : '',
+        agentSlug: agent ? str(agent.slug) : '',
+        agentIcon: agent ? str(agent.icon) : '',
         steps: (Array.isArray(typed.steps) ? typed.steps : []).map((step) => {
           const s = step as Row;
           return { id: str(s.id), order: num(s.step_order), type: str(s.step_type) };
@@ -698,6 +703,37 @@ export async function getAutomations(orgId: string) {
     }),
     executionCounts,
   };
+}
+
+/** The agents a workspace can run. Only published agents are visible. */
+export async function getPublishedAgents() {
+  const db = createServiceClient();
+  const { data } = await db
+    .from('ai_agents')
+    .select('id, slug, name, description, purpose, icon, category, status, agent_type, supports_outreach, updated_at')
+    .eq('status', 'published')
+    .order('sort_order')
+    .order('name');
+  const rows = (data ?? []) as unknown as Row[];
+  const ids = rows.map((row) => str(row.id));
+  const { data: credentials } = ids.length
+    ? await db.from('ai_agent_credentials').select('agent_id').in('agent_id', ids)
+    : { data: [] as Array<{ agent_id: string }> };
+  const connected = new Set((credentials ?? []).map((row) => String(row.agent_id)));
+  return rows.map((row) => ({
+    id: str(row.id),
+    slug: str(row.slug),
+    name: str(row.name),
+    description: str(row.description),
+    purpose: str(row.purpose),
+    icon: str(row.icon),
+    category: str(row.category),
+    status: str(row.status),
+    agentType: str(row.agent_type),
+    supportsOutreach: Boolean(row.supports_outreach),
+    apiConfigured: connected.has(str(row.id)),
+    updatedAt: str(row.updated_at),
+  }));
 }
 
 export async function getWorkspaceSettings(orgId: string, userId: string) {
