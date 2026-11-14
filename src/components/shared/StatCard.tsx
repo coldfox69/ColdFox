@@ -8,7 +8,7 @@ interface StatCardProps {
   changeType?: 'positive' | 'negative' | 'neutral';
   icon?: React.ReactNode;
   /** Semantic plate behind the icon. Defaults to a neutral tile. */
-  tone?: 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'ai';
+  tone?: 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'ai' | 'teal' | 'violet' | 'amber';
   className?: string;
 }
 
@@ -19,6 +19,9 @@ const toneClasses = {
   warning: 'icon-tile-warning',
   danger: 'icon-tile-danger',
   ai: 'icon-tile-ai',
+  teal: 'icon-tile-teal',
+  violet: 'icon-tile-violet',
+  amber: 'icon-tile-amber',
 } as const;
 
 export function StatCard({ title, value, change, changeType = 'neutral', icon, tone = 'neutral', className }: StatCardProps) {

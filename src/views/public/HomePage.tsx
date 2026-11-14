@@ -99,7 +99,7 @@ export default function HomePage() {
 
       <section className="relative overflow-hidden px-6 pb-16 pt-28 sm:px-8 lg:pb-20 lg:pt-32">
         <div className="relative mx-auto max-w-[1600px]">
-          <div className="grid-lines" aria-hidden="true" />
+          {/* Background contours are provided by the canvas; no square grid. */}
           <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16">
           <div>
             <div className="mb-5 flex items-start gap-3">
