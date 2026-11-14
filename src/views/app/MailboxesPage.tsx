@@ -5,6 +5,7 @@ import { Plus, RefreshCw, Plug, Zap, Trash2, Mail } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ProviderMark } from '@/components/brand/BrandLogo';
 import { useToast } from '@/components/shared/ToastProvider';
 import { ConnectMailboxWizard, type MailboxConnectInput } from '@/components/mailbox/ConnectMailboxWizard';
 import { type MailboxVM as Mailbox, type MailboxStatus } from '@/lib/view-models';
@@ -137,8 +138,8 @@ export default function MailboxesPage({
       />
 
       {items.some(m => m.status !== 'connected') && (
-        <div className="flex flex-wrap items-center gap-3 rounded-[12px] border border-[var(--cf-warning)]/35 bg-[var(--cf-warning)]/[0.07] px-4 py-3">
-          <RefreshCw className="h-4 w-4 shrink-0 text-[var(--cf-warning)]" />
+        <div className="flex flex-wrap items-center gap-3 rounded-[12px] border border-[var(--warning-border)] bg-[var(--warning-soft)] px-4 py-3">
+          <RefreshCw className="h-4 w-4 shrink-0 text-[var(--warning)]" />
           <p className="min-w-0 flex-1 text-[13px] text-foreground">
             {items.filter(m => m.status !== 'connected').length} mailbox{items.filter(m => m.status !== 'connected').length === 1 ? '' : 'es'} cannot send right now. Reconnect before starting a campaign.
           </p>
@@ -162,9 +163,9 @@ export default function MailboxesPage({
               <article key={m.id} className="neu-card flex flex-col gap-4 rounded-[16px] p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-accent">
-                      <Mail className="h-5 w-5 text-accent-foreground" />
-                    </div>
+                    <span className="icon-tile h-10 w-10 shrink-0 rounded-[10px]">
+                      <ProviderMark provider={m.provider} size={22} />
+                    </span>
                     <div className="min-w-0">
                       <p className="truncate text-[14px] font-semibold text-foreground">{m.email}</p>
                       <p className="text-[12px] text-muted-foreground">{providerLabel[m.provider]}{m.displayName ? ` · Sending as ${m.displayName}` : ''} · Last sync {m.lastSync}</p>
@@ -179,7 +180,7 @@ export default function MailboxesPage({
                     <span className="tabular-nums">{m.sentToday} / {m.dailyLimit}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={m.dailyLimit} aria-valuenow={m.sentToday} aria-label={`Daily send usage for ${m.email}`}>
-                    <div className={cn('h-full rounded-full transition-[width] duration-[var(--dur-slow)] ease-[var(--ease)]', pct >= 95 ? 'bg-[var(--cf-warning)]' : 'bg-primary')} style={{ width: `${pct}%` }} />
+                    <div className={cn('h-full rounded-full transition-[width] duration-[var(--dur-slow)] ease-[var(--ease)]', pct >= 100 ? 'bg-[var(--danger)]' : pct >= 90 ? 'bg-[var(--warning)]' : 'bg-primary')} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
 
@@ -193,7 +194,7 @@ export default function MailboxesPage({
                       aria-checked={m.warmupEnabled}
                       aria-label={`Warm-up for ${m.email}`}
                       onClick={() => void toggleWarmup(m)}
-                      className={cn('relative h-5 w-9 rounded-full transition-colors', m.warmupEnabled ? 'bg-[var(--cf-success)]' : 'bg-muted-foreground/30')}
+                      className={cn('relative h-5 w-9 rounded-full transition-colors', m.warmupEnabled ? 'bg-[var(--success)]' : 'bg-muted-foreground/30')}
                     >
                       <span className={cn('absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform', m.warmupEnabled && 'translate-x-4')} />
                     </button>

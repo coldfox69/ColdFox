@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useToast } from '@/components/shared/ToastProvider';
 import { Search } from 'lucide-react';
+import { BrandLogo, type BrandKey } from '@/components/brand/BrandLogo';
 import { useDebouncedValue } from '@/hooks/use-debounce';
 
 
@@ -144,9 +145,16 @@ export function AdminModulePage({
             <tbody className="divide-y divide-border">
               {filtered.map((item, index) => (
                 <tr key={String(item.id ?? index)} className="transition-colors duration-[var(--dur)] hover:bg-muted/40">
-                  {columns.map((col) => (
+                  {columns.map((col, colIndex) => (
                     <td key={col.key} className="px-4 py-3 text-foreground truncate max-w-xs">
-                      {formatValue(item[col.key])}
+                      {module === 'integrations' && colIndex === 0 && typeof item.key === 'string' && (item.key === 'gmail' || item.key === 'microsoft' || item.key === 'supabase' || item.key === 'google') ? (
+                        <span className="inline-flex items-center gap-2">
+                          <BrandLogo brand={(item.key === 'google' ? 'google' : item.key === 'microsoft' ? 'microsoft' : item.key === 'supabase' ? 'supabase' : 'gmail') as BrandKey} size={16} decorative />
+                          {formatValue(item[col.key])}
+                        </span>
+                      ) : (
+                        formatValue(item[col.key])
+                      )}
                     </td>
                   ))}
                 </tr>

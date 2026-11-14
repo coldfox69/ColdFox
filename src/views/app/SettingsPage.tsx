@@ -37,7 +37,7 @@ function SectionCard({ icon, title, description, children }: {
   return (
     <section className="neu-card rounded-[16px] p-5 sm:p-6">
       <div className="mb-5 flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-accent text-accent-foreground">{icon}</span>
+        <span className="icon-tile h-9 w-9 shrink-0 rounded-[10px]">{icon}</span>
         <div>
           <h2 className="text-[15px] font-semibold text-foreground">{title}</h2>
           <p className="mt-0.5 text-[12px] text-muted-foreground">{description}</p>
@@ -209,10 +209,10 @@ export default function SettingsPage({ data }: { data: SettingsData }) {
           {data.plans.map(p => {
             const isCurrent = p.key === currentPlan;
             return (
-              <div key={p.key} className={cn('rounded-[12px] border p-4', isCurrent ? 'border-primary bg-accent/40' : 'border-border bg-card')}>
+              <div key={p.key} className={cn('rounded-[12px] border p-4', isCurrent ? 'border-[var(--brand-border)] bg-[var(--brand-soft)]' : 'border-border bg-card')}>
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[13px] font-semibold text-foreground">{p.name}</p>
-                  {isCurrent && <StatusBadge variant="info" size="sm">Current plan</StatusBadge>}
+                  {isCurrent && <StatusBadge variant="brand" size="sm">Current plan</StatusBadge>}
                 </div>
                 <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{p.description}</p>
               </div>

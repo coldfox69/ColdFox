@@ -459,7 +459,7 @@ async function getOverviewUncached(orgId: string): Promise<OverviewVM> {
     return {
       text: `${who} · ${str(row.event_type).replace(/_/g, ' ')}${campaign ? ` in ${str(campaign.name)}` : ''}`,
       time: formatRelative(row.occurred_at),
-      dot: str(row.event_type).includes('bounce') ? 'bg-red-500' : str(row.event_type) === 'replied' ? 'bg-emerald-500' : 'bg-blue-500',
+      dot: str(row.event_type).includes('bounce') ? 'bg-[var(--danger)]' : str(row.event_type) === 'replied' ? 'bg-[var(--success)]' : 'bg-primary',
     };
   });
 

@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { X, Check, Mail, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ProviderMark, type MailboxProvider } from '@/components/brand/BrandLogo';
 
-type Provider = 'gmail' | 'outlook' | 'smtp';
+type Provider = MailboxProvider;
 
-const providers: { id: Provider; label: string; hint: string }[] = [
-  { id: 'gmail', label: 'Gmail', hint: 'Sign in with Google and approve sending access.' },
-  { id: 'outlook', label: 'Outlook', hint: 'Sign in with Microsoft 365 or Outlook.com.' },
-  { id: 'smtp', label: 'SMTP / IMAP', hint: 'Use your own mail server credentials.' },
+const providers: { id: Provider; label: string; hint: string; oauth: boolean }[] = [
+  { id: 'gmail', label: 'Gmail', hint: 'Sign in with Google and approve sending access.', oauth: true },
+  { id: 'outlook', label: 'Microsoft Outlook', hint: 'Sign in with Microsoft 365 or Outlook.com.', oauth: true },
+  { id: 'smtp', label: 'SMTP / IMAP', hint: 'Use your own mail server credentials.', oauth: false },
 ];
 
 const inputCls = 'w-full rounded-[10px] border border-border bg-input px-3.5 py-2.5 text-[13px] outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/15 disabled:cursor-not-allowed disabled:opacity-60';
@@ -120,20 +121,40 @@ export function ConnectMailboxWizard({ onClose, onConnect, configured = { gmail:
 
         {step === 0 && (
           <div className="grid gap-3">
-            {providers.map(p => (
-              <button
-                key={p.id}
-                onClick={() => { setProvider(p.id); setError(''); }}
-                aria-pressed={provider === p.id}
-                className={cn(
-                  'rounded-[12px] border p-4 text-left transition-[border-color,background-color,box-shadow]',
-                  provider === p.id ? 'border-primary bg-primary/[0.04] shadow-[var(--shadow-raised-sm)]' : 'border-border bg-card hover:border-primary/50',
-                )}
-              >
-                <p className="text-[13px] font-semibold text-foreground">{p.label}</p>
-                <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">{p.hint}</p>
-              </button>
-            ))}
+            {providers.map(p => {
+              const oauthReady = !p.oauth || configured[p.id as 'gmail' | 'outlook'];
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => { setProvider(p.id); setError(''); }}
+                  aria-pressed={provider === p.id}
+                  className={cn(
+                    'flex items-center gap-3 rounded-[12px] border p-3.5 text-left transition-[border-color,background-color,box-shadow]',
+                    provider === p.id ? 'border-primary bg-primary/[0.04] shadow-[var(--shadow-raised-sm)]' : 'border-border bg-card hover:border-primary/50',
+                  )}
+                >
+                  <span className="icon-tile h-10 w-10 rounded-[10px]">
+                    <ProviderMark provider={p.id} size={22} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="text-[13px] font-semibold text-foreground">{p.label}</span>
+                      {!oauthReady && (
+                        <span className="rounded-md bg-[var(--warning-soft)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--warning)]">OAuth not configured</span>
+                      )}
+                    </span>
+                    <span className="mt-0.5 block text-[12px] leading-relaxed text-muted-foreground">{p.hint}</span>
+                  </span>
+                  <span className={cn(
+                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
+                    provider === p.id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card',
+                  )}>
+                    {provider === p.id && <Check className="h-3 w-3" />}
+                  </span>
+                </button>
+              );
+            })}
+            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">Gmail and Outlook connect over OAuth, so your password never reaches ColdFox. SMTP works with any provider.</p>
           </div>
         )}
 

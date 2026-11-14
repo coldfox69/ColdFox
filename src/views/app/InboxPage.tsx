@@ -238,7 +238,7 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
               aria-current={folder === f.id ? 'true' : undefined}
               className={cn(
                 'flex w-full items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13px] transition-colors',
-                folder === f.id ? 'bg-accent font-medium text-accent-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                folder === f.id ? 'bg-[var(--brand-soft)] font-medium text-[var(--brand-strong)]' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
             >
               <f.icon className="h-4 w-4 shrink-0" />
@@ -273,7 +273,7 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
                 <button
                   onClick={() => openThread(t.id)}
                   aria-current={selectedId === t.id ? 'true' : undefined}
-                  className={cn('w-full p-4 text-left transition-colors hover:bg-muted/60', selectedId === t.id && 'bg-accent/50')}
+                  className={cn('w-full p-4 text-left transition-colors hover:bg-muted/60', selectedId === t.id && 'bg-[var(--brand-soft)]')}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className={cn('truncate text-[13px] text-foreground', t.unread && 'font-semibold')}>{t.leadName}</span>
@@ -309,7 +309,7 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
                     <p className="truncate text-[12px] text-muted-foreground">{selected.leadEmail} · {selected.campaign}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <button onClick={() => void toggleAssigned(selected.id)} aria-pressed={assigned.has(selected.id)} className={cn('rounded-[8px] border px-3 py-1.5 text-[12px] font-medium', assigned.has(selected.id) ? 'border-primary bg-accent text-accent-foreground' : 'border-border hover:bg-muted')}>
+                    <button onClick={() => void toggleAssigned(selected.id)} aria-pressed={assigned.has(selected.id)} className={cn('rounded-[8px] border px-3 py-1.5 text-[12px] font-medium', assigned.has(selected.id) ? 'border-[var(--brand-border)] bg-[var(--brand-soft)] text-[var(--brand-strong)]' : 'border-border hover:bg-muted')}>
                       {assigned.has(selected.id) ? 'Assigned to you' : 'Assign to me'}
                     </button>
                     <button onClick={() => void toggleArchive(selected)} className="rounded-[8px] border border-border px-3 py-1.5 text-[12px] font-medium hover:bg-muted">
@@ -332,8 +332,8 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
                             <button role="menuitem" onClick={() => { setMenuOpen(false); void markUnread(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-foreground hover:bg-muted">Mark as unread</button>
                             <button role="menuitem" onClick={() => { setMenuOpen(false); void markAsNotSpam(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-foreground hover:bg-muted">Move to inbox (not spam)</button>
                             <div className="my-1 border-t border-border" />
-                            <button role="menuitem" onClick={() => { setMenuOpen(false); void reportAsSpam(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[var(--cf-warning)] hover:bg-muted">Report spam</button>
-                            <button role="menuitem" onClick={() => { setMenuOpen(false); void deleteThread(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-destructive hover:bg-muted">Delete conversation</button>
+                            <button role="menuitem" onClick={() => { setMenuOpen(false); void reportAsSpam(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[var(--warning)] hover:bg-muted">Report spam</button>
+                            <button role="menuitem" onClick={() => { setMenuOpen(false); void deleteThread(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[var(--danger)] hover:bg-muted">Delete conversation</button>
                           </div>
                         </>
                       )}
@@ -344,14 +344,14 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
 
               <div className="flex-1 space-y-4 overflow-y-auto p-4">
                 {selected.messages.map(m => (
-                  <div key={m.id} className={cn('max-w-[85%] whitespace-pre-wrap rounded-[14px] p-4 text-[13px] sm:max-w-[70%]', m.isOutbound ? 'ml-auto bg-accent text-accent-foreground' : 'border border-border bg-card text-foreground')}>
+                  <div key={m.id} className={cn('max-w-[85%] whitespace-pre-wrap rounded-[14px] p-4 text-[13px] sm:max-w-[70%]', m.isOutbound ? 'ml-auto bg-[var(--brand-soft)] text-[var(--brand-strong)]' : 'border border-border bg-card text-foreground')}>
                     <p className="mb-1.5 text-[11px] opacity-70">{m.isOutbound ? 'You' : selected.leadName} · {m.sentAt}</p>
                     {m.body}
                   </div>
                 ))}
                 {selected.messages.length === 0 && <p className="text-center text-[13px] text-muted-foreground">No messages in this thread yet.</p>}
                 {threadNotes.map(n => (
-                  <div key={n.id} className="flex gap-2 rounded-[10px] border border-[var(--cf-warning)]/30 bg-[var(--cf-warning)]/[0.07] p-3 text-[12px] text-[var(--cf-warning)]">
+                  <div key={n.id} className="flex gap-2 rounded-[10px] border border-[var(--warning-border)] bg-[var(--warning-soft)] p-3 text-[12px] text-[var(--warning)]">
                     <StickyNote className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     <span><strong>Internal note</strong> (not sent): {n.text}</span>
                   </div>

@@ -197,8 +197,8 @@ export function LeadImportStep({
       <div className="space-y-5">
         <div className="rounded-[12px] border border-border bg-card p-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--cf-success)]/10">
-              <CheckCircle2 className="h-5 w-5 text-[var(--cf-success)]" />
+            <div className="icon-tile-success h-10 w-10 shrink-0 rounded-[10px]">
+              <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
               <h3 className="text-[15px] font-semibold text-foreground">Import finished</h3>
@@ -214,9 +214,9 @@ export function LeadImportStep({
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: 'Imported', value: result.created, tone: 'text-[var(--cf-success)]' },
-            { label: 'Duplicates skipped', value: result.duplicates, tone: 'text-[var(--cf-warning)]' },
-            { label: 'Invalid emails', value: result.invalid, tone: 'text-destructive' },
+            { label: 'Imported', value: result.created, tone: 'text-[var(--success)]' },
+            { label: 'Duplicates skipped', value: result.duplicates, tone: 'text-[var(--warning)]' },
+            { label: 'Invalid emails', value: result.invalid, tone: 'text-[var(--danger)]' },
             { label: 'Rows in file', value: result.totalRows, tone: 'text-foreground' },
           ].map((stat) => (
             <div key={stat.label} className="rounded-[12px] border border-border bg-card p-3">
@@ -227,7 +227,7 @@ export function LeadImportStep({
         </div>
 
         {result.limited && (
-          <p className="flex gap-2 rounded-[10px] border border-[var(--cf-warning)]/40 bg-[var(--cf-warning)]/10 p-3 text-[12px] text-[var(--cf-warning)]">
+          <p className="flex gap-2 rounded-[10px] border border-[var(--warning-border)] bg-[var(--warning-soft)] p-3 text-[12px] text-[var(--warning)]">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> Your plan&apos;s lead limit was reached partway through. The remaining rows were not imported.
           </p>
         )}

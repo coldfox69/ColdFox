@@ -114,7 +114,7 @@ export function SendingSettingsStep({
 
         <Section title={`Daily sending cap: ${value.dailyCap} emails`}>
           <input type="range" min={10} max={Math.max(300, selected?.dailyLimit ?? 300)} step={5} value={value.dailyCap}
-            onChange={(event) => set('dailyCap', Number(event.target.value))} aria-label="Daily sending cap" className="w-full accent-blue-600" />
+            onChange={(event) => set('dailyCap', Number(event.target.value))} aria-label="Daily sending cap" className="w-full accent-[var(--primary)]" />
           <div className="flex justify-between text-[12px] text-muted-foreground"><span>10</span><span>150 recommended max</span><span>{Math.max(300, selected?.dailyLimit ?? 300)}</span></div>
         </Section>
 
@@ -132,7 +132,7 @@ export function SendingSettingsStep({
         </Section>
 
         <Section title={`Sending interval: ${value.intervalMinutes} min between emails`}>
-          <input type="range" min={1} max={30} value={value.intervalMinutes} onChange={(event) => set('intervalMinutes', Number(event.target.value))} aria-label="Sending interval" className="w-full accent-blue-600" />
+          <input type="range" min={1} max={30} value={value.intervalMinutes} onChange={(event) => set('intervalMinutes', Number(event.target.value))} aria-label="Sending interval" className="w-full accent-[var(--primary)]" />
           <p className="text-[12px] text-muted-foreground mt-2">Stored with the campaign for reference; the worker spaces sends conservatively.</p>
         </Section>
 
@@ -162,7 +162,7 @@ export function SendingSettingsStep({
         <Section title="Pause conditions">
           <label className="flex items-center justify-between gap-3 py-2 text-sm cursor-pointer">
             <span className="text-foreground">Stop the sequence when the contact replies</span>
-            <input type="checkbox" className="h-4 w-4 accent-blue-600" checked={value.pauseOnReply} onChange={(event) => set('pauseOnReply', event.target.checked)} />
+            <input type="checkbox" className="h-4 w-4 accent-[var(--primary)]" checked={value.pauseOnReply} onChange={(event) => set('pauseOnReply', event.target.checked)} />
           </label>
           <p className="text-[12px] text-muted-foreground">Hard bounces and complaints are always suppressed and never retried.</p>
         </Section>
@@ -190,7 +190,7 @@ export function SendingSettingsStep({
 export function ValidationList({ issues }: { issues: { level: 'error' | 'warning'; message: string }[] }) {
   if (issues.length === 0) {
     return (
-      <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm text-[var(--cf-success)]">
+      <div className="flex items-center gap-2 rounded-xl bg-[var(--success-soft)] px-4 py-3 text-sm text-[var(--cf-success)]">
         <CheckCircle2 className="w-4 h-4" /> Everything looks good. You can launch this campaign.
       </div>
     );

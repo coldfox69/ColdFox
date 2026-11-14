@@ -1,19 +1,21 @@
 import { cn } from '@/lib/utils';
 
 interface BadgeProps {
-  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'muted' | 'outline';
+  variant?: 'default' | 'brand' | 'success' | 'warning' | 'danger' | 'info' | 'ai' | 'muted' | 'outline';
   size?: 'sm' | 'md';
   children: React.ReactNode;
   className?: string;
 }
 
-/* Quiet tags inside the neutral ramp. Colour only carries meaning. */
+/* Quiet tags inside the semantic ramp. Colour only carries meaning. */
 const variantClasses = {
-  default: 'bg-accent text-accent-foreground',
-  success: 'bg-[color-mix(in_srgb,var(--cf-success)_14%,transparent)] text-[var(--cf-success)]',
-  warning: 'bg-[color-mix(in_srgb,var(--cf-warning)_14%,transparent)] text-[var(--cf-warning)]',
-  danger: 'bg-[color-mix(in_srgb,var(--destructive)_14%,transparent)] text-destructive',
-  info: 'bg-accent text-accent-foreground',
+  default: 'bg-muted text-muted-foreground',
+  brand: 'bg-[var(--brand-soft)] text-[var(--brand-strong)]',
+  success: 'bg-[var(--success-soft)] text-[var(--success)]',
+  warning: 'bg-[var(--warning-soft)] text-[var(--warning)]',
+  danger: 'bg-[var(--danger-soft)] text-[var(--danger)]',
+  info: 'bg-[var(--info-soft)] text-[var(--info)]',
+  ai: 'bg-[var(--ai-soft)] text-[var(--ai)]',
   muted: 'bg-muted text-muted-foreground',
   outline: 'border border-border text-foreground',
 };
@@ -42,7 +44,7 @@ export function CampaignStatusBadge({ status }: { status: string }) {
     paused: { label: 'Paused', variant: 'warning' },
     draft: { label: 'Draft', variant: 'muted' },
     scheduled: { label: 'Scheduled', variant: 'info' },
-    completed: { label: 'Completed', variant: 'default' },
+    completed: { label: 'Completed', variant: 'success' },
     cancelled: { label: 'Cancelled', variant: 'danger' },
   };
   const config = map[status] || { label: status, variant: 'muted' };

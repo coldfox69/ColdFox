@@ -76,7 +76,7 @@ export default function AgentsPage({ agents }: { agents: AgentCard[] }) {
           {filtered.map((agent) => (
             <article key={agent.id} className="neu-card flex flex-col gap-4 rounded-[16px] p-5">
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-accent text-accent-foreground">
+                <span className="icon-tile-ai h-10 w-10 shrink-0 rounded-[10px]">
                   <AgentIcon name={agent.icon} />
                 </span>
                 <div className="min-w-0">
@@ -92,7 +92,7 @@ export default function AgentsPage({ agents }: { agents: AgentCard[] }) {
               <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
                 <span className={cn(
                   'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
-                  agent.apiConfigured ? 'bg-[var(--cf-success)]/10 text-[var(--cf-success)]' : 'bg-muted text-muted-foreground',
+                  agent.apiConfigured ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-muted text-muted-foreground',
                 )}>
                   {agent.apiConfigured && <CheckCircle2 className="h-3 w-3" />}
                   {agent.apiConfigured ? 'Ready to run' : 'Waiting for API setup'}

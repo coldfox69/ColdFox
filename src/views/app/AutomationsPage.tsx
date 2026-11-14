@@ -142,7 +142,7 @@ export default function AutomationsPage({ data, agents }: { data: AutomationsDat
             {agents.map((agent) => (
               <article key={agent.id} className="neu-card flex flex-col gap-3 rounded-[16px] p-4">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-accent text-accent-foreground">
+                  <span className="icon-tile-ai h-9 w-9 shrink-0 rounded-[10px]">
                     <AgentIcon name={agent.icon} className="h-4 w-4" />
                   </span>
                   <div className="min-w-0">
@@ -156,7 +156,7 @@ export default function AutomationsPage({ data, agents }: { data: AutomationsDat
                 <div className="flex items-center justify-between gap-2">
                   <span className={cn(
                     'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
-                    agent.apiConfigured ? 'bg-[var(--cf-success)]/10 text-[var(--cf-success)]' : 'bg-muted text-muted-foreground',
+                    agent.apiConfigured ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-muted text-muted-foreground',
                   )}>
                     {agent.apiConfigured ? <CheckCircle2 className="h-3 w-3" /> : null}
                     {agent.apiConfigured ? 'Ready to run' : 'Waiting for API setup'}

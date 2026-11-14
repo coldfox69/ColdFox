@@ -257,7 +257,7 @@ export default function AiWriterPage() {
       />
 
       {error && (
-        <p role="alert" className="flex items-center gap-2 rounded-[10px] border border-destructive/30 bg-destructive/5 px-3 py-2 text-[13px] text-destructive">
+        <p role="alert" className="flex items-center gap-2 rounded-[10px] border border-[var(--danger-border)] bg-[var(--danger-soft)] px-3 py-2 text-[13px] text-[var(--danger)]">
           <AlertTriangle className="h-4 w-4 shrink-0" /> {error}
         </p>
       )}
@@ -266,7 +266,7 @@ export default function AiWriterPage() {
         {/* Assistant */}
         <section className="neu-card flex min-h-[460px] flex-col rounded-[16px]" aria-busy={generating}>
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-accent text-accent-foreground">
+            <span className="icon-tile-ai h-8 w-8 rounded-[9px]">
               <Sparkles className="h-4 w-4" />
             </span>
             <div>
@@ -280,7 +280,7 @@ export default function AiWriterPage() {
                 key={message.id}
                 className={cn(
                   'max-w-[85%] rounded-[14px] px-4 py-2.5 text-[13px] leading-relaxed',
-                  message.role === 'user' ? 'ml-auto bg-accent text-accent-foreground' : 'border border-border bg-muted text-foreground',
+                  message.role === 'user' ? 'ml-auto bg-[var(--brand-soft)] text-[var(--brand-strong)]' : 'border border-border bg-muted text-foreground',
                 )}
               >
                 {message.text}

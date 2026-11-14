@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Download, Info, BarChart2 } from 'lucide-react';
+import { Download, Info, BarChart2, Send, CheckCircle2, Reply, UserMinus } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatCard } from '@/components/shared/StatCard';
@@ -101,10 +101,10 @@ export default function AnalyticsPage({ data }: { data: AnalyticsVM }) {
       </p>
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
-        <StatCard title="Emails sent" value={overview.emailsSent.toLocaleString()} change="Accepted by your provider" />
-        <StatCard title="Delivered" value={`${pct(overview.delivered, overview.emailsSent)}%`} change={`${overview.delivered.toLocaleString()} accepted`} />
-        <StatCard title="Reply rate" value={`${rates.reply}%`} change={`${overview.replies.toLocaleString()} replies`} changeType={overview.replies > 0 ? 'positive' : 'neutral'} />
-        <StatCard title="Unsubscribes" value={`${rates.unsub}%`} change={`${overview.unsubscribes.toLocaleString()} suppressed`} />
+        <StatCard title="Emails sent" value={overview.emailsSent.toLocaleString()} change="Accepted by your provider" icon={<Send className="h-4 w-4" />} tone="brand" />
+        <StatCard title="Delivered" value={`${pct(overview.delivered, overview.emailsSent)}%`} change={`${overview.delivered.toLocaleString()} accepted`} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" />
+        <StatCard title="Reply rate" value={`${rates.reply}%`} change={`${overview.replies.toLocaleString()} replies`} changeType={overview.replies > 0 ? 'positive' : 'neutral'} icon={<Reply className="h-4 w-4" />} tone="success" />
+        <StatCard title="Unsubscribes" value={`${rates.unsub}%`} change={`${overview.unsubscribes.toLocaleString()} suppressed`} icon={<UserMinus className="h-4 w-4" />} tone="warning" />
       </div>
 
       <section className="neu-card min-w-0 rounded-[16px] p-5">
@@ -136,6 +136,10 @@ export default function AnalyticsPage({ data }: { data: AnalyticsVM }) {
             </ResponsiveContainer>
           </div>
         )}
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-[12px] text-muted-foreground" aria-hidden="true">
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[var(--chart-1)]" /> Sent</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[var(--chart-2)]" /> Replies</span>
+        </div>
         {!hasSends && (
           <p className="mt-2 text-[12px] text-muted-foreground">No sends yet. The chart fills in as your first campaign runs.</p>
         )}
@@ -159,7 +163,7 @@ export default function AnalyticsPage({ data }: { data: AnalyticsVM }) {
                     <span className="shrink-0 text-[12px] tabular-nums text-muted-foreground">{m.sentToday.toLocaleString()} / {m.dailyLimit.toLocaleString()}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div className={cn('h-full rounded-full transition-[width] duration-[var(--dur-slow)] ease-[var(--ease)]', used >= 95 ? 'bg-[var(--cf-warning)]' : 'bg-primary')} style={{ width: `${Math.min(100, used)}%` }} />
+                    <div className={cn('h-full rounded-full transition-[width] duration-[var(--dur-slow)] ease-[var(--ease)]', used >= 100 ? 'bg-[var(--danger)]' : used >= 90 ? 'bg-[var(--warning)]' : 'bg-primary')} style={{ width: `${Math.min(100, used)}%` }} />
                   </div>
                 </div>
               );
@@ -182,7 +186,7 @@ export default function AnalyticsPage({ data }: { data: AnalyticsVM }) {
                     key={c.id}
                     onClick={() => toggleCompare(c.id)}
                     aria-pressed={compareIds.includes(c.id)}
-                    className={cn('rounded-[8px] border px-3 py-1.5 text-[12px] font-medium transition-colors', compareIds.includes(c.id) ? 'border-primary bg-accent text-accent-foreground' : 'border-border text-muted-foreground hover:bg-muted')}
+                    className={cn('rounded-[8px] border px-3 py-1.5 text-[12px] font-medium transition-colors', compareIds.includes(c.id) ? 'border-[var(--brand-border)] bg-[var(--brand-soft)] text-[var(--brand-strong)]' : 'border-border text-muted-foreground hover:bg-muted')}
                   >
                     {c.name}
                   </button>

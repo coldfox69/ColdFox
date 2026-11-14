@@ -85,7 +85,7 @@ export function EmailComposeStep({
             {variables.map((variable) => (
               <button key={variable} type="button" onClick={() => insert(variable)}
                 className={cn('px-2.5 py-1 rounded-lg text-[12px] font-mono border transition-colors',
-                  detected.includes(variable) ? 'border-[var(--cf-success)]/40 bg-[color-mix(in_srgb,var(--cf-success)_12%,transparent)] text-[var(--cf-success)]' : 'border-border bg-background text-foreground hover:bg-muted')}>
+                  detected.includes(variable) ? 'border-[var(--success-border)] bg-[var(--success-soft)] text-[var(--success)]' : 'border-border bg-background text-foreground hover:bg-muted')}>
                 {`{{${variable}}}`}
               </button>
             ))}
@@ -96,7 +96,7 @@ export function EmailComposeStep({
 
       <div className="lg:col-span-2">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 text-accent-foreground" /> Merge preview</p>
+          <p className="text-sm font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 text-[var(--ai)]" /> Merge preview</p>
           <div className="flex gap-1 p-1 bg-muted rounded-lg">
             <button aria-label="Desktop preview" aria-pressed={previewMode === 'desktop'} onClick={() => setPreviewMode('desktop')} className={cn('p-1.5 rounded-md', previewMode === 'desktop' && 'bg-card shadow-sm')}><Monitor className="w-3.5 h-3.5" /></button>
             <button aria-label="Mobile preview" aria-pressed={previewMode === 'mobile'} onClick={() => setPreviewMode('mobile')} className={cn('p-1.5 rounded-md', previewMode === 'mobile' && 'bg-card shadow-sm')}><Smartphone className="w-3.5 h-3.5" /></button>

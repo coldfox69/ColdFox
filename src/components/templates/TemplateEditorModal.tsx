@@ -240,7 +240,7 @@ export function TemplateEditorModal({
           <div className="grid gap-3">
             <button type="button" onClick={() => setChooseMode('single')} className="group rounded-[14px] border border-border bg-card p-4 text-left transition-[border-color,box-shadow] hover:border-primary/50 hover:shadow-[var(--shadow-raised-sm)]">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-accent text-accent-foreground"><FileText className="h-5 w-5" /></div>
+                <div className="icon-tile h-10 w-10 shrink-0 rounded-[10px]"><FileText className="h-5 w-5" /></div>
                 <div>
                   <span className="block text-[14px] font-semibold text-foreground">Single template</span>
                   <span className="mt-0.5 block text-[12px] leading-relaxed text-muted-foreground">One subject and body, reused for every recipient.</span>
@@ -249,7 +249,7 @@ export function TemplateEditorModal({
             </button>
             <button type="button" onClick={() => setChooseMode('group')} className="group rounded-[14px] border border-border bg-card p-4 text-left transition-[border-color,box-shadow] hover:border-primary/50 hover:shadow-[var(--shadow-raised-sm)]">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-accent text-accent-foreground"><Layers className="h-5 w-5" /></div>
+                <div className="icon-tile h-10 w-10 shrink-0 rounded-[10px]"><Layers className="h-5 w-5" /></div>
                 <div>
                   <span className="block text-[14px] font-semibold text-foreground">Template group</span>
                   <span className="mt-0.5 block text-[12px] leading-relaxed text-muted-foreground">Two or more variants that rotate between recipients.</span>
@@ -274,7 +274,7 @@ export function TemplateEditorModal({
             <span className="hidden shrink-0 items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:inline-flex">
               {isGroup ? <><Layers className="h-3 w-3" /> Group</> : <><FileText className="h-3 w-3" /> Single</>}
             </span>
-            {aiPersonalization && <span className="hidden shrink-0 items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-[11px] font-medium text-accent-foreground sm:inline-flex"><Sparkles className="h-3 w-3" /> AI personalized</span>}
+            {aiPersonalization && <span className="hidden shrink-0 items-center gap-1 rounded-md bg-[var(--ai-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--ai)] sm:inline-flex"><Sparkles className="h-3 w-3" /> AI personalized</span>}
           </div>
           <button type="button" aria-label="Close" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
@@ -303,7 +303,7 @@ export function TemplateEditorModal({
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <legend className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
                   {isGroup ? `Variant ${index + 1}` : 'Email content'}
-                  {reviewFor === index && reviewBusy && <span className="inline-flex items-center gap-1 font-normal normal-case tracking-normal text-accent-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Reviewing…</span>}
+                  {reviewFor === index && reviewBusy && <span className="inline-flex items-center gap-1 font-normal normal-case tracking-normal text-[var(--ai)]"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Reviewing…</span>}
                 </legend>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => void runReview(index)} disabled={reviewBusy || !variant.subject.trim() || !variant.body.trim()} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[12px] font-medium text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50">
@@ -340,7 +340,7 @@ export function TemplateEditorModal({
                       <p className="text-[13px] font-semibold text-foreground">{review.original.subject}</p>
                       <p className="mt-2 whitespace-pre-wrap text-[13px] text-foreground/90">{review.original.body_text}</p>
                     </div>
-                    <div className="rounded-[10px] border border-primary/30 bg-primary/[0.04] p-3">
+                    <div className="rounded-[10px] border border-[var(--ai-border)] bg-[var(--ai-soft)] p-3">
                       <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">Improved</p>
                       <p className="text-[13px] font-semibold text-foreground">{review.improved.subject}</p>
                       <p className="mt-2 whitespace-pre-wrap text-[13px] text-foreground/90">{review.improved.body_text}</p>
@@ -352,8 +352,8 @@ export function TemplateEditorModal({
                     </ul>
                   )}
                   {review.issues.length > 0 && (
-                    <div className="mt-3 rounded-[10px] border border-[var(--cf-warning)]/40 bg-[var(--cf-warning)]/10 p-3">
-                      <p className="flex items-center gap-1.5 text-[12px] font-semibold text-foreground"><AlertTriangle className="h-3.5 w-3.5 text-[var(--cf-warning)]" /> Check these yourself</p>
+                    <div className="mt-3 rounded-[10px] border border-[var(--warning-border)] bg-[var(--warning-soft)] p-3">
+                      <p className="flex items-center gap-1.5 text-[12px] font-semibold text-foreground"><AlertTriangle className="h-3.5 w-3.5 text-[var(--warning)]" /> Check these yourself</p>
                       <ul className="mt-1 list-disc space-y-1 pl-5 text-[12px] text-muted-foreground">
                         {review.issues.map((issue, i) => <li key={i}>{issue}</li>)}
                       </ul>

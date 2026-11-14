@@ -36,7 +36,7 @@ function Choice({ options, value, onChange }: { options: string[]; value: string
           aria-pressed={value === opt}
           className={cn(
             'px-3.5 py-3 rounded-xl border text-sm text-left transition-[color,background-color,box-shadow,transform,opacity] duration-[var(--dur)] ease-[var(--ease)]',
-            value === opt ? 'border-blue-500 neu-inset-sm text-blue-700 dark:text-blue-300 font-medium' : 'border-border bg-background text-foreground hover:bg-muted'
+            value === opt ? 'border-primary neu-inset-sm text-primary font-medium' : 'border-border bg-background text-foreground hover:bg-muted'
           )}
         >
           {opt}
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
                   <span className={cn(
                     'w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-semibold transition-[color,background-color,box-shadow,transform,opacity] duration-[var(--dur)] ease-[var(--ease)]',
                     done && 'bg-[var(--cf-success)] text-white',
-                    active && 'rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 shadow-md shadow-blue-500/30',
+                    active && 'rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50',
                     !done && !active && 'bg-muted text-muted-foreground'
                   )}>
                     {done ? <Check className="w-4 h-4" /> : i + 1}

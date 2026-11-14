@@ -146,12 +146,12 @@ export default function LeadsPage({ initialLeads }: { initialLeads: Lead[] }) {
       </div>
 
       {selected.size > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-[12px] border border-border bg-accent/60 px-3 py-2 text-[13px]">
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-[12px] border border-[var(--brand-border)] bg-[var(--brand-soft)] px-3 py-2 text-[13px]">
           <span className="font-medium text-foreground">{selected.size} selected</span>
           {confirmBulkDelete ? (
             <>
               <span className="text-muted-foreground">Delete {selected.size} lead{selected.size === 1 ? '' : 's'}? This cannot be undone.</span>
-              <button onClick={() => void deleteSelected()} disabled={busy} className="ml-auto rounded-lg bg-destructive px-2.5 py-1 font-medium text-destructive-foreground disabled:opacity-50">
+              <button onClick={() => void deleteSelected()} disabled={busy} className="ml-auto rounded-lg bg-[var(--danger)] px-2.5 py-1 font-medium text-white disabled:opacity-50">
                 {busy ? 'Deleting…' : 'Yes, delete'}
               </button>
               <button onClick={() => setConfirmBulkDelete(false)} className="rounded-lg border border-border bg-card px-2.5 py-1 font-medium text-foreground">Keep</button>
@@ -203,11 +203,11 @@ export default function LeadsPage({ initialLeads }: { initialLeads: Lead[] }) {
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map(l => (
-                <tr key={l.id} className={cn('transition-colors hover:bg-muted/40', selected.has(l.id) && 'bg-accent/40')}>
+                <tr key={l.id} className={cn('transition-colors hover:bg-muted/40', selected.has(l.id) && 'bg-[var(--brand-soft)]')}>
                   <td className="px-4 py-3"><input type="checkbox" aria-label={`Select ${l.firstName} ${l.lastName}`} checked={selected.has(l.id)} onChange={() => toggle(l.id)} className="h-4 w-4 rounded accent-primary" /></td>
                   <td className="px-4 py-3">
                     <Link href={`/app/leads/${l.id}`} className="text-left">
-                      <p className="font-medium text-foreground hover:text-accent-foreground">{l.firstName} {l.lastName}</p>
+                      <p className="font-medium text-foreground hover:text-[var(--brand-strong)]">{l.firstName} {l.lastName}</p>
                       <p className="text-[12px] text-muted-foreground">{l.email}</p>
                     </Link>
                   </td>

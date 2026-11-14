@@ -13,9 +13,9 @@ import { cn } from '@/lib/utils';
 import type { OverviewVM } from '@/lib/view-models';
 
 const mailboxDot: Record<string, string> = {
-  connected: 'bg-[var(--cf-success)]',
-  error: 'bg-destructive',
-  syncing: 'bg-[var(--cf-warning)]',
+  connected: 'bg-[var(--success)]',
+  error: 'bg-[var(--danger)]',
+  syncing: 'bg-[var(--warning)]',
   disconnected: 'bg-muted-foreground',
 };
 
@@ -26,13 +26,21 @@ const mailboxLabel: Record<string, string> = {
   disconnected: 'Disconnected',
 };
 
-function StatCard({ label, value, caption, icon, tone }: {
+function StatCard({ label, value, caption, icon, tone = 'neutral' }: {
   label: string;
   value: string;
   caption?: string;
   icon: React.ReactNode;
-  tone?: 'primary' | 'success' | 'warning' | 'danger';
+  tone?: 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'ai';
 }) {
+  const toneClass = {
+    neutral: 'icon-tile',
+    brand: 'icon-tile-brand',
+    success: 'icon-tile-success',
+    warning: 'icon-tile-warning',
+    danger: 'icon-tile-danger',
+    ai: 'icon-tile-ai',
+  }[tone];
   return (
     <div className="neu-card rounded-[16px] p-5">
       <div className="flex items-start justify-between gap-3">
@@ -41,13 +49,7 @@ function StatCard({ label, value, caption, icon, tone }: {
           <p className="mt-1.5 text-[26px] font-semibold leading-none tracking-[-0.02em] text-foreground tabular-nums">{value}</p>
           {caption && <p className="mt-2 text-[12px] text-muted-foreground">{caption}</p>}
         </div>
-        <span className={cn(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]',
-          tone === 'danger' ? 'bg-destructive/10 text-destructive'
-            : tone === 'warning' ? 'bg-[var(--cf-warning)]/10 text-[var(--cf-warning)]'
-              : tone === 'success' ? 'bg-[var(--cf-success)]/10 text-[var(--cf-success)]'
-                : 'bg-accent text-accent-foreground',
-        )}>
+        <span className={cn('h-9 w-9 shrink-0 items-center justify-center rounded-[10px]', toneClass)}>
           {icon}
         </span>
       </div>
@@ -154,7 +156,9 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
       <div>
         <div className="page-band">
           <div className="mx-auto max-w-[1120px] px-6 pb-10 pt-10 lg:px-8 lg:pb-12 lg:pt-12">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium text-accent-foreground">
+            <span className={cn(
+              'inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-[12px] font-medium text-muted-foreground',
+            )}>
               <Sparkles className="h-3.5 w-3.5" /> First-time setup
             </span>
             <h1 className="mt-4 max-w-2xl text-[30px] font-semibold leading-[1.12] tracking-[-0.03em] text-foreground sm:text-[36px]">
@@ -180,7 +184,7 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
                 <div className="flex items-start gap-3">
                   <span className={cn(
                     'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold',
-                    step.done ? 'bg-[var(--cf-success)]/12 text-[var(--cf-success)]' : 'bg-accent text-accent-foreground',
+                    step.done ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'icon-tile',
                   )}>
                     {step.done ? <Check className="h-4 w-4" /> : index + 1}
                   </span>
@@ -216,7 +220,7 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
                 { icon: Send, title: '3. Review and send', text: 'You see a preview of real recipients and can pause or stop at any time.' },
               ].map(item => (
                 <div key={item.title} className="flex gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-muted text-accent-foreground">
+                  <span className="icon-tile h-8 w-8 shrink-0 rounded-[9px]">
                     <item.icon className="h-4 w-4" />
                   </span>
                   <div>
@@ -259,8 +263,8 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
       {attention.length > 0 && (
         <div className="mb-4 space-y-2">
           {attention.slice(0, 2).map(item => (
-            <div key={item.text} className="flex flex-wrap items-center gap-3 rounded-[12px] border border-[var(--cf-warning)]/35 bg-[var(--cf-warning)]/[0.07] px-4 py-3">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--cf-warning)]" />
+            <div key={item.text} className="flex flex-wrap items-center gap-3 rounded-[12px] border border-[var(--warning-border)] bg-[var(--warning-soft)] px-4 py-3">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--warning)]" />
               <p className="min-w-0 flex-1 text-[13px] text-foreground">{item.text}</p>
               <Link href={item.href} className="text-[12px] font-semibold text-[var(--cf-warning)] hover:underline">{item.cta}</Link>
             </div>
@@ -333,7 +337,7 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
                     </div>
                     <div className="mt-1.5 ml-4 flex items-center gap-2">
                       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div className={cn('h-full rounded-full', pct >= 95 ? 'bg-[var(--cf-warning)]' : 'bg-primary')} style={{ width: `${pct}%` }} />
+                        <div className={cn('h-full rounded-full', pct >= 100 ? 'bg-[var(--danger)]' : pct >= 90 ? 'bg-[var(--warning)]' : 'bg-primary')} style={{ width: `${pct}%` }} />
                       </div>
                       <span className="w-20 shrink-0 text-right text-[11px] text-muted-foreground">{mailboxLabel[m.status] ?? m.status}</span>
                     </div>
@@ -345,7 +349,7 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
           {o.sendingHealth > 0 && (
             <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-[12px]">
               <span className="text-muted-foreground">Sending health</span>
-              <span className={cn('font-semibold', o.sendingHealth >= 80 ? 'text-[var(--cf-success)]' : o.sendingHealth >= 60 ? 'text-[var(--cf-warning)]' : 'text-destructive')}>{o.sendingHealth}%</span>
+              <span className={cn('font-semibold', o.sendingHealth >= 80 ? 'text-[var(--success)]' : o.sendingHealth >= 60 ? 'text-[var(--warning)]' : 'text-[var(--danger)]')}>{o.sendingHealth}%</span>
             </div>
           )}
         </SectionCard>
@@ -405,7 +409,7 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
           <ul className="space-y-2.5">
             {recommendations.map((r, i) => (
               <li key={i} className="flex gap-2.5 text-[13px] leading-relaxed text-foreground">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--cf-success)]" />
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" />
                 <span>{r}</span>
               </li>
             ))}
@@ -416,13 +420,13 @@ export default function OverviewPage({ data }: { data: OverviewVM }) {
         <SectionCard title="Jump back in" subtitle="The places people use most">
           <div className="grid gap-2 sm:grid-cols-2">
             {[
-              { label: 'Unified inbox', detail: `${o.replied.toLocaleString()} replies recorded`, href: '/app/inbox', icon: Inbox },
-              { label: 'Lead lists', detail: `${setup.leadLists} list${setup.leadLists === 1 ? '' : 's'}`, href: '/app/lead-lists', icon: Users },
-              { label: 'AI email writer', detail: 'Draft or improve copy', href: '/app/ai-writer', icon: Sparkles },
-              { label: 'Analytics', detail: 'Performance over time', href: '/app/analytics', icon: TrendingUp },
+              { label: 'Unified inbox', detail: `${o.replied.toLocaleString()} replies recorded`, href: '/app/inbox', icon: Inbox, tone: 'neutral' },
+              { label: 'Lead lists', detail: `${setup.leadLists} list${setup.leadLists === 1 ? '' : 's'}`, href: '/app/lead-lists', icon: Users, tone: 'neutral' },
+              { label: 'AI email writer', detail: 'Draft or improve copy', href: '/app/ai-writer', icon: Sparkles, tone: 'ai' },
+              { label: 'Analytics', detail: 'Performance over time', href: '/app/analytics', icon: TrendingUp, tone: 'neutral' },
             ].map(item => (
               <HoverPrefetchLink key={item.href} href={item.href} className="flex items-center gap-3 rounded-[10px] border border-border bg-card px-3 py-2.5 transition-colors hover:bg-muted">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-accent text-accent-foreground">
+                <span className={cn('h-8 w-8 shrink-0 items-center justify-center rounded-[8px]', item.tone === 'ai' ? 'icon-tile-ai' : 'icon-tile')}>
                   <item.icon className="h-4 w-4" />
                 </span>
                 <span className="min-w-0">

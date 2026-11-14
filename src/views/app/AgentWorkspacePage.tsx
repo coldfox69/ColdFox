@@ -248,7 +248,7 @@ export default function AgentWorkspacePage({
           <ArrowLeft className="w-4 h-4" /> AI agents
         </Link>
         <div className="mt-3 flex items-start gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-[10px] bg-accent text-accent-foreground shrink-0">
+          <span className="icon-tile-ai h-11 w-11 shrink-0 rounded-[10px]">
             <AgentIcon name={agent.icon} className="w-5 h-5" />
           </span>
           <div>
@@ -274,7 +274,7 @@ export default function AgentWorkspacePage({
         <div className="lg:col-span-2 space-y-5">
           <section className="neu-card space-y-4 rounded-[16px] p-5">
             <div className="flex items-start gap-3">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[12px] font-semibold text-accent-foreground">1</span>
+              <span className="icon-tile h-7 w-7 shrink-0 rounded-full text-[12px] font-semibold">1</span>
               <div>
                 <h2 className="text-[15px] font-semibold text-foreground">What this agent needs</h2>
                 <p className="mt-0.5 text-[12px] text-muted-foreground">Fill in these details so the agent has what it needs to do its work.</p>
@@ -357,7 +357,7 @@ export default function AgentWorkspacePage({
             <section className="neu-card space-y-4 rounded-[16px] p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[12px] font-semibold text-accent-foreground">2</span>
+                  <span className="icon-tile h-7 w-7 shrink-0 rounded-full text-[12px] font-semibold">2</span>
                   <div>
                     <h2 className="flex items-center gap-2 text-[15px] font-semibold text-foreground">
                       <Mail className="h-4 w-4" /> Email outreach
@@ -481,7 +481,7 @@ export default function AgentWorkspacePage({
 
           <section className="neu-card space-y-4 rounded-[16px] p-5">
             <div className="flex items-start gap-3">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[12px] font-semibold text-accent-foreground">3</span>
+              <span className="icon-tile h-7 w-7 shrink-0 rounded-full text-[12px] font-semibold">3</span>
               <div>
                 <h2 className="text-[15px] font-semibold text-foreground">When should it run</h2>
                 <p className="mt-0.5 text-[12px] text-muted-foreground">Run it now, or schedule the task for later. Scheduled tasks run in the background.</p>
@@ -493,7 +493,7 @@ export default function AgentWorkspacePage({
                 onClick={() => setMode('now')}
                 className={cn(
                   'text-left rounded-[12px] border p-4 transition-[color,background-color,border-color] duration-[var(--dur)] ease-[var(--ease)]',
-                  mode === 'now' ? 'border-primary bg-accent' : 'border-border hover:bg-muted',
+                  mode === 'now' ? 'border-primary bg-[var(--brand-soft)]' : 'border-border hover:bg-muted',
                 )}
               >
                 <span className="flex items-center gap-2 text-[13px] font-medium text-foreground">
@@ -506,7 +506,7 @@ export default function AgentWorkspacePage({
                 onClick={() => setMode('schedule')}
                 className={cn(
                   'text-left rounded-[12px] border p-4 transition-[color,background-color,border-color] duration-[var(--dur)] ease-[var(--ease)]',
-                  mode === 'schedule' ? 'border-primary bg-accent' : 'border-border hover:bg-muted',
+                  mode === 'schedule' ? 'border-primary bg-[var(--brand-soft)]' : 'border-border hover:bg-muted',
                 )}
               >
                 <span className="flex items-center gap-2 text-[13px] font-medium text-foreground">
