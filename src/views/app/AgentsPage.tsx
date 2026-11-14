@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Search, Wand2 } from 'lucide-react';
+import { ArrowRight, Search, Bot, Wand2, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { AgentIcon } from '@/components/agents/AgentIcon';
@@ -38,67 +38,70 @@ export default function AgentsPage({ agents }: { agents: AgentCard[] }) {
   }, [agents, query]);
 
   return (
-    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-[1440px] mx-auto space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-5 px-6 py-6 lg:px-8 lg:py-8">
       <PageHeader
         title="AI agents"
-        description="Specialised agents that find prospects and hand them to your email outreach. Pick one, give it what it needs, and it runs in the background."
+        description="Specialised assistants that research prospects and prepare outreach. Pick one, give it what it needs, and it runs in the background."
+        actions={
+          <Link href="/app/automations" className="inline-flex items-center gap-2 rounded-[10px] border border-border bg-card px-3.5 py-2 text-[13px] font-medium text-foreground transition-colors hover:bg-muted">
+            <Bot className="h-4 w-4" /> View automations
+          </Link>
+        }
       />
 
-      {agents.length > 0 ? (
-        <div className="neu-card rounded-[16px] p-4 flex items-center gap-3 max-w-md">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search agents"
-              aria-label="Search agents"
-              className="w-full pl-9 pr-3 py-2 rounded-[10px] bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] focus:ring-[3px] focus:ring-ring/50"
-            />
-          </div>
+      {agents.length > 0 && (
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search agents by name or category"
+            aria-label="Search agents"
+            className="w-full rounded-[10px] border border-border bg-input py-2.5 pl-9 pr-3 text-[13px] outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/15"
+          />
         </div>
-      ) : null}
+      )}
 
       {filtered.length === 0 ? (
         <div className="neu-card rounded-[16px]">
           <EmptyState
-            icon={<Wand2 className="w-6 h-6" />}
+            icon={<Wand2 className="h-6 w-6" />}
             title={agents.length ? 'No agent matches that search' : 'No agents published yet'}
-            description={agents.length ? 'Try a different word.' : 'An administrator has to publish an agent before it shows up here.'}
+            description={agents.length ? 'Try a different word or clear the search.' : 'A platform administrator has to publish an agent before it shows up here.'}
+            action={agents.length ? <button onClick={() => setQuery('')} className="rounded-[10px] border border-border bg-card px-4 py-2 text-[13px] font-medium text-foreground hover:bg-muted">Clear search</button> : undefined}
           />
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((agent) => (
-            <article key={agent.id} className="neu-card rounded-[16px] p-5 flex flex-col gap-4">
+            <article key={agent.id} className="neu-card flex flex-col gap-4 rounded-[16px] p-5">
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-accent text-accent-foreground shrink-0">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-accent text-accent-foreground">
                   <AgentIcon name={agent.icon} />
                 </span>
                 <div className="min-w-0">
-                  <h2 className="text-[15px] font-semibold text-foreground truncate">{agent.name}</h2>
+                  <h2 className="truncate text-[15px] font-semibold text-foreground">{agent.name}</h2>
                   <p className="text-[12px] text-muted-foreground">{agent.category}</p>
                 </div>
               </div>
 
-              <p className="text-[13px] text-muted-foreground line-clamp-3 flex-1">
+              <p className="line-clamp-3 flex-1 text-[13px] leading-relaxed text-muted-foreground">
                 {agent.description || agent.purpose}
               </p>
 
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
                 <span className={cn(
-                  'text-[11px] px-2 py-0.5 rounded-full',
-                  agent.apiConfigured
-                    ? 'bg-[var(--cf-success)]/10 text-[var(--cf-success)]'
-                    : 'bg-muted text-muted-foreground',
+                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                  agent.apiConfigured ? 'bg-[var(--cf-success)]/10 text-[var(--cf-success)]' : 'bg-muted text-muted-foreground',
                 )}>
+                  {agent.apiConfigured && <CheckCircle2 className="h-3 w-3" />}
                   {agent.apiConfigured ? 'Ready to run' : 'Waiting for API setup'}
                 </span>
                 <Link
                   href={`/app/agents/${agent.slug}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[10px] bg-primary text-[13px] font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]"
+                  className="inline-flex items-center gap-1.5 rounded-[10px] bg-primary px-3 py-2 text-[12px] font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[filter] hover:brightness-105"
                 >
-                  Use agent <ArrowRight className="w-3.5 h-3.5" />
+                  Use agent <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </article>

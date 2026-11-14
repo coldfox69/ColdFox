@@ -1,6 +1,15 @@
 import { z } from 'zod';
+import { isValidTimeZone } from '@/lib/timezone';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
+
+/** An IANA time zone `Intl` can resolve; invalid values would crash the send engine. */
+export const timezoneSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(64)
+  .refine(isValidTimeZone, { message: 'Choose a valid time zone (for example Europe/London)' });
 
 export const emailSchema = z
   .string()
@@ -116,7 +125,7 @@ export const campaignInputSchema = z.object({
   description: z.string().trim().max(2000).optional().nullable(),
   mailbox_id: z.string().uuid().optional().nullable(),
   template_id: z.string().uuid().optional().nullable(),
-  timezone: z.string().trim().max(64).default('UTC'),
+  timezone: timezoneSchema.default('UTC'),
   daily_limit: z.coerce.number().int().min(1).max(2000).default(100),
   lead_ids: z.array(z.string().uuid()).max(10000).default([]),
   /** Prepare recipients from a lead list instead of ad-hoc lead ids. */
@@ -208,7 +217,7 @@ export const agentOutreachSchema = z.object({
   campaign_name: z.string().trim().max(160).optional(),
   subject: z.string().trim().max(300).optional(),
   body: z.string().trim().max(50000).optional(),
-  timezone: z.string().trim().max(64).default('UTC'),
+  timezone: timezoneSchema.default('UTC'),
   daily_limit: z.coerce.number().int().min(1).max(2000).default(100),
   send_window_start: z.string().regex(/^\d{2}:\d{2}$/).default('09:00'),
   send_window_end: z.string().regex(/^\d{2}:\d{2}$/).default('17:00'),
@@ -261,7 +270,7 @@ export const settingsSchema = z.object({
   full_name: z.string().trim().min(1).max(120).optional(),
   job_title: z.string().trim().max(120).optional().nullable(),
   department: z.string().trim().max(120).optional().nullable(),
-  timezone: z.string().trim().max(64).optional(),
+  timezone: z.union([z.literal(''), timezoneSchema]).optional(),
   organization_name: z.string().trim().min(1).max(120).optional(),
   website: z.string().trim().max(300).optional().nullable(),
   industry: z.string().trim().max(120).optional().nullable(),

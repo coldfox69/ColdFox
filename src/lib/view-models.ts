@@ -139,6 +139,15 @@ export interface OverviewVM {
   mailboxes: MailboxVM[];
   activity: { text: string; time: string; dot: string }[];
   recommendations: string[];
+  /** Presence counts used to decide whether to show first-run onboarding. */
+  setup?: {
+    leads: number;
+    leadLists: number;
+    templates: number;
+    mailboxes: number;
+    connectedMailboxes: number;
+    campaigns: number;
+  };
 }
 
 export interface LeadNoteVM {

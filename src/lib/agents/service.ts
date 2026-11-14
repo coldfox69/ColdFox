@@ -49,6 +49,18 @@ function fieldsOf(row: AgentRow): AgentFieldDefinition[] {
   );
 }
 
+/**
+ * Whether an agent can be called right now.
+ *
+ * A public endpoint (`auth_type: 'none'`) needs no credential; every other
+ * auth style needs a stored key as well as an endpoint.
+ */
+export function isAgentApiConfigured(row: AgentRow, hasCredential: boolean): boolean {
+  if (!String(row.api_config?.base_url ?? '').trim()) return false;
+  const authType = row.api_config?.auth_type ?? 'bearer';
+  return authType === 'none' || hasCredential;
+}
+
 export function toAgentSummary(row: AgentRow, apiConfigured: boolean): AgentSummary {
   return {
     id: row.id,
@@ -86,7 +98,7 @@ export async function listAgents(db: SupabaseClient, options: { publishedOnly?: 
   if (error) throw new Error(`Could not load the agent catalog: ${error.message}`);
   const rows = (data ?? []) as unknown as AgentRow[];
   const configured = await configuredAgentIds(db, rows.map((row) => row.id));
-  return rows.map((row) => ({ row, apiConfigured: configured.has(row.id) }));
+  return rows.map((row) => ({ row, apiConfigured: isAgentApiConfigured(row, configured.has(row.id)) }));
 }
 
 export async function getAgentBySlug(db: SupabaseClient, slug: string) {
@@ -95,7 +107,7 @@ export async function getAgentBySlug(db: SupabaseClient, slug: string) {
   if (!data) return null;
   const row = data as unknown as AgentRow;
   const { data: credential } = await db.from('ai_agent_credentials').select('agent_id').eq('agent_id', row.id).maybeSingle();
-  return { row, apiConfigured: Boolean(credential) };
+  return { row, apiConfigured: isAgentApiConfigured(row, Boolean(credential)) };
 }
 
 export async function getAgentById(db: SupabaseClient, id: string) {
@@ -104,7 +116,7 @@ export async function getAgentById(db: SupabaseClient, id: string) {
   if (!data) return null;
   const row = data as unknown as AgentRow;
   const { data: credential } = await db.from('ai_agent_credentials').select('agent_id').eq('agent_id', row.id).maybeSingle();
-  return { row, apiConfigured: Boolean(credential) };
+  return { row, apiConfigured: isAgentApiConfigured(row, Boolean(credential)) };
 }
 
 async function configuredAgentIds(db: SupabaseClient, ids: string[]) {

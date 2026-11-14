@@ -24,7 +24,8 @@ const tabs: { id: Tab; label: string }[] = [
 const statusOptions: LeadStatus[] = ['new', 'contacted', 'replied', 'interested', 'not-interested', 'bounced', 'unsubscribed'];
 
 const cardCls = 'neu-card rounded-[16px] p-5';
-const labelCls = 'text-[12px] font-medium font-medium text-muted-foreground';
+const labelCls = 'text-[12px] font-medium text-muted-foreground';
+const fieldCls = 'w-full rounded-[10px] border border-border bg-input px-3.5 py-2.5 text-[13px] outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/15 disabled:cursor-not-allowed disabled:opacity-60';
 
 export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDetailVM; coworkers: Lead[] }) {
   const router = useRouter();
@@ -39,12 +40,12 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
 
   if (!lead) {
     return (
-      <div className="p-6">
+      <div className="mx-auto max-w-xl p-6 py-16">
         <EmptyState
-          icon={<Mail className="w-8 h-8" />}
+          icon={<Mail className="h-6 w-6" />}
           title="Lead not found"
           description="This contact may have been deleted or the link is out of date."
-          action={<Link href="/app/leads" className="px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">Back to Leads</Link>}
+          action={<Link href="/app/leads" className="rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground">Back to leads</Link>}
         />
       </div>
     );
@@ -135,33 +136,38 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
   };
 
   return (
-    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-[1440px] mx-auto space-y-6">
-      <Link href="/app/leads" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Back to Leads & CRM
+    <div className="mx-auto max-w-[1440px] space-y-5 px-6 py-6 lg:px-8 lg:py-8">
+      <Link href="/app/leads" className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground transition-colors hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> Back to leads
       </Link>
 
       <PageHeader
-        title={fullName}
-        description={`${lead.jobTitle} at ${lead.company}`}
+        title={fullName || 'Unnamed contact'}
+        description={[lead.jobTitle, lead.company].filter(Boolean).join(' at ') || lead.email}
         actions={
-          <button onClick={() => setEditing(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
-            <Pencil className="w-4 h-4" /> Edit lead
-          </button>
+          <>
+            <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-2 rounded-[10px] border border-border bg-card px-3.5 py-2 text-[13px] font-medium text-foreground transition-colors hover:bg-muted">
+              <Mail className="h-4 w-4" /> Email
+            </a>
+            <button onClick={() => setEditing(true)} className="inline-flex items-center gap-2 rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[filter] hover:brightness-105">
+              <Pencil className="h-4 w-4" /> Edit lead
+            </button>
+          </>
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         <LeadStatusBadge status={lead.status} />
         {lead.tags.map(t => (
-          <span key={t} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg neu-inset-sm text-[12px] text-muted-foreground">
-            <Tag className="w-3 h-3" /> {t}
+          <span key={t} className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[12px] text-muted-foreground">
+            <Tag className="h-3 w-3" /> {t}
           </span>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6 min-w-0">
-          <div role="tablist" className="inline-flex w-full gap-1 overflow-x-auto rounded-[10px] bg-input p-1 shadow-[var(--shadow-inset-sm)] sm:w-fit">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="min-w-0 space-y-5 lg:col-span-2">
+          <div role="tablist" className="inline-flex w-full gap-1 overflow-x-auto rounded-[10px] border border-border bg-muted p-1 sm:w-fit" aria-label="Lead sections">
             {tabs.map(t => (
               <button
                 key={t.id}
@@ -169,7 +175,7 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
                 aria-selected={tab === t.id}
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  'rounded-[8px] px-4 py-2 text-sm font-medium whitespace-nowrap transition-[color,background-color,box-shadow] duration-[var(--dur)] ease-[var(--ease)]',
+                  'whitespace-nowrap rounded-[8px] px-4 py-2 text-[13px] font-medium transition-colors',
                   tab === t.id ? 'bg-card text-foreground shadow-[var(--shadow-raised-sm)]' : 'text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -179,71 +185,73 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
           </div>
 
           {tab === 'overview' && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div className={cardCls}>
-                <h3 className="font-semibold text-foreground mb-4">Contact details</h3>
-                <dl className="grid sm:grid-cols-2 gap-4 text-sm">
-                  <div><dt className={labelCls}>Email</dt><dd className="mt-1 text-foreground break-all">{lead.email}</dd></div>
-                  <div><dt className={labelCls}>Job title</dt><dd className="mt-1 text-foreground">{lead.jobTitle}</dd></div>
-                  <div><dt className={labelCls}>Source</dt><dd className="mt-1 text-foreground">{lead.source}</dd></div>
+                <h2 className="mb-4 text-[15px] font-semibold text-foreground">Contact details</h2>
+                <dl className="grid gap-4 text-[13px] sm:grid-cols-2">
+                  <div><dt className={labelCls}>Email</dt><dd className="mt-1 break-all text-foreground">{lead.email}</dd></div>
+                  <div><dt className={labelCls}>Job title</dt><dd className="mt-1 text-foreground">{lead.jobTitle || 'Not provided'}</dd></div>
+                  <div><dt className={labelCls}>Source</dt><dd className="mt-1 capitalize text-foreground">{lead.source || 'Unknown'}</dd></div>
                   <div><dt className={labelCls}>Added</dt><dd className="mt-1 text-foreground">{lead.createdAt}</dd></div>
                 </dl>
               </div>
 
               <div className={cardCls}>
-                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Building2 className="w-4 h-4 text-muted-foreground" /> Company</h3>
-                <dl className="grid sm:grid-cols-2 gap-4 text-sm">
-                  <div><dt className={labelCls}>Company</dt><dd className="mt-1 text-foreground">{lead.company}</dd></div>
+                <h2 className="mb-4 flex items-center gap-2 text-[15px] font-semibold text-foreground"><Building2 className="h-4 w-4 text-muted-foreground" /> Company</h2>
+                <dl className="grid gap-4 text-[13px] sm:grid-cols-2">
+                  <div><dt className={labelCls}>Company</dt><dd className="mt-1 text-foreground">{lead.company || 'Not provided'}</dd></div>
                   <div><dt className={labelCls}>Industry</dt><dd className="mt-1 text-foreground">{lead.industry ?? 'Not provided'}</dd></div>
                   <div>
                     <dt className={labelCls}>Website</dt>
                     <dd className="mt-1">
                       {lead.website
-                        ? <span className="inline-flex items-center gap-1.5 text-foreground"><Globe className="w-3.5 h-3.5 text-muted-foreground" />{lead.website}</span>
+                        ? <span className="inline-flex items-center gap-1.5 break-all text-foreground"><Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />{lead.website}</span>
                         : <span className="text-muted-foreground">Not provided</span>}
                     </dd>
                   </div>
                   <div>
                     <dt className={labelCls}>Other contacts here</dt>
-                    <dd className="mt-1 text-foreground">{coworkers.length === 0 ? 'None in your workspace' : coworkers.map(c => `${c.firstName} ${c.lastName}`).join(', ')}</dd>
+                    <dd className="mt-1 text-foreground">{coworkers.length === 0 ? 'None in your workspace' : coworkers.map(c => `${c.firstName} ${c.lastName}`.trim()).join(', ')}</dd>
                   </div>
                 </dl>
               </div>
 
               <div className={cardCls}>
-                <h3 className="font-semibold text-foreground mb-4">Pipeline</h3>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <label className="text-sm font-medium">
-                    Status
+                <h2 className="mb-4 text-[15px] font-semibold text-foreground">Pipeline</h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="lead-status" className="text-[13px] font-medium text-foreground">Status</label>
                     <select
+                      id="lead-status"
                       value={lead.status}
                       onChange={e => { const next = e.target.value as LeadStatus; setLead({ ...lead, status: next }); void patchLead({ status: fromLeadStatus(next) }, 'Status updated'); }}
-                      className="mt-1.5 w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={cn(fieldCls, 'mt-1.5 capitalize')}
                     >
                       {statusOptions.map(s => <option key={s} value={s}>{s.replace('-', ' ')}</option>)}
                     </select>
-                  </label>
+                  </div>
                   <div>
                     <p className={labelCls}>Last contacted</p>
-                    <p className="mt-2 text-sm text-foreground">{lead.lastContacted ?? 'Never'}</p>
+                    <p className="mt-2 text-[13px] text-foreground">{lead.lastContacted ?? 'Never'}</p>
                   </div>
                 </div>
-                <div className="mt-5 pt-5 border-t border-border">
-                  <label className="text-sm font-medium flex items-center gap-2" htmlFor="follow-up">
-                    <CalendarClock className="w-4 h-4 text-muted-foreground" /> Follow-up reminder
+                <div className="mt-5 border-t border-border pt-5">
+                  <label className="flex items-center gap-2 text-[13px] font-medium text-foreground" htmlFor="follow-up">
+                    <CalendarClock className="h-4 w-4 text-muted-foreground" /> Follow-up reminder
                   </label>
+                  <p className="mt-1 text-[12px] text-muted-foreground">Set a date to come back to this contact. It appears as a reminder in your workspace.</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <input
                       id="follow-up"
                       type="date"
                       value={followUp}
                       onChange={e => setFollowUp(e.target.value)}
-                      className="px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={cn(fieldCls, 'sm:w-48')}
                     />
                     <button
-                      disabled={!followUp}
+                      disabled={!followUp || busy}
                       onClick={() => { setLead({ ...lead, nextFollowUp: followUp }); void patchLead({ next_follow_up_at: new Date(`${followUp}T09:00:00Z`).toISOString() }, `Reminder set for ${followUp}`); }}
-                      className="px-4 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"
+                      className="rounded-[10px] bg-primary px-4 py-2.5 text-[13px] font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[filter] hover:brightness-105 disabled:opacity-50"
                     >
                       Save reminder
                     </button>
@@ -252,23 +260,24 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
               </div>
 
               <div className={cardCls}>
-                <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><StickyNote className="w-4 h-4 text-muted-foreground" /> Notes</h3>
-                <div className="flex flex-col sm:flex-row gap-2">
+                <h2 className="mb-3 flex items-center gap-2 text-[15px] font-semibold text-foreground"><StickyNote className="h-4 w-4 text-muted-foreground" /> Notes</h2>
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <textarea
                     value={note}
                     onChange={e => setNote(e.target.value)}
                     rows={2}
-                    placeholder="Add a note about this contact..."
-                    className="flex-1 px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
+                    placeholder="Add a note only your team can see…"
+                    aria-label="New note"
+                    className={cn(fieldCls, 'flex-1 resize-y')}
                   />
-                  <button onClick={() => void addNote()} disabled={!note.trim() || busy} className="px-4 py-2.5 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50 self-start">Add note</button>
+                  <button onClick={() => void addNote()} disabled={!note.trim() || busy} className="self-start rounded-[10px] border border-border bg-card px-4 py-2.5 text-[13px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50">Add note</button>
                 </div>
                 {notes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground mt-4">No notes yet.</p>
+                  <p className="mt-4 text-[13px] text-muted-foreground">No notes yet.</p>
                 ) : (
-                  <ul className="mt-4 space-y-3">
+                  <ul className="mt-4 space-y-2.5">
                     {notes.map((n, i) => (
-                      <li key={i} className="text-sm text-foreground p-3 rounded-[10px] neu-inset-sm whitespace-pre-wrap">{n}</li>
+                      <li key={i} className="whitespace-pre-wrap rounded-[10px] border border-border bg-muted/60 p-3 text-[13px] leading-relaxed text-foreground">{n}</li>
                     ))}
                   </ul>
                 )}
@@ -279,17 +288,17 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
           {tab === 'conversations' && (
             <div className={cardCls}>
               {threads.length === 0 ? (
-                <EmptyState icon={<MessageSquare className="w-8 h-8" />} title="No conversations yet" description="Replies and sent emails for this contact will appear here." size="sm" />
+                <EmptyState icon={<MessageSquare className="h-5 w-5" />} title="No conversations yet" description="Replies and sent emails for this contact will appear here." size="sm" />
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {threads.map(t => (
-                    <div key={t.id} className="rounded-xl border border-border p-4">
+                    <div key={t.id} className="rounded-[10px] border border-border p-4">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="font-medium text-foreground text-sm">{t.subject}</p>
+                        <p className="text-[13px] font-medium text-foreground">{t.subject}</p>
                         <span className="text-[12px] text-muted-foreground">{t.campaign}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{t.lastMessage}</p>
-                      <p className="text-[12px] text-muted-foreground mt-2">{t.messages.length} messages, last activity {t.lastMessageAt}</p>
+                      <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">{t.lastMessage}</p>
+                      <p className="mt-2 text-[12px] text-muted-foreground">{t.messages.length} message{t.messages.length === 1 ? '' : 's'} · last activity {t.lastMessageAt}</p>
                     </div>
                   ))}
                 </div>
@@ -299,34 +308,38 @@ export default function LeadProfilePage({ detail, coworkers }: { detail: LeadDet
 
           {tab === 'timeline' && (
             <div className={cardCls}>
-              <ol className="relative border-l border-border ml-2 space-y-5">
-                {timeline.map((e, i) => (
-                  <li key={i} className="ml-5">
-                    <span className="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 rounded-full bg-primary" />
-                    <p className="text-sm text-foreground">{e.text}</p>
-                    <p className="text-[12px] text-muted-foreground mt-0.5 flex items-center gap-1"><Clock className="w-3 h-3" /> {e.at}</p>
-                  </li>
-                ))}
-              </ol>
+              {timeline.length === 0 ? (
+                <EmptyState size="sm" icon={<Clock className="h-5 w-5" />} title="No activity yet" description="Campaign sends, replies, and status changes appear here." />
+              ) : (
+                <ol className="relative ml-2 space-y-5 border-l border-border">
+                  {timeline.map((e, i) => (
+                    <li key={i} className="ml-5">
+                      <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-primary" />
+                      <p className="text-[13px] text-foreground">{e.text}</p>
+                      <p className="mt-0.5 flex items-center gap-1 text-[12px] text-muted-foreground"><Clock className="h-3 w-3" /> {e.at}</p>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </div>
           )}
         </div>
 
-        <aside className="space-y-6">
+        <aside className="space-y-5">
           <div className={cardCls}>
-            <h3 className="font-semibold text-foreground mb-3">Campaign history</h3>
+            <h2 className="mb-3 text-[15px] font-semibold text-foreground">Campaign history</h2>
             {campaignNames.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Not enrolled in any campaign yet.</p>
+              <p className="text-[13px] text-muted-foreground">Not enrolled in any campaign yet.</p>
             ) : (
               <ul className="space-y-2">
-                {campaignNames.map(c => <li key={c} className="text-sm text-foreground px-3 py-2 rounded-lg bg-muted/60">{c}</li>)}
+                {campaignNames.map(c => <li key={c} className="rounded-lg bg-muted px-3 py-2 text-[13px] text-foreground">{c}</li>)}
               </ul>
             )}
           </div>
           <div className={cardCls}>
-            <h3 className="font-semibold text-foreground mb-3">Contact</h3>
-            <a href={`mailto:${lead.email}`} className="flex items-center gap-2 text-sm text-primary hover:underline break-all">
-              <Mail className="w-4 h-4 shrink-0" /> {lead.email}
+            <h2 className="mb-3 text-[15px] font-semibold text-foreground">Contact</h2>
+            <a href={`mailto:${lead.email}`} className="flex items-center gap-2 break-all text-[13px] text-accent-foreground hover:underline">
+              <Mail className="h-4 w-4 shrink-0" /> {lead.email}
             </a>
           </div>
         </aside>

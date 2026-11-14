@@ -12,6 +12,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { ApiError } from '@/lib/http';
 import { syncLeadTagsBulk } from '@/lib/leads';
 import { buildLeadListColumns, type LeadListColumn, type RawColumnInput } from '@/lib/placeholders';
+import { fetchAllRows } from '@/lib/data/paginate';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
@@ -26,7 +27,8 @@ export interface LeadColumnMapping {
 export interface ImportLeadRowsInput {
   db: SupabaseClient;
   organizationId: string;
-  userId: string;
+  /** `null` when the import was started by a background agent whose user was removed. */
+  userId: string | null;
   listName: string;
   filename: string;
   headers: string[];
@@ -85,13 +87,17 @@ export async function importLeadRows(input: ImportLeadRowsInput): Promise<Import
   });
   const columns = buildLeadListColumns(columnInputs);
 
-  const { data: existing } = await db
-    .from('leads')
-    .select('email_normalized')
-    .eq('organization_id', organizationId)
-    .is('deleted_at', null)
-    .limit(50000);
-  const seen = new Set((existing ?? []).map((row) => String(row.email_normalized)));
+  const existing = await fetchAllRows<{ email_normalized: string }>(
+    (from, to) => db
+      .from('leads')
+      .select('email_normalized')
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null)
+      .order('id')
+      .range(from, to),
+    { maxRows: 200_000 },
+  );
+  const seen = new Set(existing.map((row) => String(row.email_normalized)));
 
   const { data: limit } = await db.rpc('plan_limit', { p_org: organizationId, p_metric: 'leads' });
   const { data: used } = await db.rpc('org_usage', { p_org: organizationId, p_metric: 'leads' });

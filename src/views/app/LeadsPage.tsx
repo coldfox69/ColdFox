@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Search, Plus, Download, Trash2, X, Tag, ArrowUpDown } from 'lucide-react';
+import { Search, Plus, Download, Trash2, X, ArrowUpDown, Users, Filter } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { LeadStatusBadge } from '@/components/shared/StatusBadge';
@@ -12,7 +12,6 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useDebouncedValue } from '@/hooks/use-debounce';
-
 
 const statusOptions: { value: LeadStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All statuses' },
@@ -36,6 +35,7 @@ export default function LeadsPage({ initialLeads }: { initialLeads: Lead[] }) {
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'name', desc: false });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const rows = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
@@ -63,8 +63,13 @@ export default function LeadsPage({ initialLeads }: { initialLeads: Lead[] }) {
     return next;
   });
   const toggleAll = () => setSelected(allSelected ? new Set() : new Set(rows.map(l => l.id)));
-
   const changeSort = (key: SortKey) => setSort(s => ({ key, desc: s.key === key ? !s.desc : false }));
+  const filtersActive = Boolean(debouncedQuery.trim()) || status !== 'all';
+
+  const clearFilters = () => {
+    setQuery('');
+    setStatus('all');
+  };
 
   const deleteSelected = async () => {
     if (!selected.size) return;
@@ -74,6 +79,7 @@ export default function LeadsPage({ initialLeads }: { initialLeads: Lead[] }) {
       const count = selected.size;
       setItems(list => list.filter(l => !selected.has(l.id)));
       setSelected(new Set());
+      setConfirmBulkDelete(false);
       toast.show(`${count} lead${count === 1 ? '' : 's'} deleted.`, 'danger');
       router.refresh();
     } catch (error) {
@@ -83,80 +89,113 @@ export default function LeadsPage({ initialLeads }: { initialLeads: Lead[] }) {
     }
   };
 
-  const exportCsv = () => {
-    toast.show(`Exporting ${rows.length} leads…`, 'info');
+  const exportCsv = (ids?: string[]) => {
+    const suffix = ids && ids.length ? `?ids=${ids.join(',')}` : '';
+    toast.show(ids && ids.length ? `Exporting ${ids.length} selected leads…` : `Exporting ${rows.length} leads…`, 'info');
     // A file download has to be a real navigation, so a hidden anchor is
     // used instead of the router.
     const anchor = document.createElement('a');
-    anchor.href = '/api/leads/export';
+    anchor.href = `/api/leads/export${suffix}`;
     anchor.rel = 'noopener';
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
   };
 
-  const headers: { key: SortKey | null; label: string }[] = [
+  const headers: { key: SortKey | null; label: string; className?: string }[] = [
     { key: 'name', label: 'Contact' },
-    { key: 'company', label: 'Company' },
-    { key: null, label: 'Job title' },
+    { key: 'company', label: 'Company', className: 'hidden md:table-cell' },
+    { key: null, label: 'Job title', className: 'hidden xl:table-cell' },
     { key: null, label: 'Status' },
-    { key: null, label: 'Tags' },
-    { key: null, label: 'Source' },
-    { key: 'lastContacted', label: 'Last contacted' },
-    { key: 'nextFollowUp', label: 'Next follow-up' },
+    { key: null, label: 'Tags', className: 'hidden lg:table-cell' },
+    { key: null, label: 'Source', className: 'hidden xl:table-cell' },
+    { key: 'lastContacted', label: 'Last contacted', className: 'hidden lg:table-cell' },
+    { key: 'nextFollowUp', label: 'Next follow-up', className: 'hidden 2xl:table-cell' },
   ];
 
   return (
-    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-[1440px] mx-auto">
+    <div className="mx-auto max-w-[1440px] px-6 py-6 lg:px-8 lg:py-8">
       <PageHeader
         title="Leads & CRM"
-        description={`${items.length.toLocaleString()} leads in your workspace`}
+        description={`${items.length.toLocaleString()} contact${items.length === 1 ? '' : 's'} in this workspace. Import a list, search, and manage status here.`}
         actions={
           <>
-            <Link href="/app/lead-lists#new" className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]"><Plus className="w-4 h-4" /> Add lead list</Link>
-            <button onClick={exportCsv} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50"><Download className="w-4 h-4" /> Export</button>
+            <button onClick={() => exportCsv()} className="inline-flex items-center gap-2 rounded-[10px] border border-border bg-card px-3.5 py-2 text-[13px] font-medium text-foreground transition-colors hover:bg-muted">
+              <Download className="h-4 w-4" /> Export
+            </button>
+            <Link href="/app/lead-lists#new" className="inline-flex items-center gap-2 rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[filter] hover:brightness-105">
+              <Plus className="h-4 w-4" /> Import leads
+            </Link>
           </>
         }
       />
 
-      <div className="neu-card rounded-[16px] p-3 flex flex-col md:flex-row gap-3">
+      <div className="neu-card flex flex-col gap-3 rounded-[16px] p-3 md:flex-row md:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input value={query} onChange={e => setQuery(e.target.value)} aria-label="Search leads" placeholder="Search name, company, email, or tag"
-            className="w-full pl-9 pr-3 py-2 rounded-[10px] bg-input py-2 pl-9 pr-3 text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] focus:border-ring focus:ring-[3px] focus:ring-ring/50" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input value={query} onChange={e => { setQuery(e.target.value); setSelected(new Set()); }} aria-label="Search leads" placeholder="Search name, company, email, or tag"
+            className="w-full rounded-[10px] border border-border bg-input py-2 pl-9 pr-3 text-[13px] outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/15" />
         </div>
-        <select aria-label="Filter by status" value={status} onChange={e => setStatus(e.target.value as LeadStatus | 'all')}
-          className="px-3 py-2 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60">
-          {statusOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <select aria-label="Filter by status" value={status} onChange={e => { setStatus(e.target.value as LeadStatus | 'all'); setSelected(new Set()); }}
+            className="w-full rounded-[10px] border border-border bg-input px-3 py-2 text-[13px] outline-none transition-[border-color,box-shadow] focus:border-ring focus:ring-[3px] focus:ring-ring/15 md:w-auto">
+            {statusOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
       </div>
 
       {selected.size > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-[16px] neu-inset-sm px-4 py-2.5 text-sm">
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-[12px] border border-border bg-accent/60 px-3 py-2 text-[13px]">
           <span className="font-medium text-foreground">{selected.size} selected</span>
-          <button onClick={() => toast.show('Select leads and use Add tag from the bulk actions to tag them.', 'info')} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-card text-foreground"><Tag className="w-3.5 h-3.5" /> Add tag</button>
-          <button onClick={exportCsv} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-card text-foreground"><Download className="w-3.5 h-3.5" /> Export</button>
-          <button onClick={() => void deleteSelected()} disabled={busy} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-card text-destructive disabled:opacity-50"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
-          <button onClick={() => setSelected(new Set())} aria-label="Clear selection" className="ml-auto p-1 rounded-lg hover:bg-card text-muted-foreground"><X className="w-4 h-4" /></button>
+          {confirmBulkDelete ? (
+            <>
+              <span className="text-muted-foreground">Delete {selected.size} lead{selected.size === 1 ? '' : 's'}? This cannot be undone.</span>
+              <button onClick={() => void deleteSelected()} disabled={busy} className="ml-auto rounded-lg bg-destructive px-2.5 py-1 font-medium text-destructive-foreground disabled:opacity-50">
+                {busy ? 'Deleting…' : 'Yes, delete'}
+              </button>
+              <button onClick={() => setConfirmBulkDelete(false)} className="rounded-lg border border-border bg-card px-2.5 py-1 font-medium text-foreground">Keep</button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => exportCsv([...selected])} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-foreground hover:bg-card"><Download className="h-3.5 w-3.5" /> Export selected</button>
+              <button onClick={() => setConfirmBulkDelete(true)} disabled={busy} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-destructive hover:bg-card disabled:opacity-50"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
+              <button onClick={() => setSelected(new Set())} aria-label="Clear selection" className="ml-auto rounded-lg p-1 text-muted-foreground hover:bg-card"><X className="h-4 w-4" /></button>
+            </>
+          )}
         </div>
       )}
 
       {rows.length === 0 ? (
-        <div className="neu-card rounded-[16px] mt-4">
-          <EmptyState icon={<Search className="w-6 h-6" />} title="No leads match these filters" description="Clear the search or choose another status to see more leads." />
+        <div className="neu-card mt-4 rounded-[16px]">
+          {items.length === 0 ? (
+            <EmptyState
+              icon={<Users className="h-6 w-6" />}
+              title="No leads yet"
+              description="Import a CSV or paste a spreadsheet to create your first lead list."
+              action={<Link href="/app/lead-lists#new" className="inline-flex items-center gap-2 rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground"><Plus className="h-4 w-4" /> Import leads</Link>}
+            />
+          ) : (
+            <EmptyState
+              icon={<Search className="h-6 w-6" />}
+              title="No leads match"
+              description="Try a different search term or status filter."
+              action={<button onClick={clearFilters} className="rounded-[10px] border border-border bg-card px-4 py-2 text-[13px] font-medium text-foreground hover:bg-muted">Clear filters</button>}
+            />
+          )}
         </div>
       ) : (
-        <div className="neu-card rounded-[16px] mt-4 overflow-x-auto">
-          <table className="w-full text-sm min-w-[960px]">
+        <div className="neu-card mt-4 overflow-x-auto rounded-[16px]">
+          <table className="w-full text-[13px]">
             <thead>
-              <tr className="text-left text-[12px] text-muted-foreground border-b border-border">
-                <th className="px-4 py-3 w-10">
-                  <input type="checkbox" aria-label="Select all leads" checked={allSelected} onChange={toggleAll} className="h-4 w-4 accent-blue-600" />
+              <tr className="border-b border-border text-left text-[11px] uppercase tracking-[0.04em] text-muted-foreground">
+                <th className="w-11 px-4 py-3">
+                  <input type="checkbox" aria-label="Select all leads" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded accent-primary" />
                 </th>
                 {headers.map(h => (
-                  <th key={h.label} className="px-4 py-3 font-medium">
+                  <th key={h.label} className={cn('px-4 py-3 font-semibold', h.className)}>
                     {h.key ? (
-                      <button onClick={() => changeSort(h.key!)} className="inline-flex items-center gap-1 hover:text-foreground">{h.label}<ArrowUpDown className="w-3 h-3" /></button>
+                      <button onClick={() => changeSort(h.key!)} className="inline-flex items-center gap-1 hover:text-foreground">{h.label}<ArrowUpDown className="h-3 w-3" /></button>
                     ) : h.label}
                   </th>
                 ))}
@@ -164,21 +203,25 @@ export default function LeadsPage({ initialLeads }: { initialLeads: Lead[] }) {
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map(l => (
-                <tr key={l.id} className={cn('hover:bg-muted/40 transition-colors', selected.has(l.id) && 'bg-accent')}>
-                  <td className="px-4 py-3"><input type="checkbox" aria-label={`Select ${l.firstName} ${l.lastName}`} checked={selected.has(l.id)} onChange={() => toggle(l.id)} className="h-4 w-4 accent-blue-600" /></td>
+                <tr key={l.id} className={cn('transition-colors hover:bg-muted/40', selected.has(l.id) && 'bg-accent/40')}>
+                  <td className="px-4 py-3"><input type="checkbox" aria-label={`Select ${l.firstName} ${l.lastName}`} checked={selected.has(l.id)} onChange={() => toggle(l.id)} className="h-4 w-4 rounded accent-primary" /></td>
                   <td className="px-4 py-3">
                     <Link href={`/app/leads/${l.id}`} className="text-left">
                       <p className="font-medium text-foreground hover:text-accent-foreground">{l.firstName} {l.lastName}</p>
                       <p className="text-[12px] text-muted-foreground">{l.email}</p>
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-foreground">{l.company}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{l.jobTitle}</td>
+                  <td className="hidden px-4 py-3 text-foreground md:table-cell">{l.company || '-'}</td>
+                  <td className="hidden px-4 py-3 text-muted-foreground xl:table-cell">{l.jobTitle || '-'}</td>
                   <td className="px-4 py-3"><LeadStatusBadge status={l.status} /></td>
-                  <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{l.tags.map(t => <span key={t} className="px-2 py-0.5 rounded-md bg-muted text-[12px] text-muted-foreground">{t}</span>)}</div></td>
-                  <td className="px-4 py-3 text-muted-foreground">{l.source}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{l.lastContacted ?? '-'}</td>
-                  <td className="px-4 py-3 text-foreground">{l.nextFollowUp ?? '-'}</td>
+                  <td className="hidden px-4 py-3 lg:table-cell">
+                    <div className="flex flex-wrap gap-1">
+                      {l.tags.length === 0 ? <span className="text-[12px] text-muted-foreground">-</span> : l.tags.map(t => <span key={t} className="rounded-md bg-muted px-2 py-0.5 text-[12px] text-muted-foreground">{t}</span>)}
+                    </div>
+                  </td>
+                  <td className="hidden px-4 py-3 text-muted-foreground xl:table-cell">{l.source || '-'}</td>
+                  <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">{l.lastContacted ?? '-'}</td>
+                  <td className="hidden px-4 py-3 text-foreground 2xl:table-cell">{l.nextFollowUp ?? '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -186,6 +229,12 @@ export default function LeadsPage({ initialLeads }: { initialLeads: Lead[] }) {
         </div>
       )}
 
+      {filtersActive && rows.length > 0 && (
+        <div className="mt-3 flex items-center justify-between text-[12px] text-muted-foreground">
+          <span>Showing {rows.length.toLocaleString()} of {items.length.toLocaleString()} leads</span>
+          <button onClick={clearFilters} className="font-medium text-accent-foreground hover:underline">Clear filters</button>
+        </div>
+      )}
     </div>
   );
 }

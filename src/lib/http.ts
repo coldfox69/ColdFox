@@ -4,6 +4,7 @@ import { ZodError, type ZodType } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getApiSession, type ApiSession } from '@/lib/auth/api-session';
 import { withTrace } from '@/lib/telemetry';
+import { escapeCsvCell } from '@/lib/csv';
 import { createHash } from 'node:crypto';
 
 export class ApiError extends Error {
@@ -183,8 +184,7 @@ export async function writeAudit(input: {
 }
 
 export function csvEscape(value: unknown) {
-  const s = value === null || value === undefined ? '' : String(value);
-  return `"${s.replace(/"/g, '""')}"`;
+  return escapeCsvCell(value);
 }
 
 export function toCsv(rows: unknown[][]) {

@@ -72,8 +72,16 @@ export default function MailboxesPage({
     }
   };
 
-  const disconnect = async (m: Mailbox) => {
-    setBusy(m.id);
+  const reconnect = (m: Mailbox) => {
+    if (m.provider === 'gmail' || m.provider === 'outlook') {
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign(`/api/mailboxes/oauth/${m.provider}/start?sender_name=${encodeURIComponent(m.displayName || '')}`);
+      return;
+    }
+    setWizardOpen(true);
+  };
+
+  const disconnect = async (m: Mailbox) => {    setBusy(m.id);
     try {
       await apiFetch(`/api/mailboxes/${m.id}`, { method: 'DELETE' });
       update(m.id, { status: 'disconnected' });
@@ -117,87 +125,99 @@ export default function MailboxesPage({
   };
 
   return (
-    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-[1440px] mx-auto space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-5 px-6 py-6 lg:px-8 lg:py-8">
       <PageHeader
         title="Mailboxes"
-        description="Sending accounts used for your campaigns. Keep daily limits conservative and watch their health."
+        description="Sending accounts for your campaigns. Keep daily limits conservative and watch their health."
         actions={
-          <button onClick={() => setWizardOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
-            <Plus className="w-4 h-4" /> Connect mailbox
+          <button onClick={() => setWizardOpen(true)} className="inline-flex items-center gap-2 rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[filter] hover:brightness-105">
+            <Plus className="h-4 w-4" /> Connect mailbox
           </button>
         }
       />
 
+      {items.some(m => m.status !== 'connected') && (
+        <div className="flex flex-wrap items-center gap-3 rounded-[12px] border border-[var(--cf-warning)]/35 bg-[var(--cf-warning)]/[0.07] px-4 py-3">
+          <RefreshCw className="h-4 w-4 shrink-0 text-[var(--cf-warning)]" />
+          <p className="min-w-0 flex-1 text-[13px] text-foreground">
+            {items.filter(m => m.status !== 'connected').length} mailbox{items.filter(m => m.status !== 'connected').length === 1 ? '' : 'es'} cannot send right now. Reconnect before starting a campaign.
+          </p>
+        </div>
+      )}
+
       {items.length === 0 ? (
-        <EmptyState
-          icon={<Mail className="w-8 h-8" />}
-          title="No mailboxes connected"
-          description="Connect a Gmail, Outlook, or SMTP account to start sending."
-          action={<button onClick={() => setWizardOpen(true)} className="px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">Connect mailbox</button>}
-        />
+        <div className="neu-card rounded-[16px]">
+          <EmptyState
+            icon={<Mail className="h-6 w-6" />}
+            title="No mailboxes connected"
+            description="Connect a Gmail, Outlook, or SMTP account to start sending. You can add more than one later."
+            action={<button onClick={() => setWizardOpen(true)} className="inline-flex items-center gap-2 rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground">Connect mailbox</button>}
+          />
+        </div>
       ) : (
-        <div className="grid md:grid-cols-2 gap-5">
+        <div className="grid gap-5 md:grid-cols-2">
           {items.map(m => {
             const pct = Math.min(100, Math.round((m.sentToday / m.dailyLimit) * 100));
             return (
-              <article key={m.id} className="neu-card rounded-[16px] p-5 flex flex-col gap-4">
+              <article key={m.id} className="neu-card flex flex-col gap-4 rounded-[16px] p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-[10px] neu-inset-sm flex items-center justify-center shrink-0">
-                      <Mail className="w-5 h-5 text-primary" />
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-accent">
+                      <Mail className="h-5 w-5 text-accent-foreground" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-foreground truncate">{m.email}</p>
+                      <p className="truncate text-[14px] font-semibold text-foreground">{m.email}</p>
                       <p className="text-[12px] text-muted-foreground">{providerLabel[m.provider]}{m.displayName ? ` · Sending as ${m.displayName}` : ''} · Last sync {m.lastSync}</p>
                     </div>
                   </div>
-                  <StatusBadge variant={statusVariant[m.status]}>{m.status}</StatusBadge>
+                  <StatusBadge variant={statusVariant[m.status]}>{m.status === 'connected' ? 'Connected' : 'Needs attention'}</StatusBadge>
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-[12px] text-muted-foreground mb-1.5">
+                  <div className="mb-1.5 flex justify-between text-[12px] text-muted-foreground">
                     <span>Sent today</span>
-                    <span>{m.sentToday} / {m.dailyLimit}</span>
+                    <span className="tabular-nums">{m.sentToday} / {m.dailyLimit}</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-input shadow-[var(--shadow-inset-sm)]" role="progressbar" aria-valuemin={0} aria-valuemax={m.dailyLimit} aria-valuenow={m.sentToday}>
-                    <div className="h-full rounded-full bg-primary transition-[width] duration-[var(--dur-slow)] ease-[var(--ease)]" style={{ width: `${pct}%` }} />
+                  <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={m.dailyLimit} aria-valuenow={m.sentToday} aria-label={`Daily send usage for ${m.email}`}>
+                    <div className={cn('h-full rounded-full transition-[width] duration-[var(--dur-slow)] ease-[var(--ease)]', pct >= 95 ? 'bg-[var(--cf-warning)]' : 'bg-primary')} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 text-sm">
+                <div className="flex flex-wrap items-center gap-3 text-[12px]">
                   <span className="text-muted-foreground">Health</span>
                   <StatusBadge variant={reputationVariant[m.reputation]} size="sm">{m.reputation}</StatusBadge>
-                  <label className="ml-auto inline-flex items-center gap-2 text-muted-foreground cursor-pointer">
+                  <label className="ml-auto inline-flex cursor-pointer items-center gap-2 text-muted-foreground">
                     <span>Warm-up</span>
                     <button
                       role="switch"
                       aria-checked={m.warmupEnabled}
+                      aria-label={`Warm-up for ${m.email}`}
                       onClick={() => void toggleWarmup(m)}
-                      className={cn('relative w-9 h-5 rounded-full transition-colors', m.warmupEnabled ? 'bg-[var(--cf-success)]' : 'bg-muted-foreground/30')}
+                      className={cn('relative h-5 w-9 rounded-full transition-colors', m.warmupEnabled ? 'bg-[var(--cf-success)]' : 'bg-muted-foreground/30')}
                     >
-                      <span className={cn('absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform', m.warmupEnabled && 'translate-x-4')} />
+                      <span className={cn('absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform', m.warmupEnabled && 'translate-x-4')} />
                     </button>
                   </label>
                 </div>
 
-                <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
-                  <button onClick={() => void test(m)} disabled={busy === m.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted disabled:opacity-50">
-                    <Zap className="w-3.5 h-3.5" /> {busy === m.id ? 'Testing…' : 'Test connection'}
+                <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+                  <button onClick={() => void test(m)} disabled={busy === m.id} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[12px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50">
+                    <Zap className="h-3.5 w-3.5" /> {busy === m.id ? 'Testing…' : 'Test connection'}
                   </button>
                   {m.status === 'error' && (
-                    <button onClick={() => void test(m)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
-                      <RefreshCw className="w-3.5 h-3.5" /> Reconnect
+                    <button onClick={() => reconnect(m)} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[12px] font-medium text-foreground transition-colors hover:bg-muted">
+                      <RefreshCw className="h-3.5 w-3.5" /> Reconnect
                     </button>
                   )}
                   {confirmId === m.id ? (
-                    <div className="flex items-center gap-2 ml-auto text-[12px]">
+                    <div className="ml-auto flex items-center gap-2 text-[12px]">
                       <span className="text-muted-foreground">Disconnect this mailbox?</span>
-                      <button onClick={() => void disconnect(m)} disabled={busy === m.id} className="px-2.5 py-1 rounded-lg bg-destructive text-destructive-foreground font-medium disabled:opacity-50">Yes, disconnect</button>
-                      <button onClick={() => setConfirmId(null)} className="px-2.5 py-1 rounded-lg border border-border font-medium">Keep</button>
+                      <button onClick={() => void disconnect(m)} disabled={busy === m.id} className="rounded-lg bg-destructive px-2.5 py-1 font-medium text-destructive-foreground disabled:opacity-50">Yes, disconnect</button>
+                      <button onClick={() => setConfirmId(null)} className="rounded-lg border border-border bg-card px-2.5 py-1 font-medium text-foreground hover:bg-muted">Keep</button>
                     </div>
                   ) : (
-                    <button onClick={() => setConfirmId(m.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-destructive hover:bg-muted ml-auto">
-                      <Trash2 className="w-3.5 h-3.5" /> Disconnect
+                    <button onClick={() => setConfirmId(m.id)} className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium text-destructive transition-colors hover:bg-muted">
+                      <Trash2 className="h-3.5 w-3.5" /> Disconnect
                     </button>
                   )}
                 </div>
@@ -207,9 +227,10 @@ export default function MailboxesPage({
         </div>
       )}
 
-      <p className="text-[12px] text-muted-foreground flex items-center gap-1.5">
-        <Plug className="w-3.5 h-3.5" /> Gmail and Outlook connections use OAuth when configured. SMTP credentials are encrypted at rest and never returned to the browser.
-      </p>
+      <div className="space-y-1.5 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="flex items-start gap-1.5"><Plug className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Gmail and Outlook connect with OAuth. SMTP credentials are encrypted at rest and never returned to the browser.</p>
+        <p className="flex items-start gap-1.5"><Zap className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Warm-up raises daily volume gradually so a new mailbox builds a sending history. Keep limits conservative.</p>
+      </div>
 
       {wizardOpen && <ConnectMailboxWizard onClose={() => setWizardOpen(false)} onConnect={addMailbox} configured={providers} />}
     </div>

@@ -13,6 +13,7 @@ import type { CampaignInput } from '@/lib/validation';
 import { ensureCampaignSteps } from '@/lib/email/engine';
 import { extractRawVariables, validateVariablesAgainstList, type LeadListColumn } from '@/lib/placeholders';
 import { partitionSuppressed } from '@/lib/suppression';
+import { chunk, fetchAllRows } from '@/lib/data/paginate';
 
 export interface CreateCampaignResult {
   campaign: Record<string, unknown>;
@@ -23,7 +24,8 @@ export interface CreateCampaignResult {
 export async function createCampaign(input: {
   db: SupabaseClient;
   organizationId: string;
-  userId: string;
+  /** `null` when the campaign is created by a background agent whose user was removed. */
+  userId: string | null;
   data: CampaignInput;
 }): Promise<CreateCampaignResult> {
   const { db, organizationId, userId, data } = input;
@@ -134,45 +136,58 @@ export async function createCampaign(input: {
   // ids are still supported for backwards compatibility.
   let candidateIds: string[] = data.lead_ids.slice(0, 10000);
   if (data.lead_list_id) {
-    const { data: listLeads } = await db
-      .from('leads')
-      .select('id')
-      .eq('organization_id', organizationId)
-      .eq('lead_list_id', data.lead_list_id)
-      .is('deleted_at', null)
-      .not('status', 'in', '(unsubscribed,bounced,not_interested)')
-      .limit(10000);
+    const listLeadRows = await fetchAllRows<{ id: string }>(
+      (from, to) => db
+        .from('leads')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('lead_list_id', data.lead_list_id)
+        .is('deleted_at', null)
+        .not('status', 'in', '(unsubscribed,bounced,not_interested)')
+        .order('id')
+        .range(from, to),
+      { maxRows: 100_000 },
+    );
     const seen = new Set<string>(candidateIds);
-    for (const lead of listLeads ?? []) {
+    for (const lead of listLeadRows) {
       const id = String(lead.id);
       if (!seen.has(id)) { seen.add(id); candidateIds.push(id); }
     }
   }
   let excludedCount = 0;
   if (candidateIds.length) {
-    const { data: validLeads } = await db
-      .from('leads')
-      .select('id, email')
-      .eq('organization_id', organizationId)
-      .is('deleted_at', null)
-      .in('id', candidateIds);
-    const { suppressed } = await partitionSuppressed(db, organizationId, (validLeads ?? []).map((lead) => String(lead.email)));
+    // A campaign can include thousands of leads; the id filter is batched so
+    // the request URL stays within the provider's limit.
+    const validLeads: Array<{ id: string; email: string }> = [];
+    for (const ids of chunk(candidateIds, 200)) {
+      const { data: rows } = await db
+        .from('leads')
+        .select('id, email')
+        .eq('organization_id', organizationId)
+        .is('deleted_at', null)
+        .in('id', ids);
+      for (const row of rows ?? []) validLeads.push({ id: String(row.id), email: String(row.email) });
+    }
+    const { suppressed } = await partitionSuppressed(db, organizationId, validLeads.map((lead) => lead.email));
     const blockedInDb = new Set<string>(suppressed);
     const excludeSet = new Set(data.exclude_lead_ids);
-    const rows = (validLeads ?? [])
+    const rows = validLeads
       .filter((lead) => {
         if (excludeSet.has(String(lead.id))) { excludedCount += 1; return false; }
         if (blockedInDb.has(String(lead.email).trim().toLowerCase())) { excludedCount += 1; return false; }
         return true;
       })
-      .map((lead) => lead.id as string)
-      .map((leadId) => ({
+      .map((lead) => ({
         organization_id: organizationId,
         campaign_id: campaign.id,
-        lead_id: leadId,
+        lead_id: lead.id,
         status: 'queued',
       }));
-    if (rows.length) await db.from('campaign_leads').upsert(rows, { onConflict: 'campaign_id,lead_id', ignoreDuplicates: true });
+    if (rows.length) {
+      for (const batch of chunk(rows, 500)) {
+        await db.from('campaign_leads').upsert(batch, { onConflict: 'campaign_id,lead_id', ignoreDuplicates: true });
+      }
+    }
     await db.from('campaigns').update({ total_leads: rows.length }).eq('id', campaign.id);
   }
 

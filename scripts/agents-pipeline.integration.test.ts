@@ -203,4 +203,99 @@ describe('the agent pipeline', () => {
     expect(String(finished?.error)).toMatch(/not connected/i);
     expect(finished?.lead_list_id).toBeNull();
   });
+
+  it('runs an agent that needs no credential', async () => {
+    const { organizationId, userId } = await findWorkspace();
+    const slug = `pipeline-noauth-${Date.now()}`;
+
+    const { data: agent, error: agentError } = await db
+      .from('ai_agents')
+      .insert({
+        slug,
+        name: 'Pipeline test agent without auth',
+        status: 'published',
+        agent_type: 'external',
+        input_schema: [],
+        api_config: { base_url: baseUrl, path: '/v1/leads', method: 'POST', auth_type: 'none' },
+        supports_outreach: false,
+      })
+      .select('id')
+      .single();
+    if (agentError || !agent) throw new Error(`Could not create the no-auth agent: ${agentError?.message}`);
+    const agentId = String(agent.id);
+    cleanup.push(async () => {
+      await db.from('ai_agents').delete().eq('id', agentId);
+    });
+
+    const { data: run } = await db
+      .from('ai_agent_runs')
+      .insert({ organization_id: organizationId, agent_id: agentId, user_id: userId, status: 'queued', inputs: {}, outreach: { enabled: false } })
+      .select('id')
+      .single();
+    const runId = String(run?.id);
+    cleanup.push(async () => {
+      await db.from('ai_agent_runs').delete().eq('id', runId);
+    });
+
+    await runAgentTask(runId);
+
+    const { data: finished } = await db.from('ai_agent_runs').select('status, error, lead_list_id').eq('id', runId).maybeSingle();
+    expect(finished?.status).toBe('succeeded');
+    expect(finished?.error).toBeNull();
+    expect(receivedAuth).toBe('');
+    const leadListId = String(finished?.lead_list_id ?? '');
+    expect(leadListId).not.toBe('');
+    cleanup.push(async () => {
+      await db.from('leads').delete().eq('lead_list_id', leadListId);
+      await db.from('lead_lists').delete().eq('id', leadListId);
+    });
+  });
+
+  it('keeps a run valid when its user has been removed', async () => {
+    const { organizationId } = await findWorkspace();
+    const slug = `pipeline-nouser-${Date.now()}`;
+
+    const { data: agent, error: agentError } = await db
+      .from('ai_agents')
+      .insert({
+        slug,
+        name: 'Pipeline test agent without a user',
+        status: 'published',
+        agent_type: 'external',
+        input_schema: [],
+        api_config: { base_url: baseUrl, path: '/v1/leads', method: 'POST', auth_type: 'bearer' },
+        supports_outreach: false,
+      })
+      .select('id')
+      .single();
+    if (agentError || !agent) throw new Error(`Could not create the no-user agent: ${agentError?.message}`);
+    const agentId = String(agent.id);
+    cleanup.push(async () => {
+      await db.from('ai_agents').delete().eq('id', agentId);
+      await removeAgentCredential(db, agentId);
+    });
+    await saveAgentCredential(db, agentId, { api_key: 'integration-test-key' });
+
+    const { data: run, error: runError } = await db
+      .from('ai_agent_runs')
+      .insert({ organization_id: organizationId, agent_id: agentId, user_id: null, status: 'queued', inputs: {}, outreach: { enabled: false } })
+      .select('id')
+      .single();
+    if (runError || !run) throw new Error(`Could not create the no-user run: ${runError?.message}`);
+    const runId = String(run.id);
+    cleanup.push(async () => {
+      await db.from('ai_agent_runs').delete().eq('id', runId);
+    });
+
+    await runAgentTask(runId);
+
+    const { data: finished } = await db.from('ai_agent_runs').select('status, error, lead_list_id').eq('id', runId).maybeSingle();
+    expect(finished?.status).toBe('succeeded');
+    const leadListId = String(finished?.lead_list_id ?? '');
+    expect(leadListId).not.toBe('');
+    cleanup.push(async () => {
+      await db.from('leads').delete().eq('lead_list_id', leadListId);
+      await db.from('lead_lists').delete().eq('id', leadListId);
+    });
+  });
 });

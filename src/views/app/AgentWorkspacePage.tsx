@@ -8,7 +8,12 @@ import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useToast } from '@/components/shared/ToastProvider';
 import { cn } from '@/lib/utils';
 import { emptyInputs } from '@/lib/agents/inputs';
+import { COMMON_TIMEZONES } from '@/lib/timezone';
 import type { AgentDetail, AgentFieldDefinition } from '@/lib/agents/types';
+
+/** The zone `<input type="datetime-local">` is interpreted in by the browser. */
+const SCHEDULE_TIMEZONE =
+  typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' : 'UTC';
 
 interface RunRow {
   id: string;
@@ -35,7 +40,7 @@ interface TemplateOption {
   mode: string | null;
 }
 
-const inputCls = 'w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60';
+const inputCls = 'w-full rounded-[10px] border border-border bg-input px-3.5 py-2.5 text-[13px] outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/15 disabled:cursor-not-allowed disabled:opacity-60';
 const labelCls = 'block text-[13px] font-medium text-foreground';
 
 const RUN_LABELS: Record<string, string> = {
@@ -146,6 +151,19 @@ export default function AgentWorkspacePage({
 
   const start = async () => {
     if (!agent) return;
+    const missing = fields.filter(field => field.required && !String(inputs[field.key] ?? '').trim());
+    if (missing.length > 0) {
+      toast.show(`Fill in ${missing.map(field => field.label).join(', ')} before starting.`, 'danger');
+      return;
+    }
+    if (mode === 'schedule' && !sendAt) {
+      toast.show('Pick a date and time to schedule the task.', 'danger');
+      return;
+    }
+    if (agent.supportsOutreach && outreachEnabled && !mailboxId) {
+      toast.show('Choose a sending mailbox, or turn email outreach off.', 'danger');
+      return;
+    }
     setBusy(true);
     try {
       const response = await apiFetch<{ id: string }>(`/api/agents/${agent.slug}/run`, {
@@ -254,10 +272,13 @@ export default function AgentWorkspacePage({
 
       <div className="grid lg:grid-cols-3 gap-5 items-start">
         <div className="lg:col-span-2 space-y-5">
-          <section className="neu-card rounded-[16px] p-5 space-y-4">
-            <div>
-              <h2 className="text-[15px] font-semibold text-foreground">What this agent needs</h2>
-              <p className="text-[12px] text-muted-foreground mt-0.5">Every field below is required by the agent to do its work.</p>
+          <section className="neu-card space-y-4 rounded-[16px] p-5">
+            <div className="flex items-start gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[12px] font-semibold text-accent-foreground">1</span>
+              <div>
+                <h2 className="text-[15px] font-semibold text-foreground">What this agent needs</h2>
+                <p className="mt-0.5 text-[12px] text-muted-foreground">Fill in these details so the agent has what it needs to do its work.</p>
+              </div>
             </div>
 
             {fields.length === 0 ? (
@@ -333,15 +354,18 @@ export default function AgentWorkspacePage({
           </section>
 
           {agent.supportsOutreach ? (
-            <section className="neu-card rounded-[16px] p-5 space-y-4">
+            <section className="neu-card space-y-4 rounded-[16px] p-5">
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-[15px] font-semibold text-foreground flex items-center gap-2">
-                    <Mail className="w-4 h-4" /> Email outreach
-                  </h2>
-                  <p className="text-[12px] text-muted-foreground mt-0.5">
-                    The leads the agent finds go into a lead list, then this campaign sends to them.
-                  </p>
+                <div className="flex items-start gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[12px] font-semibold text-accent-foreground">2</span>
+                  <div>
+                    <h2 className="flex items-center gap-2 text-[15px] font-semibold text-foreground">
+                      <Mail className="h-4 w-4" /> Email outreach
+                    </h2>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground">
+                      The leads the agent finds go into a lead list, then this campaign sends to them.
+                    </p>
+                  </div>
                 </div>
                 <label className="inline-flex items-center gap-2 text-[12px] text-muted-foreground">
                   <input
@@ -441,7 +465,9 @@ export default function AgentWorkspacePage({
                     </div>
                     <div>
                       <label className={labelCls} htmlFor="outreach-timezone">Timezone</label>
-                      <input id="outreach-timezone" value={timezone} onChange={(event) => setTimezone(event.target.value)} className={cn(inputCls, 'mt-1.5')} />
+                      <select id="outreach-timezone" value={timezone} onChange={(event) => setTimezone(event.target.value)} className={cn(inputCls, 'mt-1.5')}>
+                        {COMMON_TIMEZONES.map((zone) => <option key={zone} value={zone}>{zone}</option>)}
+                      </select>
                     </div>
                     <div>
                       <label className={labelCls} htmlFor="outreach-limit">Daily limit</label>
@@ -453,10 +479,13 @@ export default function AgentWorkspacePage({
             </section>
           ) : null}
 
-          <section className="neu-card rounded-[16px] p-5 space-y-4">
-            <div>
-              <h2 className="text-[15px] font-semibold text-foreground">When should it run</h2>
-              <p className="text-[12px] text-muted-foreground mt-0.5">Run it now, or schedule the task for later. Scheduled tasks run in the background.</p>
+          <section className="neu-card space-y-4 rounded-[16px] p-5">
+            <div className="flex items-start gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[12px] font-semibold text-accent-foreground">3</span>
+              <div>
+                <h2 className="text-[15px] font-semibold text-foreground">When should it run</h2>
+                <p className="mt-0.5 text-[12px] text-muted-foreground">Run it now, or schedule the task for later. Scheduled tasks run in the background.</p>
+              </div>
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
               <button
@@ -496,18 +525,26 @@ export default function AgentWorkspacePage({
                   onChange={(event) => setSendAt(event.target.value)}
                   className={cn(inputCls, 'mt-1.5')}
                 />
-                <p className="mt-1 text-[11px] text-muted-foreground">Uses your local time ({timezone}).</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">Uses your browser&apos;s local time ({SCHEDULE_TIMEZONE}).</p>
               </div>
             ) : null}
+
+            <div className="rounded-[10px] border border-border bg-muted/60 px-3 py-2.5 text-[12px] leading-relaxed text-muted-foreground">
+              {mode === 'schedule'
+                ? `The task starts on ${sendAt ? new Date(sendAt).toLocaleString() : 'the date you choose'}${agent.supportsOutreach && outreachEnabled ? ', then creates an outreach campaign.' : '.'}`
+                : agent.supportsOutreach && outreachEnabled
+                  ? 'Starting now runs the agent and creates an outreach campaign using the settings above.'
+                  : 'Starting now runs the agent in the background. You can follow progress in Recent tasks.'}
+            </div>
 
             <button
               type="button"
               onClick={() => void start()}
               disabled={busy || Boolean(activeRunId)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-[10px] bg-primary px-4 py-2.5 text-[13px] font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[filter] hover:brightness-105 disabled:opacity-60"
             >
-              {busy || activeRunId ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-              {mode === 'schedule' ? 'Schedule task' : 'Start agent'}
+              {busy || activeRunId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {activeRunId ? 'Running…' : mode === 'schedule' ? 'Schedule task' : 'Start agent'}
             </button>
           </section>
         </div>
@@ -516,14 +553,18 @@ export default function AgentWorkspacePage({
           <section className="neu-card rounded-[16px] p-5">
             <h2 className="text-[15px] font-semibold text-foreground">Recent tasks</h2>
             {runs.length === 0 ? (
-              <p className="mt-2 text-[13px] text-muted-foreground">No task has been started with this agent yet.</p>
+              <div className="mt-3 rounded-[10px] border border-dashed border-border px-3 py-6 text-center">
+                <Clock className="mx-auto h-5 w-5 text-muted-foreground" />
+                <p className="mt-2 text-[13px] font-medium text-foreground">No tasks yet</p>
+                <p className="mt-1 text-[12px] text-muted-foreground">Start the agent and its progress appears here.</p>
+              </div>
             ) : (
               <ul className="mt-3 space-y-3">
                 {runs.map((run) => (
                   <li key={run.id} className="rounded-[10px] border border-border p-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={cn('text-[12px] font-medium flex items-center gap-1.5', statusTone(run.status))}>
-                        {run.status === 'succeeded' ? <CheckCircle2 className="w-3.5 h-3.5" /> : null}
+                      <span className={cn('flex items-center gap-1.5 text-[12px] font-medium', statusTone(run.status))}>
+                        {run.status === 'succeeded' ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
                         {RUN_LABELS[run.status] ?? run.status}
                       </span>
                       <span className="text-[11px] text-muted-foreground">
@@ -533,7 +574,7 @@ export default function AgentWorkspacePage({
                     {run.error ? <p className="mt-1.5 text-[12px] text-destructive">{run.error}</p> : null}
                     {run.campaignId ? (
                       <Link href={`/app/campaigns/${run.campaignId}`} className="mt-1.5 inline-flex items-center gap-1 text-[12px] text-foreground hover:underline">
-                        Open campaign <ArrowRight className="w-3 h-3" />
+                        Open campaign <ArrowRight className="h-3 w-3" />
                       </Link>
                     ) : null}
                   </li>

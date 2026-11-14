@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Plus, Search, Copy, Trash2, Eye, Pencil, Users, Lock, FlaskConical } from 'lucide-react';
+import { Plus, Search, Copy, Trash2, Eye, Pencil, Users, Lock, MoreHorizontal, FileText } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -12,7 +12,6 @@ import { cn } from '@/lib/utils';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useRouter } from 'next/navigation';
 import { useDebouncedValue } from '@/hooks/use-debounce';
-
 
 type Scope = 'all' | 'personal' | 'shared';
 type Editing = Template | 'new' | null;
@@ -31,7 +30,7 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
   const [editing, setEditing] = useState<Editing>(null);
   const [previewing, setPreviewing] = useState<Template | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [testIds, setTestIds] = useState<string[]>([]);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const visible = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
@@ -41,6 +40,8 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
       (!q || [t.name, t.subject, t.tags.join(' ')].join(' ').toLowerCase().includes(q)),
     );
   }, [items, debouncedQuery, category, scope]);
+
+  const filtersActive = Boolean(debouncedQuery.trim()) || category !== 'All categories' || scope !== 'all';
 
   const saveTemplate = async (values: TemplateEditorValues) => {
     const payload = {
@@ -119,6 +120,7 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
       toast.show(errorMessage(error), 'danger');
     } finally {
       setBusy(null);
+      setOpenMenu(null);
     }
   };
 
@@ -127,8 +129,8 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
     try {
       await apiFetch(`/api/templates/${t.id}`, { method: 'DELETE' });
       setItems(list => list.filter(x => x.id !== t.id));
-      setTestIds(ids => ids.filter(id => id !== t.id));
       setConfirmId(null);
+      setOpenMenu(null);
       toast.show(`Deleted "${t.name}".`, 'info');
       router.refresh();
     } catch (error) {
@@ -138,111 +140,107 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
     }
   };
 
-  const toggleTest = (id: string) => {
-    setTestIds(ids => {
-      if (ids.includes(id)) return ids.filter(x => x !== id);
-      if (ids.length >= 3) {
-        toast.show('You can compare up to 3 templates at once.', 'info');
-        return ids;
-      }
-      return [...ids, id];
-    });
-  };
-
-  const testTemplates = items.filter(t => testIds.includes(t.id));
-
   return (
-    <div className="px-6 py-6 lg:px-8 lg:py-8 max-w-[1440px] mx-auto space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-5 px-6 py-6 lg:px-8 lg:py-8">
       <PageHeader
         title="Templates"
-        description="Reusable email copy for your campaigns and sequences."
+        description="Reusable email copy for your campaigns. Write once, then use it in any campaign."
         actions={
-          <button onClick={() => setEditing('new')} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
-            <Plus className="w-4 h-4" /> New template
+          <button onClick={() => setEditing('new')} className="inline-flex items-center gap-2 rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[filter] hover:brightness-105">
+            <Plus className="h-4 w-4" /> New template
           </button>
         }
       />
 
-      <div className="flex flex-col md:flex-row gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search templates" aria-label="Search templates" className="w-full pl-9 pr-3 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search templates" aria-label="Search templates" className="w-full rounded-[10px] border border-border bg-input py-2.5 pl-9 pr-3 text-[13px] outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/15" />
         </div>
-        <select value={category} onChange={e => setCategory(e.target.value)} aria-label="Category" className="px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60">
-          {categories.map(c => <option key={c}>{c}</option>)}
-        </select>
-        <div role="tablist" className="inline-flex gap-1 rounded-[10px] bg-input p-1 shadow-[var(--shadow-inset-sm)]">
-          {(['all', 'personal', 'shared'] as const).map(s => (
-            <button key={s} role="tab" aria-selected={scope === s} onClick={() => setScope(s)} className={cn('rounded-[8px] px-3 py-1.5 text-[12px] font-medium capitalize transition-[color,background-color,box-shadow] duration-[var(--dur)] ease-[var(--ease)]', scope === s ? 'bg-card text-foreground shadow-[var(--shadow-raised-sm)]' : 'text-muted-foreground hover:text-foreground')}>{s}</button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <select value={category} onChange={e => setCategory(e.target.value)} aria-label="Category" className="rounded-[10px] border border-border bg-input px-3.5 py-2.5 text-[13px] outline-none transition-[border-color,box-shadow] focus:border-ring focus:ring-[3px] focus:ring-ring/15">
+            {categories.map(c => <option key={c}>{c}</option>)}
+          </select>
+          <div role="tablist" aria-label="Template scope" className="inline-flex gap-1 rounded-[10px] border border-border bg-muted p-1">
+            {(['all', 'personal', 'shared'] as const).map(s => (
+              <button key={s} role="tab" aria-selected={scope === s} onClick={() => setScope(s)} className={cn('rounded-[7px] px-3 py-1.5 text-[12px] font-medium capitalize transition-colors', scope === s ? 'bg-card text-foreground shadow-[var(--shadow-raised-sm)]' : 'text-muted-foreground hover:text-foreground')}>{s}</button>
+            ))}
+          </div>
         </div>
       </div>
 
       {visible.length === 0 ? (
-        <EmptyState icon={<Search className="w-8 h-8" />} title="No templates match" description="Try another search, category, or scope." />
+        <div className="neu-card rounded-[16px]">
+          {items.length === 0 ? (
+            <EmptyState
+              icon={<FileText className="h-6 w-6" />}
+              title="No templates yet"
+              description="Create your first reusable email. You can personalize it with fields like {{first_name}} later."
+              action={<button onClick={() => setEditing('new')} className="inline-flex items-center gap-2 rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground"><Plus className="h-4 w-4" /> Create template</button>}
+            />
+          ) : (
+            <EmptyState
+              icon={<Search className="h-6 w-6" />}
+              title="No templates match"
+              description="Try another search, category, or scope."
+              action={filtersActive ? <button onClick={() => { setQuery(''); setCategory('All categories'); setScope('all'); }} className="rounded-[10px] border border-border bg-card px-4 py-2 text-[13px] font-medium text-foreground hover:bg-muted">Clear filters</button> : undefined}
+            />
+          )}
+        </div>
       ) : (
-        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {visible.map(t => (
-            <article key={t.id} className="neu-card rounded-[16px] p-5 flex flex-col gap-3">
+            <article key={t.id} className="neu-card flex flex-col gap-3 rounded-[16px] p-5">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold text-foreground truncate">{t.name}</h3>
+                <h3 className="truncate text-[14px] font-semibold text-foreground">{t.name}</h3>
                 <StatusBadge variant={t.isShared ? 'info' : 'muted'} size="sm">
-                  <span className="inline-flex items-center gap-1">{t.isShared ? <Users className="w-3 h-3" /> : <Lock className="w-3 h-3" />}{t.isShared ? 'Shared' : 'Personal'}</span>
+                  <span className="inline-flex items-center gap-1">{t.isShared ? <Users className="h-3 w-3" /> : <Lock className="h-3 w-3" />}{t.isShared ? 'Shared' : 'Personal'}</span>
                 </StatusBadge>
               </div>
-               <p className="text-[12px] text-muted-foreground">{t.category} · {t.mode === 'group' ? `${t.variants.length} variants · ` : ''}{t.aiPersonalization ? 'AI personalization · ' : ''}Used {t.usageCount} times · Updated {t.updatedAt}</p>
-              <p className="text-sm text-foreground/80 line-clamp-3">{renderSample(t.body)}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {t.tags.map(tag => <span key={tag} className="px-2 py-0.5 rounded-md bg-muted text-[12px] text-muted-foreground">{tag}</span>)}
-              </div>
+              <p className="text-[12px] text-muted-foreground">
+                {t.category} · {t.mode === 'group' ? `${t.variants.length} variants · ` : ''}{t.aiPersonalization ? 'AI personalization · ' : ''}Used {t.usageCount} times
+              </p>
+              <p className="line-clamp-3 text-[13px] leading-relaxed text-foreground/80">{renderSample(t.body)}</p>
+              {t.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {t.tags.map(tag => <span key={tag} className="rounded-md bg-muted px-2 py-0.5 text-[12px] text-muted-foreground">{tag}</span>)}
+                </div>
+              )}
 
-              <div className="flex flex-wrap items-center gap-1.5 pt-3 mt-auto border-t border-border">
-                <button onClick={() => setPreviewing(t)} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium hover:bg-muted"><Eye className="w-3.5 h-3.5" /> Preview</button>
-                <button onClick={() => setEditing(t)} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium hover:bg-muted"><Pencil className="w-3.5 h-3.5" /> Edit</button>
-                <button onClick={() => void duplicate(t)} disabled={busy === t.id} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium hover:bg-muted disabled:opacity-50"><Copy className="w-3.5 h-3.5" /> Duplicate</button>
-                <button onClick={() => toggleTest(t.id)} aria-pressed={testIds.includes(t.id)} className={cn('inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium', testIds.includes(t.id) ? 'bg-accent text-accent-foreground' : 'hover:bg-muted')}>
-                  <FlaskConical className="w-3.5 h-3.5" /> {testIds.includes(t.id) ? 'In test' : 'Add to test'}
-                </button>
-                {confirmId === t.id ? (
-                  <span className="ml-auto flex items-center gap-2 text-[12px]">
-                    <button onClick={() => void remove(t)} disabled={busy === t.id} className="px-2 py-1 rounded-lg bg-destructive text-destructive-foreground font-medium disabled:opacity-50">Delete</button>
-                    <button onClick={() => setConfirmId(null)} className="px-2 py-1 rounded-lg border border-border font-medium">Keep</button>
-                  </span>
-                ) : (
-                  <button onClick={() => setConfirmId(t.id)} aria-label={`Delete ${t.name}`} className="ml-auto p-1.5 rounded-lg text-destructive hover:bg-muted"><Trash2 className="w-3.5 h-3.5" /></button>
-                )}
+              <div className="mt-auto flex items-center gap-1.5 border-t border-border pt-3">
+                <button onClick={() => setPreviewing(t)} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-foreground hover:bg-muted"><Eye className="h-3.5 w-3.5" /> Preview</button>
+                <button onClick={() => setEditing(t)} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-foreground hover:bg-muted"><Pencil className="h-3.5 w-3.5" /> Edit</button>
+                <div className="relative ml-auto">
+                  <button onClick={() => setOpenMenu(openMenu === t.id ? null : t.id)} aria-label={`More actions for ${t.name}`} aria-expanded={openMenu === t.id} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                  {openMenu === t.id && (
+                    <>
+                      <div className="fixed inset-0 z-20" onClick={() => setOpenMenu(null)} aria-hidden="true" />
+                      <div className="absolute bottom-9 right-0 z-30 w-44 rounded-[12px] border border-border bg-popover py-1 shadow-[var(--shadow-raised-lg)]">
+                        {confirmId === t.id ? (
+                          <div className="px-3 py-2">
+                            <p className="text-[12px] text-muted-foreground">Delete this template?</p>
+                            <div className="mt-2 flex gap-2">
+                              <button onClick={() => void remove(t)} disabled={busy === t.id} className="rounded-md bg-destructive px-2 py-1 text-[12px] font-medium text-destructive-foreground disabled:opacity-50">Delete</button>
+                              <button onClick={() => setConfirmId(null)} className="rounded-md border border-border px-2 py-1 text-[12px] font-medium">Keep</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <button onClick={() => void duplicate(t)} disabled={busy === t.id} className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-foreground hover:bg-muted disabled:opacity-50"><Copy className="h-4 w-4" /> Duplicate</button>
+                            <button onClick={() => setConfirmId(t.id)} className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-destructive hover:bg-muted"><Trash2 className="h-4 w-4" /> Delete</button>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </article>
           ))}
         </div>
       )}
-
-      <section className="neu-card rounded-[16px] p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <FlaskConical className="w-4 h-4 text-primary" />
-          <h2 className="font-semibold text-foreground">Content test</h2>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Compare up to 3 templates to see which copy gets more replies. Each lead receives one variant at random and results are reported per variant. This tests message content; it does not change how mailbox providers filter email.
-        </p>
-        {testTemplates.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Select templates above with &quot;Add to test&quot; to start a comparison.</p>
-        ) : (
-          <div className="flex flex-col sm:flex-row gap-3">
-            {testTemplates.map(t => (
-              <div key={t.id} className="flex-1 rounded-xl border border-border p-3">
-                <p className="text-sm font-medium text-foreground">{t.name}</p>
-                <p className="text-[12px] text-muted-foreground mt-1">Variant share: {Math.round(100 / testTemplates.length)}%</p>
-              </div>
-            ))}
-          </div>
-        )}
-        {testTemplates.length > 1 && (
-          <button onClick={() => toast.show('Save the templates, then choose them when creating a campaign.', 'info')} className="px-4 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
-            Use this test in a campaign
-          </button>
-        )}
-      </section>
 
       {editing && (
         <TemplateEditorModal template={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSave={saveTemplate} />
@@ -250,14 +248,14 @@ export default function TemplatesPage({ initialTemplates }: { initialTemplates: 
 
       {previewing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setPreviewing(null)} aria-hidden="true" />
-          <div role="dialog" aria-modal="true" aria-labelledby="preview-title" className="relative w-full max-w-lg neu-card rounded-[16px] p-6">
-            <h2 id="preview-title" className="font-semibold text-foreground mb-1">{previewing.name}</h2>
-            <p className="text-[12px] text-muted-foreground mb-4">Sample lead: Sarah at TechFlow</p>
-            <p className="text-sm font-semibold text-foreground">{renderSample(previewing.subject)}</p>
-            <p className="mt-3 text-sm text-foreground whitespace-pre-wrap">{renderSample(previewing.body)}</p>
-            <div className="flex justify-end mt-6">
-              <button onClick={() => setPreviewing(null)} className="px-4 py-2 rounded-[10px] bg-card text-sm font-medium text-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:shadow-[var(--shadow-raised)] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">Close</button>
+          <div className="absolute inset-0 bg-[#0b1220]/50 backdrop-blur-[2px]" onClick={() => setPreviewing(null)} aria-hidden="true" />
+          <div role="dialog" aria-modal="true" aria-labelledby="preview-title" className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-[16px] border border-border bg-card p-6 shadow-[var(--shadow-raised-lg)]">
+            <h2 id="preview-title" className="mb-1 text-[15px] font-semibold text-foreground">{previewing.name}</h2>
+            <p className="mb-4 text-[12px] text-muted-foreground">Sample lead: Sarah at TechFlow</p>
+            <p className="text-[13px] font-semibold text-foreground">{renderSample(previewing.subject)}</p>
+            <p className="mt-3 whitespace-pre-wrap text-[13px] leading-relaxed text-foreground">{renderSample(previewing.body)}</p>
+            <div className="mt-6 flex justify-end">
+              <button onClick={() => setPreviewing(null)} className="rounded-[10px] border border-border bg-card px-4 py-2 text-[13px] font-medium text-foreground hover:bg-muted">Close</button>
             </div>
           </div>
         </div>

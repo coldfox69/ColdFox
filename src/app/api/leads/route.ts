@@ -13,9 +13,21 @@ export async function GET(request: Request) {
     const query = parseQuery(request, leadListQuerySchema);
     const db = createServiceClient();
 
+    // Resolve the tag before building the query: only a tag filter needs the
+    // inner join, otherwise untagged leads would be excluded.
+    let tagId: string | null = null;
+    if (query.tag) {
+      const { data: tag } = await db.from('lead_tags').select('id').eq('organization_id', session.organizationId).eq('name', query.tag).maybeSingle();
+      if (!tag) return ok({ leads: [], total: 0, page: query.page, pageSize: query.pageSize, statuses: {} });
+      tagId = String(tag.id);
+    }
+
     let builder = db
       .from('leads')
-      .select('*', { count: 'exact' })
+      // The join is only part of the select when a tag filter is active; the
+      // cast keeps Supabase's compile-time parser from rejecting the runtime
+      // string, while the result shape stays the same plain lead row.
+      .select((tagId ? '*, lead_tag_assignments!inner(tag_id)' : '*') as '*', { count: 'exact' })
       .eq('organization_id', session.organizationId)
       .is('deleted_at', null);
 
@@ -32,11 +44,11 @@ export async function GET(request: Request) {
         ].join(','),
       );
     }
-    if (query.tag) {
-      const { data: tag } = await db.from('lead_tags').select('id').eq('organization_id', session.organizationId).eq('name', query.tag).maybeSingle();
-      if (!tag) return ok({ leads: [], total: 0, page: query.page, pageSize: query.pageSize, statuses: {} });
-      const { data: assignments } = await db.from('lead_tag_assignments').select('lead_id').eq('organization_id', session.organizationId).eq('tag_id', tag.id).limit(10000);
-      builder = builder.in('id', (assignments ?? []).map((a) => a.lead_id));
+    if (tagId) {
+      // Filter through the join instead of pulling every assignment id into
+      // an `.in()` filter, which breaks once a tag has more than a few hundred
+      // leads.
+      builder = builder.eq('lead_tag_assignments.tag_id', tagId);
     }
 
     const sortColumn = query.sort === 'name' ? 'last_name' : query.sort;

@@ -1,6 +1,7 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { countByValue } from '@/lib/data/app';
+import { fetchAllRows } from '@/lib/data/paginate';
 import {
   CAMPAIGN_STATUSES,
   JOB_STATUSES,
@@ -58,7 +59,15 @@ export async function getPlatformOverview(db: SupabaseClient) {
     loadUsers(db),
     db.from('organizations').select('id', { count: 'exact', head: true }).is('deleted_at', null),
     db.from('organizations').select('id', { count: 'exact', head: true }).eq('is_suspended', true).is('deleted_at', null),
-    db.from('organizations').select('plan_key').is('deleted_at', null).limit(5000),
+    fetchAllRows<{ plan_key: string }>(
+      (from, to) => db
+        .from('organizations')
+        .select('plan_key')
+        .is('deleted_at', null)
+        .order('id')
+        .range(from, to),
+      { maxRows: 100_000 },
+    ),
     countByValue(db, 'campaigns', 'status', CAMPAIGN_STATUSES, { excludeDeleted: true }),
     db.from('campaigns').select('id', { count: 'exact', head: true }).is('archived_at', null),
     db.from('leads').select('id', { count: 'exact', head: true }).is('deleted_at', null),
@@ -76,7 +85,7 @@ export async function getPlatformOverview(db: SupabaseClient) {
   ]);
 
   const planCounts: Record<string, number> = {};
-  for (const row of planRows.data ?? []) {
+  for (const row of planRows) {
     const key = String(row.plan_key ?? 'free');
     planCounts[key] = (planCounts[key] ?? 0) + 1;
   }

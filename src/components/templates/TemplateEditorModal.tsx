@@ -45,7 +45,9 @@ interface VariantDraft {
 }
 
 const categories = ['Cold Outreach', 'Follow-up', 'Partnership', 'Nurture', 'Re-engagement', 'General'];
-const inputCls = 'w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60';
+const inputCls = 'w-full rounded-[10px] border border-border bg-input px-3.5 py-2.5 text-[13px] outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/15 disabled:cursor-not-allowed disabled:opacity-60';
+const secondaryBtn = 'inline-flex items-center gap-2 rounded-[10px] border border-border bg-card px-4 py-2 text-[13px] font-medium text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50';
+const primaryBtn = 'inline-flex items-center gap-2 rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[filter] hover:brightness-105 disabled:pointer-events-none disabled:opacity-60';
 
 interface ReviewResult {
   original: { subject: string; body_text: string };
@@ -230,27 +232,27 @@ export function TemplateEditorModal({
   if (!template && !chooseMode) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
-        <div role="dialog" aria-modal="true" aria-labelledby="template-mode-title" className="relative w-full max-w-md neu-card rounded-[16px] p-6">
-          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-4 top-4 p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
-          <h2 id="template-mode-title" className="text-lg font-semibold text-foreground mb-1">Create a template</h2>
-          <p className="text-sm text-muted-foreground mb-5">Choose what kind of template you want to build.</p>
+        <div className="absolute inset-0 bg-[#0b1220]/50 backdrop-blur-[2px]" aria-hidden="true" onClick={onClose} />
+        <div role="dialog" aria-modal="true" aria-labelledby="template-mode-title" className="relative w-full max-w-md rounded-[16px] border border-border bg-card p-6 shadow-[var(--shadow-raised-lg)]">
+          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-4 top-4 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"><X className="h-4 w-4" /></button>
+          <h2 id="template-mode-title" className="mb-1 text-[17px] font-semibold tracking-[-0.015em] text-foreground">Create a template</h2>
+          <p className="mb-5 text-[13px] leading-relaxed text-muted-foreground">Choose what kind of template you want to build. You can change this later by creating a new one.</p>
           <div className="grid gap-3">
-            <button type="button" onClick={() => setChooseMode('single')} className="text-left rounded-[16px] border border-border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-raised-sm)]">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-[10px] neu-inset-sm flex items-center justify-center"><FileText className="w-5 h-5 text-primary" /></div>
+            <button type="button" onClick={() => setChooseMode('single')} className="group rounded-[14px] border border-border bg-card p-4 text-left transition-[border-color,box-shadow] hover:border-primary/50 hover:shadow-[var(--shadow-raised-sm)]">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-accent text-accent-foreground"><FileText className="h-5 w-5" /></div>
                 <div>
-                  <span className="font-semibold text-foreground block">Single Template</span>
-                  <span className="text-[12px] text-muted-foreground">One subject and body, reused for every recipient.</span>
+                  <span className="block text-[14px] font-semibold text-foreground">Single template</span>
+                  <span className="mt-0.5 block text-[12px] leading-relaxed text-muted-foreground">One subject and body, reused for every recipient.</span>
                 </div>
               </div>
             </button>
-            <button type="button" onClick={() => setChooseMode('group')} className="text-left rounded-[16px] border border-border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-raised-sm)]">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-[10px] neu-inset-sm flex items-center justify-center"><Layers className="w-5 h-5 text-primary" /></div>
+            <button type="button" onClick={() => setChooseMode('group')} className="group rounded-[14px] border border-border bg-card p-4 text-left transition-[border-color,box-shadow] hover:border-primary/50 hover:shadow-[var(--shadow-raised-sm)]">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-accent text-accent-foreground"><Layers className="h-5 w-5" /></div>
                 <div>
-                  <span className="font-semibold text-foreground block">Multiple Templates</span>
-                  <span className="text-[12px] text-muted-foreground">A template group with variants that rotate per recipient.</span>
+                  <span className="block text-[14px] font-semibold text-foreground">Template group</span>
+                  <span className="mt-0.5 block text-[12px] leading-relaxed text-muted-foreground">Two or more variants that rotate between recipients.</span>
                 </div>
               </div>
             </button>
@@ -263,62 +265,63 @@ export function TemplateEditorModal({
   const title = template ? `Edit ${template.name}` : isGroup ? 'New template group' : 'New single template';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
-      <div role="dialog" aria-modal="true" aria-labelledby="template-editor-title" className="relative w-full max-w-3xl neu-card rounded-[16px] my-6">
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <h2 id="template-editor-title" className="text-lg font-semibold text-foreground truncate">{title}</h2>
-            <span className="hidden sm:inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-              {isGroup ? <><Layers className="w-3 h-3" /> Multiple</> : <><FileText className="w-3 h-3" /> Single</>}
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4">
+      <div className="absolute inset-0 bg-[#0b1220]/50 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      <div role="dialog" aria-modal="true" aria-labelledby="template-editor-title" className="relative my-6 w-full max-w-3xl rounded-[16px] border border-border bg-card shadow-[var(--shadow-raised-lg)]">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <h2 id="template-editor-title" className="truncate text-[17px] font-semibold tracking-[-0.015em] text-foreground">{title}</h2>
+            <span className="hidden shrink-0 items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:inline-flex">
+              {isGroup ? <><Layers className="h-3 w-3" /> Group</> : <><FileText className="h-3 w-3" /> Single</>}
             </span>
-            {aiPersonalization && <span className="hidden sm:inline-flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-[11px] font-medium text-accent-foreground"><Sparkles className="w-3 h-3" /> AI personalized</span>}
+            {aiPersonalization && <span className="hidden shrink-0 items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-[11px] font-medium text-accent-foreground sm:inline-flex"><Sparkles className="h-3 w-3" /> AI personalized</span>}
           </div>
-          <button type="button" aria-label="Close" onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+          <button type="button" aria-label="Close" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
 
-        <div className="px-6 py-5 space-y-6 max-h-[78vh] overflow-y-auto">
+        <div className="max-h-[76vh] space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label htmlFor="tname" className="text-sm font-medium mb-1.5 block">{isGroup ? 'Template group name' : 'Template name'}</label>
+              <label htmlFor="tname" className="mb-1.5 block text-[13px] font-medium text-foreground">{isGroup ? 'Template group name' : 'Template name'}</label>
               <input id="tname" className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder={isGroup ? 'Q4 SaaS founders variants' : 'Quick question about {{company_name}}'} />
+              <p className="mt-1 text-[11px] text-muted-foreground">Only your team sees this name. Recipients see the subject line.</p>
             </div>
             <div>
-              <label htmlFor="tcat" className="text-sm font-medium mb-1.5 block">Category</label>
+              <label htmlFor="tcat" className="mb-1.5 block text-[13px] font-medium text-foreground">Category</label>
               <select id="tcat" className={inputCls} value={category} onChange={(e) => setCategory(e.target.value)}>
                 {categories.map((c) => <option key={c}>{c}</option>)}
               </select>
             </div>
-            <label className="flex items-center gap-2 text-sm font-medium self-end pb-2.5 cursor-pointer select-none">
+            <label className="flex cursor-pointer select-none items-center gap-2 self-end pb-2.5 text-[13px] font-medium text-foreground">
               <input type="checkbox" checked={isShared} onChange={(e) => setIsShared(e.target.checked)} className="h-4 w-4 rounded border-border accent-primary" />
               Shared with workspace
             </label>
           </div>
 
           {variants.map((variant, index) => (
-            <fieldset key={variant.key} className="rounded-[16px] border border-border p-4 sm:p-5">
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <legend className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+            <fieldset key={variant.key} className="rounded-[14px] border border-border bg-muted/30 p-4 sm:p-5">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <legend className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
                   {isGroup ? `Variant ${index + 1}` : 'Email content'}
-                  {reviewFor === index && reviewBusy && <span className="inline-flex items-center gap-1 text-accent-foreground normal-case font-normal"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Reviewing…</span>}
+                  {reviewFor === index && reviewBusy && <span className="inline-flex items-center gap-1 font-normal normal-case tracking-normal text-accent-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Reviewing…</span>}
                 </legend>
                 <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => void runReview(index)} disabled={reviewBusy || !variant.subject.trim() || !variant.body.trim()} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium border border-border hover:bg-muted disabled:opacity-50">
-                    <ShieldCheck className="w-3.5 h-3.5 text-primary" /> AI Deliverability Review
+                  <button type="button" onClick={() => void runReview(index)} disabled={reviewBusy || !variant.subject.trim() || !variant.body.trim()} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[12px] font-medium text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50">
+                    <ShieldCheck className="h-3.5 w-3.5 text-primary" /> AI deliverability review
                   </button>
                   {isGroup && variants.length > 1 && (
-                    <button type="button" aria-label={`Remove variant ${index + 1}`} onClick={() => removeVariant(index)} className="p-1.5 rounded-lg text-destructive hover:bg-muted"><Trash2 className="w-4 h-4" /></button>
+                    <button type="button" aria-label={`Remove variant ${index + 1}`} onClick={() => removeVariant(index)} className="rounded-lg p-1.5 text-destructive hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
                   )}
                 </div>
               </div>
               <div className="grid gap-3">
                 <div>
-                  <label htmlFor={`subject-${variant.key}`} className="text-sm font-medium mb-1.5 block">Subject line</label>
+                  <label htmlFor={`subject-${variant.key}`} className="mb-1.5 block text-[13px] font-medium text-foreground">Subject line</label>
                   <input id={`subject-${variant.key}`} ref={(el) => { subjectRefs.current[index] = el; }} onFocus={() => setActiveInsert({ variantIndex: index, field: 'subject' })} className={inputCls} value={variant.subject} onChange={(e) => updateVariant(index, 'subject', e.target.value)} placeholder="Hello {{first_name}}, a quick question about {{company_name}}" />
                 </div>
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label htmlFor={`body-${variant.key}`} className="text-sm font-medium">Email body</label>
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <label htmlFor={`body-${variant.key}`} className="text-[13px] font-medium text-foreground">Email body</label>
                     <span className="text-[11px] text-muted-foreground">Plain text · placeholders supported</span>
                   </div>
                   <textarea id={`body-${variant.key}`} ref={(el) => { bodyRefs.current[index] = el; }} onFocus={() => setActiveInsert({ variantIndex: index, field: 'body' })} rows={7} className={cn(inputCls, 'leading-relaxed')} value={variant.body} onChange={(e) => updateVariant(index, 'body', e.target.value)} placeholder={'Hi {{first_name}},\n\nI came across {{company_name}} and wanted to reach out.\n\nBest regards,\nAlex'} />
@@ -326,40 +329,40 @@ export function TemplateEditorModal({
               </div>
 
               {reviewFor === index && review && (
-                <div className="mt-4 rounded-[14px] border border-border bg-muted/40 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <h3 className="text-sm font-semibold text-foreground">AI suggested improvements</h3>
+                <div className="mt-4 rounded-[12px] border border-border bg-card p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <h3 className="text-[14px] font-semibold text-foreground">AI suggested improvements</h3>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <div className="rounded-xl bg-card border border-border p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">Original</p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-[10px] border border-border bg-muted/50 p-3">
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">Original</p>
                       <p className="text-[13px] font-semibold text-foreground">{review.original.subject}</p>
-                      <p className="mt-2 text-[13px] whitespace-pre-wrap text-foreground/90">{review.original.body_text}</p>
+                      <p className="mt-2 whitespace-pre-wrap text-[13px] text-foreground/90">{review.original.body_text}</p>
                     </div>
-                    <div className="rounded-xl border border-primary/40 bg-primary/5 p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">Improved</p>
+                    <div className="rounded-[10px] border border-primary/30 bg-primary/[0.04] p-3">
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">Improved</p>
                       <p className="text-[13px] font-semibold text-foreground">{review.improved.subject}</p>
-                      <p className="mt-2 text-[13px] whitespace-pre-wrap text-foreground/90">{review.improved.body_text}</p>
+                      <p className="mt-2 whitespace-pre-wrap text-[13px] text-foreground/90">{review.improved.body_text}</p>
                     </div>
                   </div>
                   {review.changes.length > 0 && (
-                    <ul className="mt-3 text-[12px] text-muted-foreground list-disc pl-5 space-y-1">
+                    <ul className="mt-3 list-disc space-y-1 pl-5 text-[12px] text-muted-foreground">
                       {review.changes.map((change, i) => <li key={i}>{change}</li>)}
                     </ul>
                   )}
                   {review.issues.length > 0 && (
-                    <div className="mt-3 rounded-xl border border-[var(--cf-warning)]/40 bg-[var(--cf-warning)]/10 p-3">
-                      <p className="flex items-center gap-1.5 text-[12px] font-semibold text-foreground"><AlertTriangle className="w-3.5 h-3.5" /> Check these yourself</p>
-                      <ul className="mt-1 text-[12px] text-muted-foreground list-disc pl-5 space-y-1">
+                    <div className="mt-3 rounded-[10px] border border-[var(--cf-warning)]/40 bg-[var(--cf-warning)]/10 p-3">
+                      <p className="flex items-center gap-1.5 text-[12px] font-semibold text-foreground"><AlertTriangle className="h-3.5 w-3.5 text-[var(--cf-warning)]" /> Check these yourself</p>
+                      <ul className="mt-1 list-disc space-y-1 pl-5 text-[12px] text-muted-foreground">
                         {review.issues.map((issue, i) => <li key={i}>{issue}</li>)}
                       </ul>
                     </div>
                   )}
-                  <p className="mt-3 text-[11px] text-muted-foreground">{review.disclaimer}</p>
-                  <div className="flex items-center gap-2 mt-4">
-                    <button type="button" onClick={acceptReview} className="px-4 py-2 rounded-[10px] bg-primary text-xs font-medium text-primary-foreground hover:brightness-110">Accept changes</button>
-                    <button type="button" onClick={() => { setReview(null); setReviewFor(null); }} className="px-4 py-2 rounded-[10px] border border-border text-xs font-medium hover:bg-muted">Keep original</button>
+                  <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">{review.disclaimer}</p>
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <button type="button" onClick={acceptReview} className={primaryBtn}>Accept changes</button>
+                    <button type="button" onClick={() => { setReview(null); setReviewFor(null); }} className={secondaryBtn}>Keep original</button>
                   </div>
                 </div>
               )}
@@ -367,66 +370,66 @@ export function TemplateEditorModal({
           ))}
 
           {isGroup && (
-            <button type="button" onClick={addVariant} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] border border-dashed border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-primary/60">
-              <ListPlus className="w-4 h-4" /> Add more
+            <button type="button" onClick={addVariant} className="inline-flex items-center gap-2 rounded-[10px] border border-dashed border-border bg-card px-4 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground">
+              <ListPlus className="h-4 w-4" /> Add another variant
             </button>
           )}
 
-          <section aria-labelledby="variables-title" className="rounded-[16px] border border-border p-4 sm:p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between mb-2">
+          <section aria-labelledby="variables-title" className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+            <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
-                <h3 id="variables-title" className="text-sm font-semibold text-foreground">Available Personalization Variables</h3>
+                <Users className="h-4 w-4 text-primary" />
+                <h3 id="variables-title" className="text-[14px] font-semibold text-foreground">Personalization variables</h3>
               </div>
               <label className="flex items-center gap-2 text-[12px] text-muted-foreground">
                 Lead list
-                <select className="rounded-[8px] border border-transparent bg-input px-2 py-1.5 text-[12px]" value={variableList} onChange={(e) => setVariableList(e.target.value)}>
+                <select className="rounded-[8px] border border-border bg-input px-2 py-1.5 text-[12px] outline-none focus:border-ring focus:ring-[3px] focus:ring-ring/15" value={variableList} onChange={(e) => setVariableList(e.target.value)}>
                   <option value="union">All lists (union)</option>
                   {leadLists.map((list) => <option key={list.id} value={list.id}>{list.name}</option>)}
                 </select>
               </label>
             </div>
-            <p className="text-[12px] text-muted-foreground mb-3">Click a variable to insert it at the cursor, or copy it. Values come from the columns of the selected lead list.</p>
+            <p className="mb-3 text-[12px] leading-relaxed text-muted-foreground">Click a variable to insert it at the cursor, or copy it. Values come from the columns of the selected lead list.</p>
             {activeVariables.length === 0 ? (
-              <p className="text-[13px] text-muted-foreground">Import a lead list to see its personalization variables.</p>
+              <p className="rounded-[10px] border border-dashed border-border px-3 py-4 text-center text-[13px] text-muted-foreground">Import a lead list to see its personalization variables.</p>
             ) : (
               <ul className="grid gap-2 sm:grid-cols-2">
                 {activeVariables.map((variable) => (
-                  <li key={variable.key} className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
+                  <li key={variable.key} className="flex items-center gap-2 rounded-[10px] border border-border bg-muted/40 px-3 py-2">
                     <button type="button" onClick={() => insertPlaceholder(variable.key)} title="Insert at cursor" className="min-w-0 flex-1 text-left">
-                      <span className="block text-[13px] font-medium text-foreground truncate"><code className="rounded bg-muted px-1.5 py-0.5 text-[12px]">{`{{${variable.key}}}`}</code></span>
-                      <span className="block text-[11px] text-muted-foreground mt-1 truncate">{variable.description}{variable.example ? ` · e.g. ${variable.example}` : ''}</span>
+                      <span className="block truncate text-[13px] font-medium text-foreground"><code className="rounded bg-card px-1.5 py-0.5 text-[12px]">{`{{${variable.key}}}`}</code></span>
+                      <span className="mt-1 block truncate text-[11px] text-muted-foreground">{variable.description}{variable.example ? ` · e.g. ${variable.example}` : ''}</span>
                     </button>
-                    <button type="button" aria-label={`Copy {{${variable.key}}}`} onClick={() => copyPlaceholder(variable.key)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"><Copy className="w-3.5 h-3.5" /></button>
+                    <button type="button" aria-label={`Copy {{${variable.key}}}`} onClick={() => copyPlaceholder(variable.key)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-card hover:text-foreground"><Copy className="h-3.5 w-3.5" /></button>
                   </li>
                 ))}
               </ul>
             )}
           </section>
 
-          <section className="rounded-[16px] border border-border p-4 sm:p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+          <section className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <label htmlFor="ai-personalization" className="flex items-center gap-2 cursor-pointer select-none">
+                <label htmlFor="ai-personalization" className="flex cursor-pointer select-none items-center gap-2">
                   <input id="ai-personalization" type="checkbox" checked={aiPersonalization} onChange={(e) => setAiPersonalization(e.target.checked)} className="h-4 w-4 rounded border-border accent-primary" />
-                  <span className="text-sm font-semibold text-foreground inline-flex items-center gap-1"><Sparkles className="w-4 h-4 text-primary" /> AI Personalization</span>
+                  <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-foreground"><Sparkles className="h-4 w-4 text-primary" /> AI personalization</span>
                 </label>
-                <p className="text-[12px] text-muted-foreground mt-1 ml-6">For each recipient, AI writes a variation of this template using only their verified lead data. The original stays the reference; if generation fails, the approved original is sent.</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground sm:ml-6">For each recipient, AI writes a variation using only their verified lead data. The original stays the reference; if generation fails, the approved original is sent.</p>
               </div>
-              <button type="button" onClick={() => void showSamples()} disabled={sampleBusy} className="inline-flex items-center gap-2 px-3 py-2 rounded-[10px] border border-border text-[12px] font-medium hover:bg-muted disabled:opacity-50 whitespace-nowrap">
-                {sampleBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FlaskConical className="w-3.5 h-3.5 text-primary" />} Preview sample
+              <button type="button" onClick={() => void showSamples()} disabled={sampleBusy} className={cn(secondaryBtn, 'shrink-0 py-2 text-[12px]')}>
+                {sampleBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FlaskConical className="h-3.5 w-3.5 text-primary" />} Preview sample
               </button>
             </div>
             {samples.length > 0 && (
               <ul className="mt-4 grid gap-3">
                 {samples.map((sample) => (
-                  <li key={sample.lead_id} className="rounded-xl border border-border bg-card p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                  <li key={sample.lead_id} className="rounded-[10px] border border-border bg-muted/40 p-3">
+                    <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                       <span className="text-[12px] font-medium text-muted-foreground">{sample.email}{sample.ai ? ' · AI' : ' · template'}</span>
                       {sample.notes.length > 0 && <span className="text-[11px] text-muted-foreground">{sample.notes.join(' · ')}</span>}
                     </div>
                     <p className="text-[13px] font-semibold text-foreground">{sample.subject}</p>
-                    <p className="mt-1 text-[13px] whitespace-pre-wrap text-foreground/90">{sample.body}</p>
+                    <p className="mt-1 whitespace-pre-wrap text-[13px] text-foreground/90">{sample.body}</p>
                   </li>
                 ))}
               </ul>
@@ -434,12 +437,12 @@ export function TemplateEditorModal({
           </section>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-border px-6 py-4">
-          <p className="text-[11px] text-muted-foreground">AI review and samples never send email. You confirm every send.</p>
+        <div className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-[11px] leading-relaxed text-muted-foreground">AI review and samples never send email. You confirm every send.</p>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={onClose} disabled={busy} className="px-4 py-2 rounded-[10px] border border-border text-sm font-medium hover:bg-muted disabled:opacity-50">Cancel</button>
-            <button type="button" onClick={() => void save()} disabled={busy} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] hover:-translate-y-px hover:brightness-110 disabled:opacity-60">
-              {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Check className="w-4 h-4" /> Save template</>}
+            <button type="button" onClick={onClose} disabled={busy} className={secondaryBtn}>Cancel</button>
+            <button type="button" onClick={() => void save()} disabled={busy} className={primaryBtn}>
+              {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : <><Check className="h-4 w-4" /> Save template</>}
             </button>
           </div>
         </div>

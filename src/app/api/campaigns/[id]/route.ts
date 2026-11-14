@@ -1,6 +1,44 @@
 import { withApi, ok, requireApiSession, writeAudit, assertRole, ApiError } from '@/lib/http';
 import { createServiceClient } from '@/lib/supabase/service';
 
+const EXECUTION_STATUSES = [
+  'queued', 'processing', 'accepted', 'delivered', 'failed',
+  'skipped', 'cancelled', 'replied', 'bounced', 'unsubscribed',
+] as const;
+
+/**
+ * Count executions exactly with head requests.
+ *
+ * Reading the rows and counting them in JS silently loses everything past
+ * PostgREST's 1000-row cap, which made progress and variant stats wrong for
+ * large campaigns. `count: 'exact', head: true` transfers no rows.
+ */
+async function countExecutionStats(db: ReturnType<typeof createServiceClient>, campaignId: string, variantIds: string[]) {
+  const queries = [
+    ...EXECUTION_STATUSES.map((status) =>
+      db.from('campaign_executions').select('id', { count: 'exact', head: true }).eq('campaign_id', campaignId).eq('status', status),
+    ),
+    ...variantIds.map((variantId) =>
+      db.from('campaign_executions').select('id', { count: 'exact', head: true }).eq('campaign_id', campaignId).eq('variant_id', variantId),
+    ),
+    db.from('campaign_executions').select('id', { count: 'exact', head: true }).eq('campaign_id', campaignId),
+  ];
+  const results = await Promise.all(queries);
+
+  const statusCounts: Record<string, number> = {};
+  EXECUTION_STATUSES.forEach((status, index) => {
+    const count = results[index]?.count ?? 0;
+    if (count > 0) statusCounts[status] = count;
+  });
+  const variantCounts: Record<string, number> = {};
+  variantIds.forEach((variantId, index) => {
+    const count = results[EXECUTION_STATUSES.length + index]?.count ?? 0;
+    if (count > 0) variantCounts[variantId] = count;
+  });
+  const total = results[results.length - 1]?.count ?? 0;
+  return { statusCounts, variantCounts, total };
+}
+
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withApi({ route: '/api/campaigns/[id]', method: 'GET' }, async () => {
     const session = await requireApiSession();
@@ -14,25 +52,23 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       .maybeSingle();
     if (error || !campaign) throw new ApiError(404, 'Campaign not found.', 'not_found');
 
-    const [settings, steps, executions, leads, executionStatusRows] = await Promise.all([
+    let templateVariants: { id: string; variant_order: number; subject: string }[] = [];
+    const templateId = campaign.template_id as string | null;
+    if (templateId) {
+      const { data: variants } = await db.from('email_template_variants').select('id, variant_order, subject').eq('template_id', templateId).order('variant_order');
+      templateVariants = (variants ?? []) as { id: string; variant_order: number; subject: string }[];
+    }
+
+    const [settings, steps, executions, leads, counts] = await Promise.all([
       db.from('campaign_settings').select('*').eq('campaign_id', id).maybeSingle(),
       db.from('campaign_steps').select('*').eq('campaign_id', id).order('step_order'),
       db.from('campaign_executions').select('id, step_order, status, scheduled_for, started_at, finished_at, error, provider_message_id, variant_id, personalized, lead:leads(id, first_name, last_name, email)').eq('campaign_id', id).order('scheduled_for', { ascending: false }).limit(100),
       db.from('campaign_leads').select('id, status, current_step, last_sent_at, next_send_at, error, lead:leads(id, first_name, last_name, email, company_name)').eq('campaign_id', id).limit(500),
-      db.from('campaign_executions').select('status, variant_id').eq('campaign_id', id).limit(100000),
+      countExecutionStats(db, id, templateVariants.map((variant) => variant.id)),
     ]);
 
-    // Exact per-status breakdown, no campaign rows are copied to the client.
-    const statusCounts: Record<string, number> = {};
-    const variantCounts: Record<string, number> = {};
-    for (const row of executionStatusRows.data ?? []) {
-      const key = String((row as Record<string, unknown>).status);
-      statusCounts[key] = (statusCounts[key] ?? 0) + 1;
-      const variantId = (row as Record<string, unknown>).variant_id;
-      if (variantId) variantCounts[String(variantId)] = (variantCounts[String(variantId)] ?? 0) + 1;
-    }
+    const { statusCounts, variantCounts, total } = counts;
     const terminal = ['accepted', 'delivered', 'failed', 'skipped', 'cancelled', 'replied', 'bounced', 'unsubscribed'];
-    const total = executionStatusRows.data?.length ?? Number(campaign.total_leads ?? 0);
     const done = terminal.reduce((sum, status) => sum + (statusCounts[status] ?? 0), 0);
     const stats = {
       totalRecipients: Number(campaign.total_leads ?? 0),
@@ -48,13 +84,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       progress: total > 0 ? Math.round((done / total) * 100) : 0,
       variants: variantCounts,
     };
-
-    let templateVariants: { id: string; variant_order: number; subject: string }[] = [];
-    const templateId = campaign.template_id as string | null;
-    if (templateId) {
-      const { data: variants } = await db.from('email_template_variants').select('id, variant_order, subject').eq('template_id', templateId).order('variant_order');
-      templateVariants = (variants ?? []) as { id: string; variant_order: number; subject: string }[];
-    }
 
     return ok({
       campaign,

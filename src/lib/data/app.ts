@@ -396,6 +396,12 @@ async function getOverviewUncached(orgId: string): Promise<OverviewVM> {
     db.from('email_events').select('event_type, occurred_at').eq('organization_id', orgId).gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(EVENT_SAMPLE_LIMIT),
     db.from('campaign_events').select('event_type, occurred_at, campaign:campaigns(name), lead:leads(first_name, last_name, email)').eq('organization_id', orgId).order('occurred_at', { ascending: false }).limit(8),
   ]);
+  // Setup counts are tiny head requests; they decide whether the first-run
+  // checklist is still relevant. Failures degrade to zero, never throw.
+  const [leadLists, templates] = await Promise.all([
+    db.from('lead_lists').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+    db.from('templates').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+  ]);
 
   const campaignRows = (campaigns.data ?? []) as Row[];
   const mailboxRows = (mailboxes.data ?? []) as Row[];
@@ -472,6 +478,14 @@ async function getOverviewUncached(orgId: string): Promise<OverviewVM> {
     mailboxes: mailboxRows.map(mapMailbox),
     activity: activity.length ? activity : [{ text: 'No campaign activity yet.', time: '', dot: 'bg-muted-foreground' }],
     recommendations,
+    setup: {
+      leads: leads.count ?? 0,
+      leadLists: leadLists.count ?? 0,
+      templates: templates.count ?? 0,
+      mailboxes: mailboxRows.length,
+      connectedMailboxes: connected,
+      campaigns: Object.values(campaignStatuses).reduce((sum, value) => sum + value, 0),
+    },
   };
 }
 
@@ -786,13 +800,24 @@ export async function getWorkspaceSettings(orgId: string, userId: string) {
     db.from('organization_members').select('user_id, role, status, invited_at, created_at').eq('organization_id', orgId).limit(200),
     db.from('subscription_plans').select('*').order('sort_order'),
   ]);
+  const memberRows = (memberships.data ?? []) as Row[];
+  const memberIds = memberRows.map((row) => str(row.user_id)).filter(Boolean);
+  const { data: memberProfiles } = memberIds.length
+    ? await db.from('profiles').select('id, full_name').in('id', memberIds)
+    : { data: [] as Row[] };
+  const nameById = new Map(
+    ((memberProfiles ?? []) as Row[]).map((row) => [str(row.id), str(row.full_name)]),
+  );
   return {
     profile: (profile.data ?? {}) as Row,
     organization: (organization.data ?? {}) as Row,
-    members: (memberships.data ?? []).map((row) => {
-      const typed = row as Row;
-      return { userId: str(typed.user_id), role: str(typed.role), status: str(typed.status), joinedAt: formatDate(typed.created_at) };
-    }),
+    members: memberRows.map((row) => ({
+      userId: str(row.user_id),
+      name: nameById.get(str(row.user_id)) || '',
+      role: str(row.role),
+      status: str(row.status),
+      joinedAt: formatDate(row.created_at),
+    })),
     plans: (plans.data ?? []).map((row) => {
       const typed = row as Row;
       return { key: str(typed.key), name: str(typed.name), description: str(typed.description) };

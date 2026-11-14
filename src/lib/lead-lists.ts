@@ -2,6 +2,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { LeadListColumn } from '@/lib/placeholders';
 import { leadListPlaceholders } from '@/lib/placeholders';
+import { escapeCsvCell } from '@/lib/csv';
 
 export interface LeadListDto {
   id: string;
@@ -105,11 +106,9 @@ export async function leadCountsByList(db: SupabaseClient, organizationId: strin
   return result;
 }
 
-/** Escape a value for a CSV cell (RFC 4180 quoting). */
+/** Escape a value for a CSV cell (RFC 4180 quoting plus formula neutralisation). */
 export function csvCell(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  const text = String(value);
-  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  return escapeCsvCell(value);
 }
 
 export function leadsToCsv(columns: LeadListColumn[], rows: Record<string, unknown>[]): string {

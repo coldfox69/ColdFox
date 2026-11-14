@@ -12,6 +12,10 @@ import { applyUnsubscribeFooter, buildLeadVariables, renderHtml, renderText, tex
 import { findUnresolvedPlaceholders } from '@/lib/placeholders';
 import { pickVariant } from '@/lib/email/rotation';
 import { personalizeForRecipient } from '@/lib/ai/personalize';
+import { nextSendWindow } from '@/lib/timezone';
+import { chunk, fetchAllRows } from '@/lib/data/paginate';
+
+export { nextSendWindow };
 
 const service = () => createServiceClient();
 
@@ -124,60 +128,6 @@ export async function createUnsubscribeToken(organizationId: string, leadId: str
   return `${appUrl()}/api/unsubscribe?token=${encodeURIComponent(token)}`;
 }
 
-// ── timezone / send window ──────────────────────────────────────
-function zonedParts(date: Date, timeZone: string) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', weekday: 'short', hour12: false,
-  }).formatToParts(date);
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '00';
-  const weekdayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-  return {
-    year: Number(get('year')),
-    month: Number(get('month')),
-    day: Number(get('day')),
-    hour: Number(get('hour') === '24' ? '0' : get('hour')),
-    minute: Number(get('minute')),
-    second: Number(get('second')),
-    weekday: weekdayMap[get('weekday')] ?? 1,
-  };
-}
-
-function timezoneOffsetMs(date: Date, timeZone: string) {
-  const p = zonedParts(date, timeZone);
-  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - date.getTime();
-}
-
-function zonedTimeToUtc(year: number, month: number, day: number, hour: number, minute: number, timeZone: string) {
-  let guess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
-  for (let i = 0; i < 2; i += 1) {
-    guess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0) - timezoneOffsetMs(guess, timeZone));
-  }
-  return guess;
-}
-
-function parseClock(value: string, fallback: string) {
-  const [h, m] = (value || fallback).slice(0, 5).split(':').map(Number);
-  return { hour: Number.isFinite(h) ? h : Number(fallback.slice(0, 2)), minute: Number.isFinite(m) ? m : 0 };
-}
-
-export function nextSendWindow(now: Date, timeZone: string, start: string, end: string, weekdays: number[]): Date {
-  const startClock = parseClock(start, '09:00');
-  const endClock = parseClock(end, '17:00');
-  const days = weekdays.length ? weekdays : [1, 2, 3, 4, 5];
-  for (let offset = 0; offset < 10; offset += 1) {
-    const probe = new Date(now.getTime() + offset * 86_400_000);
-    const p = zonedParts(probe, timeZone);
-    if (!days.includes(p.weekday)) continue;
-    const windowStart = zonedTimeToUtc(p.year, p.month, p.day, startClock.hour, startClock.minute, timeZone);
-    const windowEnd = zonedTimeToUtc(p.year, p.month, p.day, endClock.hour, endClock.minute, timeZone);
-    if (now < windowStart) return windowStart;
-    if (now >= windowStart && now < windowEnd) return now;
-  }
-  return now;
-}
-
 // ── campaign seeding ────────────────────────────────────────────
 type CampaignRecord = Record<string, unknown>;
 
@@ -240,9 +190,20 @@ export async function seedCampaignExecutions(organizationId: string, campaignId:
   if (!initialStep) throw new Error('Campaign has no sending steps.');
 
   // Settings and campaign leads do not depend on each other: read them in one round-trip.
-  const [settingsResult, campaignLeadsResult] = await Promise.all([
+  // The lead read is paged because a campaign can hold far more recipients than
+  // PostgREST returns in a single response.
+  const [settingsResult, campaignLeads] = await Promise.all([
     db.from('campaign_settings').select('*').eq('campaign_id', campaignId).maybeSingle(),
-    db.from('campaign_leads').select('id, lead_id, status').eq('campaign_id', campaignId).eq('organization_id', organizationId),
+    fetchAllRows<{ id: string; lead_id: string; status: string }>(
+      (from, to) => db
+        .from('campaign_leads')
+        .select('id, lead_id, status')
+        .eq('campaign_id', campaignId)
+        .eq('organization_id', organizationId)
+        .order('id')
+        .range(from, to),
+      { maxRows: 100_000 },
+    ),
   ]);
   const settings = settingsResult.data ?? {};
   const timezone = String(campaign.timezone || 'UTC');
@@ -253,7 +214,7 @@ export async function seedCampaignExecutions(organizationId: string, campaignId:
   // Every recipient gets its own jittered slot inside the configured pause range.
   const minSec = Math.max(1, Number(campaign.interval_min_seconds ?? 30));
   const maxSec = Math.max(minSec, Number(campaign.interval_max_seconds ?? 70));
-  const planned = (campaignLeadsResult.data ?? []).filter((cl) => ['queued', 'active'].includes(String(cl.status)));
+  const planned = campaignLeads.filter((cl) => ['queued', 'active'].includes(String(cl.status)));
   const reservations: Date[] = [];
   let cursor = first.getTime();
   for (let i = 0; i < planned.length; i += 1) {
@@ -267,7 +228,6 @@ export async function seedCampaignExecutions(organizationId: string, campaignId:
 
   if (!planned.length) return { queued: 0 };
 
-  const plannedIds = planned.map((cl) => cl.id);
   const rows = planned
     .map((cl, index) => ({
       organization_id: organizationId,
@@ -281,17 +241,26 @@ export async function seedCampaignExecutions(organizationId: string, campaignId:
       idempotency_key: `campaign:${campaignId}:lead:${cl.lead_id}:step:${initialStep.step_order}`,
     }));
 
-  const updates: Array<PromiseLike<unknown>> = [];
   if (rows.length) {
-    const { error: insertError } = await db.from('campaign_executions').upsert(rows, { onConflict: 'idempotency_key', ignoreDuplicates: true });
-    if (insertError) throw new Error(`Could not queue campaign: ${insertError.message}`);
+    for (const batch of chunk(rows, 1000)) {
+      const { error: insertError } = await db.from('campaign_executions').upsert(batch, { onConflict: 'idempotency_key', ignoreDuplicates: true });
+      if (insertError) throw new Error(`Could not queue campaign: ${insertError.message}`);
+    }
     // The executions table is the source of truth for send timing; this only
-    // marks the recipients and sets a rough next action timestamp.
-    updates.push(db.from('campaign_leads').update({ status: 'active', next_send_at: first.toISOString() }).in('id', plannedIds).in('status', ['queued', 'active']));
+    // marks every planned recipient of this campaign and sets a rough next
+    // action timestamp. One statement is enough and avoids a large id list.
+    await db
+      .from('campaign_leads')
+      .update({ status: 'active', next_send_at: first.toISOString() })
+      .eq('campaign_id', campaignId)
+      .eq('organization_id', organizationId)
+      .in('status', ['queued', 'active']);
   }
 
-  updates.push(db.from('campaigns').update({ total_leads: rows.length }).eq('id', campaignId));
-  await Promise.all(updates);
+  // A resume must never shrink the audience: keep the largest known total.
+  if (Number(campaign.total_leads ?? 0) < rows.length) {
+    await db.from('campaigns').update({ total_leads: rows.length }).eq('id', campaignId);
+  }
   return { queued: rows.length };
 }
 

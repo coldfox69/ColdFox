@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Search, Inbox, MailOpen, Archive, UserCheck, Send, StickyNote, ArrowLeft, ExternalLink, Reply } from 'lucide-react';
+import { Search, Inbox, MailOpen, Archive, UserCheck, Send, StickyNote, ArrowLeft, ExternalLink, Reply, MoreHorizontal } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useToast } from '@/components/shared/ToastProvider';
 import { type ConversationThreadVM as ConversationThread, type MessageVM as Message } from '@/lib/view-models';
@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { apiFetch, errorMessage } from '@/lib/client/api';
 import { useRouter } from 'next/navigation';
 import { useDebouncedValue } from '@/hooks/use-debounce';
-
 
 type Folder = 'all' | 'unread' | 'replied' | 'archived' | 'assigned';
 
@@ -42,6 +41,9 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
   const [mode, setMode] = useState<'reply' | 'note'>('reply');
   const [notes, setNotes] = useState<Note[]>([]);
   const [busy, setBusy] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const unreadCount = threads.filter(t => t.unread && t.status !== 'archived').length;
 
   const visible = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
@@ -62,6 +64,7 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
 
   const openThread = (id: string) => {
     setSelectedId(id);
+    setMenuOpen(false);
     setThreads(list => list.map(t => (t.id === id ? { ...t, unread: false } : t)));
     setReply('');
     void apiFetch(`/api/inbox/${id}/read`, { method: 'POST' }).catch(() => undefined);
@@ -111,6 +114,7 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
     });
     try {
       await apiFetch(`/api/inbox/${id}`, { method: 'PATCH', body: JSON.stringify({ assigned: next }) });
+      toast.show(next ? 'Assigned to you.' : 'Unassigned.', 'success');
     } catch (error) {
       setAssigned(s => {
         const copy = new Set(s);
@@ -200,168 +204,186 @@ export default function InboxPage({ initialThreads, currentUserId }: { initialTh
     }
   };
 
+  const countFor = (id: Folder) => threads.filter(t => {
+    if (id === 'archived') return t.status === 'archived';
+    if (t.status === 'archived') return false;
+    if (id === 'unread') return t.unread;
+    if (id === 'replied') return t.status === 'replied';
+    if (id === 'assigned') return assigned.has(t.id);
+    return true;
+  }).length;
+
   return (
-    <div className="h-full flex flex-col lg:flex-row min-h-0">
-      {/* Column 1: folders */}
-      <nav aria-label="Inbox folders" className={cn('lg:w-52 shrink-0 border-b lg:border-b-0 lg:border-r border-border p-3 space-y-1', selected && 'hidden lg:block')}>
-        {folders.map(f => {
-          const count = threads.filter(t => {
-            if (f.id === 'archived') return t.status === 'archived';
-            if (t.status === 'archived') return false;
-            if (f.id === 'unread') return t.unread;
-            if (f.id === 'replied') return t.status === 'replied';
-            if (f.id === 'assigned') return assigned.has(t.id);
-            return true;
-          }).length;
-          return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-card/60 px-4 py-3 lg:px-6">
+        <div>
+          <h1 className="text-[18px] font-semibold tracking-[-0.02em] text-foreground">Unified inbox</h1>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
+            {unreadCount} unread · {threads.length} conversation{threads.length === 1 ? '' : 's'} · every campaign reply in one place
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/app/leads" className="rounded-[9px] border border-border bg-card px-3 py-1.5 text-[12px] font-medium text-foreground hover:bg-muted">View leads</Link>
+          <Link href="/app/campaigns" className="rounded-[9px] border border-border bg-card px-3 py-1.5 text-[12px] font-medium text-foreground hover:bg-muted">Campaigns</Link>
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        {/* Column 1: folders */}
+        <nav aria-label="Inbox folders" className={cn('shrink-0 space-y-1 border-b border-border p-3 lg:w-52 lg:border-b-0 lg:border-r', selected && 'hidden lg:block')}>
+          {folders.map(f => (
             <button
               key={f.id}
               onClick={() => setFolder(f.id)}
               aria-current={folder === f.id ? 'true' : undefined}
               className={cn(
-                'w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors',
-                folder === f.id ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                'flex w-full items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13px] transition-colors',
+                folder === f.id ? 'bg-accent font-medium text-accent-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
             >
-              <f.icon className="w-4 h-4 shrink-0" />
-              <span className="flex-1 text-left truncate">{f.label}</span>
-              <span className="text-[12px] tabular-nums">{count}</span>
+              <f.icon className="h-4 w-4 shrink-0" />
+              <span className="flex-1 truncate text-left">{f.label}</span>
+              <span className="text-[12px] tabular-nums">{countFor(f.id)}</span>
             </button>
-          );
-        })}
-      </nav>
-
-      {/* Column 2: conversation list */}
-      <section className={cn('lg:w-96 shrink-0 border-b lg:border-b-0 lg:border-r border-border flex flex-col min-h-0', selected && 'hidden lg:flex')}>
-        <div className="p-3 border-b border-border">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Search conversations"
-              aria-label="Search conversations"
-              className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </div>
-        <ul className="flex-1 overflow-y-auto divide-y divide-border">
-          {visible.length === 0 && (
-            <li className="p-6">
-              <EmptyState icon={<Inbox className="w-8 h-8" />} title="Nothing here" description="No conversations match this folder or search." size="sm" />
-            </li>
-          )}
-          {visible.map(t => (
-            <li key={t.id}>
-              <button
-                onClick={() => openThread(t.id)}
-                aria-current={selectedId === t.id ? 'true' : undefined}
-                className={cn('w-full text-left p-4 hover:bg-muted/60 transition-colors', selectedId === t.id && 'bg-accent/60')}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className={cn('text-sm truncate', t.unread ? 'font-semibold text-foreground' : 'text-foreground')}>{t.leadName}</span>
-                  <span className="text-[12px] text-muted-foreground shrink-0">{t.lastMessageAt}</span>
-                </div>
-                <p className="text-[12px] text-foreground/80 truncate mt-0.5">{t.subject}</p>
-                <p className="text-[12px] text-muted-foreground truncate mt-1">{t.lastMessage}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  {t.unread && <span className="w-2 h-2 rounded-full bg-primary" aria-label="Unread" />}
-                  <span className="text-[12px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground truncate">{t.campaign}</span>
-                </div>
-              </button>
-            </li>
           ))}
-        </ul>
-      </section>
+        </nav>
 
-      {/* Column 3: thread */}
-      <section className={cn('flex-1 min-w-0 flex flex-col min-h-0', !selected && 'hidden lg:flex')}>
-        {!selected ? (
-          <div className="flex-1 flex items-center justify-center p-6">
-            <EmptyState icon={<Inbox className="w-8 h-8" />} title="Select a conversation" description="Replies from your campaigns appear here." />
-          </div>
-        ) : (
-          <>
-            <header className="p-4 border-b border-border space-y-3">
-              <button onClick={() => setSelectedId(null)} className="lg:hidden inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                <ArrowLeft className="w-4 h-4" /> Back to list
-              </button>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="font-semibold text-foreground truncate">{selected.leadName}</h2>
-                  <p className="text-[12px] text-muted-foreground truncate">{selected.leadEmail} · {selected.campaign}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button onClick={() => void toggleAssigned(selected.id)} aria-pressed={assigned.has(selected.id)} className={cn('px-3 py-1.5 rounded-lg border text-[12px] font-medium', assigned.has(selected.id) ? 'border-primary bg-accent' : 'border-border hover:bg-muted')}>
-                    {assigned.has(selected.id) ? 'Assigned to you' : 'Assign to me'}
-                  </button>
-                  <button onClick={() => void toggleArchive(selected)} className="px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
-                    {selected.status === 'archived' ? 'Restore' : 'Archive'}
-                  </button>
-                  <button onClick={() => void markRead(selected.id)} className="px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
-                     Mark read
-                   </button>
-                   <button onClick={() => void markUnread(selected.id)} className="px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
-                     Mark unread
-                   </button>
-                   <button onClick={() => void markAsNotSpam(selected.id)} className="px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
-                     Not spam
-                   </button>
-                   <button onClick={() => void reportAsSpam(selected.id)} className="px-3 py-1.5 rounded-lg border border-destructive/30 text-[12px] font-medium text-destructive hover:bg-destructive/10">
-                     Report spam
-                   </button>
-                   <button onClick={() => void deleteThread(selected.id)} className="px-3 py-1.5 rounded-lg border border-destructive/30 text-[12px] font-medium text-destructive hover:bg-destructive/10">
-                     Delete
-                   </button>
-                  {selected.leadId && (
-                    <Link href={`/app/leads/${selected.leadId}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border text-[12px] font-medium hover:bg-muted">
-                      Contact profile <ExternalLink className="w-3 h-3" />
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </header>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {selected.messages.map(m => (
-                <div key={m.id} className={cn('max-w-[85%] sm:max-w-[70%] rounded-[16px] p-4 text-sm whitespace-pre-wrap', m.isOutbound ? 'ml-auto bg-accent text-accent-foreground' : 'bg-muted text-foreground')}>
-                  <p className="text-[12px] opacity-70 mb-1.5">{m.isOutbound ? 'You' : selected.leadName} · {m.sentAt}</p>
-                  {m.body}
-                </div>
-              ))}
-              {threadNotes.map(n => (
-                <div key={n.id} className="flex gap-2 text-[12px] text-[var(--cf-warning)] neu-inset-sm rounded-[10px] p-3">
-                  <StickyNote className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                  <span><strong>Internal note</strong> (not sent): {n.text}</span>
-                </div>
-              ))}
+        {/* Column 2: conversation list */}
+        <section className={cn('flex min-h-0 shrink-0 flex-col border-b border-border lg:w-96 lg:border-b-0 lg:border-r', selected && 'hidden lg:flex')}>
+          <div className="border-b border-border p-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Search conversations"
+                aria-label="Search conversations"
+                className="w-full rounded-[10px] border border-border bg-input py-2 pl-9 pr-3 text-[13px] outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/15"
+              />
             </div>
+          </div>
+          <ul className="flex-1 divide-y divide-border overflow-y-auto">
+            {visible.length === 0 && (
+              <li className="p-6">
+                <EmptyState icon={<Inbox className="h-7 w-7" />} title="Nothing here" description="No conversations match this folder or search." size="sm" />
+              </li>
+            )}
+            {visible.map(t => (
+              <li key={t.id}>
+                <button
+                  onClick={() => openThread(t.id)}
+                  aria-current={selectedId === t.id ? 'true' : undefined}
+                  className={cn('w-full p-4 text-left transition-colors hover:bg-muted/60', selectedId === t.id && 'bg-accent/50')}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={cn('truncate text-[13px] text-foreground', t.unread && 'font-semibold')}>{t.leadName}</span>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{t.lastMessageAt}</span>
+                  </div>
+                  <p className="mt-0.5 truncate text-[12px] text-foreground/80">{t.subject}</p>
+                  <p className="mt-1 truncate text-[12px] text-muted-foreground">{t.lastMessage}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    {t.unread && <span className="h-2 w-2 rounded-full bg-primary" aria-label="Unread" />}
+                    <span className="truncate rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">{t.campaign}</span>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-            <div className="p-4 border-t border-border space-y-3">
-              <div role="tablist" className="inline-flex gap-1 rounded-[10px] bg-input p-1 shadow-[var(--shadow-inset-sm)]">
-                {(['reply', 'note'] as const).map(m => (
-                  <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={cn('rounded-[8px] px-3 py-1.5 text-[12px] font-medium capitalize transition-[color,background-color,box-shadow] duration-[var(--dur)] ease-[var(--ease)]', mode === m ? 'bg-card text-foreground shadow-[var(--shadow-raised-sm)]' : 'text-muted-foreground hover:text-foreground')}>
-                    {m === 'reply' ? 'Reply' : 'Internal note'}
-                  </button>
+        {/* Column 3: thread */}
+        <section className={cn('flex min-h-0 min-w-0 flex-1 flex-col', !selected && 'hidden lg:flex')}>
+          {!selected ? (
+            <div className="flex flex-1 items-center justify-center p-6">
+              <EmptyState icon={<Inbox className="h-7 w-7" />} title="Select a conversation" description="Replies from your campaigns appear here. Choose one on the left to read and reply." />
+            </div>
+          ) : (
+            <>
+              <header className="shrink-0 space-y-3 border-b border-border p-4">
+                <button onClick={() => setSelectedId(null)} className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground lg:hidden">
+                  <ArrowLeft className="h-4 w-4" /> Back to list
+                </button>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="truncate font-semibold text-foreground">{selected.leadName}</h2>
+                    <p className="truncate text-[12px] text-muted-foreground">{selected.leadEmail} · {selected.campaign}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button onClick={() => void toggleAssigned(selected.id)} aria-pressed={assigned.has(selected.id)} className={cn('rounded-[8px] border px-3 py-1.5 text-[12px] font-medium', assigned.has(selected.id) ? 'border-primary bg-accent text-accent-foreground' : 'border-border hover:bg-muted')}>
+                      {assigned.has(selected.id) ? 'Assigned to you' : 'Assign to me'}
+                    </button>
+                    <button onClick={() => void toggleArchive(selected)} className="rounded-[8px] border border-border px-3 py-1.5 text-[12px] font-medium hover:bg-muted">
+                      {selected.status === 'archived' ? 'Restore' : 'Archive'}
+                    </button>
+                    {selected.leadId && (
+                      <Link href={`/app/leads/${selected.leadId}`} className="inline-flex items-center gap-1 rounded-[8px] border border-border px-3 py-1.5 text-[12px] font-medium hover:bg-muted">
+                        Contact <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    )}
+                    <div className="relative">
+                      <button onClick={() => setMenuOpen(v => !v)} aria-expanded={menuOpen} aria-haspopup="menu" aria-label="More conversation actions" className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-border text-muted-foreground hover:bg-muted hover:text-foreground">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                      {menuOpen && (
+                        <>
+                          <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+                          <div role="menu" className="absolute right-0 top-9 z-30 w-52 rounded-[12px] border border-border bg-popover py-1 shadow-[var(--shadow-raised-lg)]">
+                            <button role="menuitem" onClick={() => { setMenuOpen(false); void markRead(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-foreground hover:bg-muted">Mark as read</button>
+                            <button role="menuitem" onClick={() => { setMenuOpen(false); void markUnread(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-foreground hover:bg-muted">Mark as unread</button>
+                            <button role="menuitem" onClick={() => { setMenuOpen(false); void markAsNotSpam(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-foreground hover:bg-muted">Move to inbox (not spam)</button>
+                            <div className="my-1 border-t border-border" />
+                            <button role="menuitem" onClick={() => { setMenuOpen(false); void reportAsSpam(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[var(--cf-warning)] hover:bg-muted">Report spam</button>
+                            <button role="menuitem" onClick={() => { setMenuOpen(false); void deleteThread(selected.id); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-destructive hover:bg-muted">Delete conversation</button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              <div className="flex-1 space-y-4 overflow-y-auto p-4">
+                {selected.messages.map(m => (
+                  <div key={m.id} className={cn('max-w-[85%] whitespace-pre-wrap rounded-[14px] p-4 text-[13px] sm:max-w-[70%]', m.isOutbound ? 'ml-auto bg-accent text-accent-foreground' : 'border border-border bg-card text-foreground')}>
+                    <p className="mb-1.5 text-[11px] opacity-70">{m.isOutbound ? 'You' : selected.leadName} · {m.sentAt}</p>
+                    {m.body}
+                  </div>
+                ))}
+                {selected.messages.length === 0 && <p className="text-center text-[13px] text-muted-foreground">No messages in this thread yet.</p>}
+                {threadNotes.map(n => (
+                  <div key={n.id} className="flex gap-2 rounded-[10px] border border-[var(--cf-warning)]/30 bg-[var(--cf-warning)]/[0.07] p-3 text-[12px] text-[var(--cf-warning)]">
+                    <StickyNote className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span><strong>Internal note</strong> (not sent): {n.text}</span>
+                  </div>
                 ))}
               </div>
-              <textarea
-                value={reply}
-                onChange={e => setReply(e.target.value)}
-                rows={3}
-                placeholder={mode === 'reply' ? `Reply to ${selected.leadName}...` : 'Write a note only your team can see...'}
-                aria-label={mode === 'reply' ? 'Reply' : 'Internal note'}
-                className="w-full px-3.5 py-2.5 rounded-[10px] border border-transparent bg-input text-sm shadow-[var(--shadow-inset-sm)] outline-none transition-[box-shadow] duration-[var(--dur)] ease-[var(--ease)] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
-              />
-              <div className="flex justify-end">
-                <button onClick={() => void send()} disabled={!reply.trim() || busy} className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-primary text-sm font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[box-shadow,transform,filter] duration-[var(--dur)] ease-[var(--ease)] hover:-translate-y-px hover:brightness-[1.07] active:translate-y-0 active:shadow-[var(--shadow-inset-sm)] disabled:pointer-events-none disabled:opacity-50">
-                  <Send className="w-4 h-4" /> {busy ? 'Sending…' : mode === 'reply' ? 'Send reply' : 'Save note'}
-                </button>
+
+              <div className="shrink-0 space-y-3 border-t border-border p-4">
+                <div role="tablist" aria-label="Reply mode" className="inline-flex gap-1 rounded-[10px] border border-border bg-muted p-1">
+                  {(['reply', 'note'] as const).map(m => (
+                    <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={cn('rounded-[7px] px-3 py-1.5 text-[12px] font-medium capitalize transition-colors', mode === m ? 'bg-card text-foreground shadow-[var(--shadow-raised-sm)]' : 'text-muted-foreground hover:text-foreground')}>
+                      {m === 'reply' ? 'Reply' : 'Internal note'}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={reply}
+                  onChange={e => setReply(e.target.value)}
+                  rows={3}
+                  placeholder={mode === 'reply' ? `Reply to ${selected.leadName}…` : 'Write a note only your team can see…'}
+                  aria-label={mode === 'reply' ? 'Reply' : 'Internal note'}
+                  className="w-full rounded-[10px] border border-border bg-input px-3.5 py-2.5 text-[13px] outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/15"
+                />
+                <div className="flex justify-end">
+                  <button onClick={() => void send()} disabled={!reply.trim() || busy} className="inline-flex items-center gap-2 rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground shadow-[var(--shadow-raised-sm)] transition-[filter] hover:brightness-105 disabled:opacity-50">
+                    <Send className="h-4 w-4" /> {busy ? 'Sending…' : mode === 'reply' ? 'Send reply' : 'Save note'}
+                  </button>
+                </div>
               </div>
-            </div>
-          </>
-        )}
-      </section>
+            </>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

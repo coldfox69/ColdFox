@@ -1,5 +1,6 @@
 import { withApi, ok, requireApiSession, assertRole, ApiError, writeAudit } from '@/lib/http';
 import { createServiceClient } from '@/lib/supabase/service';
+import { chunk, fetchAllRows } from '@/lib/data/paginate';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,12 +56,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // Copy the recipient set so the clone is ready to launch.
-    const { data: leadRows } = await db.from('campaign_leads').select('lead_id').eq('campaign_id', id);
-    if (leadRows?.length) {
-      await db.from('campaign_leads').upsert(
-        leadRows.map((row) => ({ organization_id: session.organizationId, campaign_id: copy.id as string, lead_id: row.lead_id as string, status: 'queued' })),
-        { onConflict: 'campaign_id,lead_id', ignoreDuplicates: true },
-      );
+    const leadRows = await fetchAllRows<{ lead_id: string }>(
+      (from, to) => db
+        .from('campaign_leads')
+        .select('lead_id')
+        .eq('campaign_id', id)
+        .order('lead_id')
+        .range(from, to),
+      { maxRows: 100_000 },
+    );
+    if (leadRows.length) {
+      for (const batch of chunk(leadRows, 500)) {
+        await db.from('campaign_leads').upsert(
+          batch.map((row) => ({ organization_id: session.organizationId, campaign_id: copy.id as string, lead_id: row.lead_id as string, status: 'queued' })),
+          { onConflict: 'campaign_id,lead_id', ignoreDuplicates: true },
+        );
+      }
       await db.from('campaigns').update({ total_leads: leadRows.length }).eq('id', copy.id);
     }
 
